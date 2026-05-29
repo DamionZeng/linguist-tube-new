@@ -1,66 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { Play, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchExploreData } from "../../api/general";
 
-const CAROUSEL_ITEMS = [
-  {
-    id: "v1",
-    title: "商场购物与试衣",
-    subtitle: "Shopping & Fitting",
-    desc: "Learn essential vocabulary for trying on clothes at the mall.",
-    image:
-      "https://images.unsplash.com/photo-1605100804763-247f67b854d4?auto=format&fit=crop&w=800&q=80",
-    tag: "Up Next",
-  },
-  {
-    id: "v2",
-    title: "咖啡馆点餐",
-    subtitle: "Ordering at a Cafe",
-    desc: "Master the common phrases used in a coffee shop.",
-    image:
-      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
-    tag: "New",
-  },
-  {
-    id: "v3",
-    title: "机场英语",
-    subtitle: "Airport English",
-    desc: "Navigate the check-in and boarding process effortlessly.",
-    image:
-      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
-    tag: "Trending",
-  },
-];
-
 export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<{ categories: string[]; videos: any[] }>({
+  const [data, setData] = useState<{ categories: string[]; videos: any[]; carousel: any[] }>({
     categories: [],
     videos: [],
+    carousel: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    fetchExploreData().then((res) => {
-      setData(res);
-      setLoading(false);
-    });
+    fetchExploreData()
+      .then((res) => {
+        setData(res);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load explore data.");
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
+    if (data.carousel.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+      setCurrentSlide((prev) => (prev + 1) % data.carousel.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [data.carousel.length]);
 
   const nextSlide = () =>
-    setCurrentSlide((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+    setCurrentSlide((prev) => data.carousel.length > 0 ? (prev + 1) % data.carousel.length : 0);
   const prevSlide = () =>
     setCurrentSlide(
-      (prev) => (prev - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length,
+      (prev) => data.carousel.length > 0 ? (prev - 1 + data.carousel.length) % data.carousel.length : 0,
     );
 
   if (loading) {
@@ -71,11 +50,19 @@ export const ExplorePage: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="text-[#D48166] font-bold">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="md:p-8 max-w-7xl mx-auto pb-10 mt-2 md:mt-0">
       {/* Hero Carousel */}
       <section className="relative w-full rounded-2xl md:rounded-[32px] overflow-hidden bg-[#2A2A25] h-[220px] md:h-[300px] shadow-lg group mb-6 md:mb-10">
-        {CAROUSEL_ITEMS.map((item, index) => (
+        {data.carousel.map((item, index) => (
           <div
             key={item.id}
             className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"}`}
@@ -130,7 +117,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Carousel Indicators */}
         <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 md:gap-2">
-          {CAROUSEL_ITEMS.map((_, idx) => (
+          {data.carousel.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
@@ -142,15 +129,15 @@ export const ExplorePage: React.FC = () => {
 
       {/* Grid List */}
       <section>
-        <div className="flex items-center justify-between mb-4 md:mb-5">
-          <h2 className="text-xl md:text-2xl font-serif font-bold text-[#5A5A40]">
+        <div className="flex items-center justify-between mb-4 md:mb-5 gap-2">
+          <h2 className="text-xl md:text-2xl font-serif font-bold text-[#5A5A40] truncate">
             Recommended for You
           </h2>
           <button 
              onClick={() => navigate('/youtube-news')}
-             className="text-sm font-bold text-[#D48166] hover:text-[#C27055] transition-colors flex items-center gap-1 bg-[#D48166]/10 px-3 py-1.5 rounded-lg"
+             className="text-xs sm:text-sm font-bold text-[#D48166] hover:text-[#C27055] transition-colors flex items-center gap-1 bg-[#D48166]/10 px-2 sm:px-3 py-1.5 rounded-lg shrink-0 whitespace-nowrap"
           >
-            <Play className="w-4 h-4" /> YouTube News
+            <Play className="w-3 h-3 sm:w-4 sm:h-4" /> YouTube News
           </button>
         </div>
 
@@ -209,8 +196,15 @@ export const ExplorePage: React.FC = () => {
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-1 rounded-md font-mono font-bold tracking-wide backdrop-blur-md">
                     {v.duration}
                   </div>
-                  <div className="absolute top-2 left-2 bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
-                    {v.tag}
+                  <div className="absolute top-2 left-2 flex gap-2">
+                    <div className="bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
+                      {v.tag}
+                    </div>
+                    {v.isVipOnly && (
+                      <div className="bg-[#E1B12C]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> VIP
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

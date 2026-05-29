@@ -2,23 +2,47 @@ import React, { useEffect, useState } from 'react';
 import { Play, TrendingUp, Clock } from 'lucide-react';
 import { fetchHistoryData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
 
 export const HistoryPage: React.FC = () => {
+  const { user } = useAuth();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchHistoryData().then(res => {
-      setHistory(res);
-      setLoading(false);
-    });
-  }, []);
+    if (!user) return;
+    
+    fetchHistoryData()
+      .then(res => {
+        setHistory(res);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load history.");
+        setLoading(false);
+      });
+  }, [user]);
+
+  if (!user) {
+    return <LoginPrompt message="Please login to view your watch history." />;
+  }
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
         <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="text-[#D48166] font-bold">{error}</div>
       </div>
     );
   }

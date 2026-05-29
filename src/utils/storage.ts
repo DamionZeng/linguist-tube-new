@@ -1,3 +1,9 @@
+export const getLocalDayStr = (date = new Date()) => {
+  return date.getFullYear() + '-' + 
+    String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(date.getDate()).padStart(2, '0');
+};
+
 export const getCheckIns = (): string[] => {
   const data = localStorage.getItem('checkins');
   return data ? JSON.parse(data) : [];
@@ -5,7 +11,7 @@ export const getCheckIns = (): string[] => {
 
 export const addCheckIn = () => {
   const checkins = getCheckIns();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDayStr();
   if (!checkins.includes(today)) {
     checkins.push(today);
     localStorage.setItem('checkins', JSON.stringify(checkins));

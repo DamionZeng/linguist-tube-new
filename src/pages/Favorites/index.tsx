@@ -3,31 +3,43 @@ import { Star, PlayCircle, Quote } from 'lucide-react';
 import { fetchFavoritesData } from '../../api/general';
 import { getFavoriteVideos } from '../../utils/storage';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
 
 export const FavoritesPage: React.FC = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<{videos: any[], sentences: any[]}>({ videos: [], sentences: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'videos' | 'sentences'>('videos');
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchFavoritesData().then(res => {
-      // Merge mocked initial data with real local storage
-      const storageVideos = getFavoriteVideos();
-      // Simple deduplication based on ID
-      const mergedVideos = [...storageVideos];
-      for (const v of res.videos) {
-        if (!mergedVideos.some(mv => mv.id === v.id)) {
-          mergedVideos.push(v);
+    if (!user) return;
+    
+    fetchFavoritesData()
+      .then(res => {
+        // Merge mocked initial data with real local storage
+        const storageVideos = getFavoriteVideos();
+        // Simple deduplication based on ID
+        const mergedVideos = [...storageVideos];
+        for (const v of res.videos) {
+          if (!mergedVideos.some(mv => mv.id === v.id)) {
+            mergedVideos.push(v);
+          }
         }
-      }
 
-      setData({
-        videos: mergedVideos,
-        sentences: res.sentences
+        setData({
+          videos: mergedVideos,
+          sentences: res.sentences
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load favorites data.");
+        setLoading(false);
       });
-      setLoading(false);
-    });
 
     const handleUpdate = () => {
        const storageVideos = getFavoriteVideos();
@@ -43,12 +55,24 @@ export const FavoritesPage: React.FC = () => {
     };
     window.addEventListener('favorites-updated', handleUpdate);
     return () => window.removeEventListener('favorites-updated', handleUpdate);
-  }, []);
+  }, [user]);
+
+  if (!user) {
+    return <LoginPrompt message="Please login to view your favorites." />;
+  }
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
         <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="text-[#D48166] font-bold">{error}</div>
       </div>
     );
   }

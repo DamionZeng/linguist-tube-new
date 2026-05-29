@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCheckIns } from '../utils/storage';
+import { getCheckIns, getLocalDayStr } from '../utils/storage';
 
 export const GithubHeatmap: React.FC = () => {
   const [checkIns, setCheckIns] = useState<string[]>([]);
@@ -33,7 +33,7 @@ export const GithubHeatmap: React.FC = () => {
      for (let j = 0; j < 7; j++) {
         const d = new Date(startDate);
         d.setDate(d.getDate() + (i * 7 + j));
-        const dayStr = d.toISOString().split('T')[0];
+        const dayStr = getLocalDayStr(d);
         const isFuture = d > today;
         week.push({ date: d, dayStr, isFuture });
 

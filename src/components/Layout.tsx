@@ -1,8 +1,12 @@
 import React from "react";
-import { Outlet, NavLink } from "react-router-dom";
-import { Compass, BookText, Search, History, Star } from "lucide-react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Compass, BookText, Search, History, Star, User } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export const Layout: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col h-screen w-full bg-[#F5F5F0] font-sans text-[#4A4A40] overflow-hidden max-w-[1920px] mx-auto">
       {/* Top Nav (Desktop) */}
@@ -61,9 +65,15 @@ export const Layout: React.FC = () => {
             </span>
             <Search className="w-4 h-4 text-[#4A4A40]" />
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#D48166] text-white flex items-center justify-center font-bold font-serif shadow-md cursor-pointer hover:scale-105 transition-transform">
-            A
-          </div>
+          {user ? (
+            <div onClick={() => navigate('/library')} className="w-10 h-10 rounded-full bg-[#D48166] text-white flex items-center justify-center font-bold font-serif shadow-md cursor-pointer hover:scale-105 transition-transform uppercase">
+              {user.username.charAt(0)}
+            </div>
+          ) : (
+            <div onClick={() => navigate('/library')} className="w-10 h-10 rounded-full bg-[#EAEAE0] text-[#6A6A5A] flex items-center justify-center font-bold font-serif shadow-sm cursor-pointer hover:bg-[#D48166] hover:text-white transition-colors">
+              <User className="w-5 h-5" />
+            </div>
+          )}
         </div>
       </nav>
 

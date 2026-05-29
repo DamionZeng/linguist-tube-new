@@ -15,9 +15,11 @@ export const YoutubeNewsPage: React.FC = () => {
   const navigate = useNavigate();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
+    setError(null);
     try {
       const channels = [
         'UCBi2mrWuNuyYy4gbM6fU18Q', // ABC News
@@ -46,9 +48,12 @@ export const YoutubeNewsPage: React.FC = () => {
         });
         // shuffle items to give a mix effect as well, or just use as is
         setNews(items.sort(() => 0.5 - Math.random()));
+      } else {
+        setError("Failed to fetch news.");
       }
     } catch (e) {
       console.error("Failed to fetch news", e);
+      setError("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -86,6 +91,10 @@ export const YoutubeNewsPage: React.FC = () => {
         {loading && news.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
             <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+            <div className="text-[#D48166] font-bold">{error}</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

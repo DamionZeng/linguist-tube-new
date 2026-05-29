@@ -23,4 +23,5 @@ export interface VideoInfo {
   currentProgress?: string;
   index: number;
   total: number;
+  isVipOnly?: boolean;
 }

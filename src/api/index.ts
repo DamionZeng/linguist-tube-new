@@ -1,21 +1,8 @@
 import { Transcript, VideoInfo } from '../types';
 import { mockTranscripts, mockVideoInfo } from '../mocks/transcript';
-import { MOCK_FAVORITE_SENTENCES } from '../mocks/general';
+import { MOCK_FAVORITE_SENTENCES, MOCK_EXPLORE_VIDEOS } from '../mocks/general';
 
 export const fetchTranscripts = async (id?: string): Promise<Transcript[]> => {
-  if (id?.startsWith('yt-')) {
-    const videoId = id.replace('yt-', '');
-    try {
-      const res = await fetch(`/api/transcript?videoId=${videoId}`);
-      const data = await res.json();
-      if (data.transcripts) {
-        return data.transcripts;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockTranscripts);
@@ -34,10 +21,16 @@ export const fetchVideoInfo = (id?: string): Promise<VideoInfo> => {
           videoUrl: `https://www.youtube.com/watch?v=${id.replace('yt-', '')}`,
           duration: '05:00',
           index: 1,
-          total: 1
+          total: 1,
+          isVipOnly: false
         });
       } else {
-        resolve(mockVideoInfo);
+        const matchingVideo = MOCK_EXPLORE_VIDEOS.find(v => v.id === id);
+        resolve({
+          ...mockVideoInfo,
+          title: matchingVideo?.title || mockVideoInfo.title,
+          isVipOnly: matchingVideo?.isVipOnly || false
+        });
       }
     }, 400);
   });

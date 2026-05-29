@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { VideoPlayer } from './components/VideoPlayer';
 import { TranscriptList } from './components/TranscriptList';
@@ -9,13 +9,17 @@ import { fetchTranscripts, fetchVideoInfo, toggleFavoriteTranscript } from '../.
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
-import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns } from '../../utils/storage';
-import { CalendarCheck, Heart, SlidersHorizontal } from 'lucide-react';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr } from '../../utils/storage';
+import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
 
 export type LangMode = 'bilingual' | 'en' | 'zh';
 
 export const VideoLearningPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +42,7 @@ export const VideoLearningPage: React.FC = () => {
   const videoContext = useVideoPlayer(transcripts);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDayStr();
     const checkIns = getCheckIns();
     if (checkIns.includes(today)) {
       setIsCheckedIn(true);
@@ -106,6 +110,33 @@ export const VideoLearningPage: React.FC = () => {
       <div className="w-full h-screen flex items-center justify-center bg-gray-50">
          <div className="bg-red-50 text-red-600 px-6 py-4 rounded-xl border border-red-100 shadow-sm font-medium">
             {error || 'An unexpected error occurred'}
+         </div>
+      </div>
+    );
+  }
+
+  if (videoInfo.isVipOnly && (!user || user.role !== 'vip')) {
+    return (
+      <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
+         <Header title={videoInfo.title} rightNode={<></>} />
+         <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
+               <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
+                  <Lock className="w-8 h-8" />
+               </div>
+               <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">VIP Content</h2>
+               <p className="text-[#848464] mb-8">This video is exclusively available for VIP members. Please login with a VIP account to continue learning.</p>
+               
+               {!user ? (
+                 <button onClick={() => navigate('/library')} className="bg-[#D48166] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#C27055] transition-colors">
+                   Login Now
+                 </button>
+               ) : (
+                 <button onClick={() => navigate(-1)} className="bg-[#EAEAE0] text-[#5A5A40] px-8 py-3 rounded-xl font-bold hover:bg-[#E0E0D5] transition-colors">
+                   Go Back
+                 </button>
+               )}
+            </div>
          </div>
       </div>
     );

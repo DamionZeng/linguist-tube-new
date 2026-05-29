@@ -12,22 +12,25 @@ import { VocabularyPage } from './pages/Vocabulary';
 import { HistoryPage } from './pages/History';
 import { FavoritesPage } from './pages/Favorites';
 import { YoutubeNewsPage } from './pages/YoutubeNews';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/explore" replace />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/youtube-news" element={<YoutubeNewsPage />} />
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/vocab" element={<VocabularyPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-        </Route>
-        <Route path="/video/:id" element={<VideoLearningPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Navigate to="/explore" replace />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/youtube-news" element={<YoutubeNewsPage />} />
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/vocab" element={<VocabularyPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+          </Route>
+          <Route path="/video/:id" element={<VideoLearningPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

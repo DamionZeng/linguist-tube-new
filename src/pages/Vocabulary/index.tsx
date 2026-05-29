@@ -2,20 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, CheckSquare, Trash2, Edit2, Play, Volume2 } from 'lucide-react';
 import { fetchVocabularyData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
 
 export const VocabularyPage: React.FC = () => {
+  const { user } = useAuth();
   const [vocab, setVocab] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchVocabularyData().then(res => {
-      setVocab(res);
-      setLoading(false);
-    });
-  }, []);
+    if (!user || user.role !== 'vip') return;
+
+    fetchVocabularyData()
+      .then(res => {
+        setVocab(res);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load vocabulary.");
+        setLoading(false);
+      });
+  }, [user]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedWords);
@@ -32,10 +44,36 @@ export const VocabularyPage: React.FC = () => {
     }
   };
 
+  if (!user) {
+    return <LoginPrompt message="Please login to access the Vocabulary Book." />;
+  }
+
+  if (user.role !== 'vip') {
+    return (
+      <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative pt-20 px-4 items-center flex-1">
+         <div className="bg-white p-8 rounded-[24px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
+            <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">Members Only</h2>
+            <p className="text-[#848464] mb-6">Vocabulary Book is exclusively available for VIP members.</p>
+            <button className="bg-[#E1B12C] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#C29828] transition-colors" onClick={() => navigate(-1)}>
+               Go Back
+            </button>
+         </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
         <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="text-[#D48166] font-bold">{error}</div>
       </div>
     );
   }

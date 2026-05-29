@@ -1,10 +1,46 @@
+export const MOCK_USERS = [
+  { username: 'damion', password: '123456', role: 'user' },
+  { username: 'root', password: '123456', role: 'vip' }
+];
+
 export const MOCK_CATEGORIES = ["All", "Business", "Daily Life", "Travel", "IELTS", "Slang"];
 
+export const MOCK_CAROUSEL_ITEMS = [
+  {
+    id: "v1",
+    title: "商场购物与试衣",
+    subtitle: "Shopping & Fitting",
+    desc: "Learn essential vocabulary for trying on clothes at the mall.",
+    image:
+      "https://images.unsplash.com/photo-1605100804763-247f67b854d4?auto=format&fit=crop&w=800&q=80",
+    tag: "Up Next",
+  },
+  {
+    id: "v2",
+    title: "咖啡馆点餐",
+    subtitle: "Ordering at a Cafe",
+    desc: "Master the common phrases used in a coffee shop.",
+    image:
+      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
+    tag: "New",
+  },
+  {
+    id: "v3",
+    title: "求职面试技巧",
+    subtitle: "Job Interview Tips",
+    desc: "Key phrases and power words to land your dream job.",
+    image:
+      "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80",
+    tag: "Featured",
+  },
+];
+
+
 export const MOCK_EXPLORE_VIDEOS = [
-  { id: 'v1', title: 'Mastering British Phrasal Verbs', duration: '12:45', level: 'Intermediate', thumb: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80', tag: 'British English' },
-  { id: 'v2', title: 'Coffee Shop Conversations', duration: '08:20', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80', tag: 'Daily Life' },
-  { id: 'v3', title: 'Tech Interview Power Words', duration: '15:10', level: 'Advanced', thumb: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', tag: 'Business' },
-  { id: 'v4', title: 'Airport & Customs Vocabulary', duration: '10:05', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80', tag: 'Travel' },
+  { id: 'v1', title: 'Mastering British Phrasal Verbs', duration: '12:45', level: 'Intermediate', thumb: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80', tag: 'British English', isVipOnly: false },
+  { id: 'v2', title: 'Coffee Shop Conversations', duration: '08:20', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80', tag: 'Daily Life', isVipOnly: false },
+  { id: 'v3', title: 'Tech Interview Power Words', duration: '15:10', level: 'Advanced', thumb: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', tag: 'Business', isVipOnly: true },
+  { id: 'v4', title: 'Airport & Customs Vocabulary', duration: '10:05', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80', tag: 'Travel', isVipOnly: true },
 ];
 
 export const MOCK_HISTORY = [

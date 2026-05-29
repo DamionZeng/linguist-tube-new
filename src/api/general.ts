@@ -1,9 +1,9 @@
 import { VideoInfo } from '../types';
-import { MOCK_CATEGORIES, MOCK_EXPLORE_VIDEOS, MOCK_VOCAB, MOCK_HISTORY, MOCK_FAVORITE_SENTENCES } from '../mocks/general';
+import { MOCK_CATEGORIES, MOCK_EXPLORE_VIDEOS, MOCK_VOCAB, MOCK_HISTORY, MOCK_FAVORITE_SENTENCES, MOCK_CAROUSEL_ITEMS } from '../mocks/general';
 
 export const fetchExploreData = (): Promise<any> => {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({ categories: MOCK_CATEGORIES, videos: MOCK_EXPLORE_VIDEOS }), 500);
+    setTimeout(() => resolve({ categories: MOCK_CATEGORIES, videos: MOCK_EXPLORE_VIDEOS, carousel: MOCK_CAROUSEL_ITEMS }), 500);
   });
 };
 
