@@ -1,0 +1,228 @@
+import React, { useEffect, useState } from "react";
+import { Play, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { fetchExploreData } from "../../api/general";
+
+const CAROUSEL_ITEMS = [
+  {
+    id: "v1",
+    title: "商场购物与试衣",
+    subtitle: "Shopping & Fitting",
+    desc: "Learn essential vocabulary for trying on clothes at the mall.",
+    image:
+      "https://images.unsplash.com/photo-1605100804763-247f67b854d4?auto=format&fit=crop&w=800&q=80",
+    tag: "Up Next",
+  },
+  {
+    id: "v2",
+    title: "咖啡馆点餐",
+    subtitle: "Ordering at a Cafe",
+    desc: "Master the common phrases used in a coffee shop.",
+    image:
+      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
+    tag: "New",
+  },
+  {
+    id: "v3",
+    title: "机场英语",
+    subtitle: "Airport English",
+    desc: "Navigate the check-in and boarding process effortlessly.",
+    image:
+      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
+    tag: "Trending",
+  },
+];
+
+export const ExplorePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [data, setData] = useState<{ categories: string[]; videos: any[] }>({
+    categories: [],
+    videos: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    fetchExploreData().then((res) => {
+      setData(res);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () =>
+    setCurrentSlide((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+  const prevSlide = () =>
+    setCurrentSlide(
+      (prev) => (prev - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length,
+    );
+
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="md:p-8 max-w-7xl mx-auto pb-10 mt-2 md:mt-0">
+      {/* Hero Carousel */}
+      <section className="relative w-full rounded-2xl md:rounded-[32px] overflow-hidden bg-[#2A2A25] h-[220px] md:h-[300px] shadow-lg group mb-6 md:mb-10">
+        {CAROUSEL_ITEMS.map((item, index) => (
+          <div
+            key={item.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10"></div>
+            <img
+              src={item.image}
+              className="w-full h-full object-cover"
+              alt={item.title}
+            />
+
+            <div className="absolute inset-x-0 bottom-0 top-0 p-6 md:p-10 flex flex-col justify-center z-20 text-white w-full md:w-2/3">
+              <div className="bg-white/20 backdrop-blur-md inline-block px-2.5 py-1 rounded w-max text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm">
+                {item.tag}
+              </div>
+              <h3 className="text-xl md:text-3xl font-serif font-bold mb-1.5 md:mb-2 leading-tight drop-shadow-md">
+                {item.title}{" "}
+                <span className="font-sans text-white/80 font-normal text-sm md:text-xl ml-1">
+                  ({item.subtitle})
+                </span>
+              </h3>
+              <p className="text-white/80 text-xs md:text-sm mb-4 md:mb-5 max-w-md font-medium leading-relaxed drop-shadow line-clamp-2 md:line-clamp-none">
+                {item.desc}
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/video/${item.id}`);
+                }}
+                className="bg-[#D48166] hover:bg-[#C27055] text-white px-5 md:px-6 py-2 md:py-2.5 rounded-full font-bold transition-all shadow-md flex items-center gap-2 w-max text-sm"
+              >
+                <Play className="w-[18px] h-[18px] fill-current" /> Start
+                Learning
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Carousel Controls */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/30 hover:bg-black/50 text-white p-1.5 md:p-2 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/30 hover:bg-black/50 text-white p-1.5 md:p-2 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+
+        {/* Carousel Indicators */}
+        <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 md:gap-2">
+          {CAROUSEL_ITEMS.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Grid List */}
+      <section>
+        <div className="flex items-center justify-between mb-4 md:mb-5">
+          <h2 className="text-xl md:text-2xl font-serif font-bold text-[#5A5A40]">
+            Recommended for You
+          </h2>
+        </div>
+
+        {/* Categories */}
+        <div 
+          className="flex gap-2.5 overflow-x-auto pb-4 hide-scrollbar cursor-grab active:cursor-grabbing"
+          onMouseDown={(e) => {
+            const ele = e.currentTarget;
+            let isDown = true;
+            let startX = e.pageX - ele.offsetLeft;
+            let scrollLeft = ele.scrollLeft;
+
+            const onMouseMove = (e: MouseEvent) => {
+              if (!isDown) return;
+              e.preventDefault();
+              const x = e.pageX - ele.offsetLeft;
+              const walk = (x - startX) * 2; // scroll-fast
+              ele.scrollLeft = scrollLeft - walk;
+            };
+
+            const onMouseUp = () => {
+              isDown = false;
+              window.removeEventListener('mousemove', onMouseMove);
+              window.removeEventListener('mouseup', onMouseUp);
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+          }}
+        >
+          {data.categories.map((cat, i) => (
+            <button
+              key={i}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer shrink-0 ${i === 0 ? "bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm" : "bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#94A684] hover:text-[#4A4A40]"}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Videos Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
+          {data.videos.map((v) => (
+            <div
+              key={v.id}
+              onClick={() => navigate(`/video/${v.id}`)}
+              className="bg-white rounded-[24px] overflow-hidden border border-[#E0E0D5] hover:border-[#94A684] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex flex-col"
+            >
+              <div className="relative aspect-video overflow-hidden bg-[#EAEAE0] p-1">
+                <div className="w-full h-full rounded-[20px] overflow-hidden relative">
+                  <img
+                    src={v.thumb}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    alt={v.title}
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-1 rounded-md font-mono font-bold tracking-wide backdrop-blur-md">
+                    {v.duration}
+                  </div>
+                  <div className="absolute top-2 left-2 bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
+                    {v.tag}
+                  </div>
+                </div>
+              </div>
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-bold text-[17px] text-[#4A4A40] line-clamp-2 leading-tight mb-3 group-hover:text-[#D48166] transition-colors">
+                  {v.title}
+                </h3>
+                <div className="mt-auto flex items-center justify-between text-xs text-[#8A8A7A] font-bold">
+                  <span className="flex items-center gap-1.5 bg-[#F9F9F7] px-2.5 py-1 rounded-md border border-[#E0E0D5] text-[#6A6A5A]">
+                    <TrendingUp className="w-3.5 h-3.5 text-[#94A684]" />{" "}
+                    {v.level}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};

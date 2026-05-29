@@ -1,0 +1,6 @@
+{
+  "name": "English Learning Player",
+  "description": "A responsive video player geared for English language learning with bilingual transcripts and interactive controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

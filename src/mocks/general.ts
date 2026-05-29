@@ -1,0 +1,25 @@
+export const MOCK_CATEGORIES = ["All", "Business", "Daily Life", "Travel", "IELTS", "Slang"];
+
+export const MOCK_EXPLORE_VIDEOS = [
+  { id: 'v1', title: 'Mastering British Phrasal Verbs', duration: '12:45', level: 'Intermediate', thumb: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80', tag: 'British English' },
+  { id: 'v2', title: 'Coffee Shop Conversations', duration: '08:20', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80', tag: 'Daily Life' },
+  { id: 'v3', title: 'Tech Interview Power Words', duration: '15:10', level: 'Advanced', thumb: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', tag: 'Business' },
+  { id: 'v4', title: 'Airport & Customs Vocabulary', duration: '10:05', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80', tag: 'Travel' },
+];
+
+export const MOCK_HISTORY = [
+  { id: 'v1', title: 'Mastering British Phrasal Verbs', duration: '12:45', level: 'Intermediate', thumb: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80', tag: 'British English', progress: 85, lastWatched: '2 hours ago' },
+  { id: 'v2', title: 'Coffee Shop Conversations', duration: '08:20', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80', tag: 'Daily Life', progress: 30, lastWatched: 'Yesterday' },
+];
+
+export const MOCK_VOCAB = [
+  { id: 'w1', word: 'get by', phonetic: "/get baɪ/", pos: 'phrasal verb', mean: 'To manage or survive with limited resources.', trans: '勉强生存，维持', added: '2 days ago', example: '"I can get by on just 5 hours of sleep."', exampleTrans: '我只睡5个小时也能勉强应付。' },
+  { id: 'w2', word: 'knackered', phonetic: "/'nækəd/", pos: 'adj.', mean: 'Extremely tired; exhausted. (British Informal)', trans: '极度疲倦的，筋疲力尽的', added: 'Oct 12', example: '"I am absolutely knackered after that long trip."', exampleTrans: '那趟长途旅行后我真是累坏了。' },
+  { id: 'w3', word: 'try on', phonetic: "/traɪ ɒn/", pos: 'phrasal verb', mean: 'Put on a piece of clothing to see if it fits.', trans: '试穿', added: 'Just now', example: '"Can I try this on before buying it?"', exampleTrans: '买之前我可以试穿一下这个吗？' },
+  { id: 'w4', word: 'freshen up', phonetic: "/ˈfreʃ.ən ʌp/", pos: 'phrasal verb', mean: 'To wash and make yourself look clean and tidy.', trans: '梳洗打扮', added: '1 week ago', example: '"We wanted to freshen up a bit before going out."', exampleTrans: '出门前我们想稍加梳洗打扮一下。' },
+];
+
+export const MOCK_FAVORITE_SENTENCES = [
+  { id: 's1', en: 'They go on your finger.', zh: '它们戴在你的手指上。', videoTitle: '商场购物与试衣', time: '00:02' },
+  { id: 's2', en: 'We wanted to freshen up a bit.', zh: '我们想要稍微梳洗打扮一下。', videoTitle: '购物分享与周末晚餐', time: '00:00' },
+];

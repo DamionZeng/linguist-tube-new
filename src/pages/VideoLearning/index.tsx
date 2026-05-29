@@ -1,0 +1,188 @@
+import React, { useEffect, useState } from 'react';
+import { Header } from '../../components/Header';
+import { VideoPlayer } from './components/VideoPlayer';
+import { TranscriptList } from './components/TranscriptList';
+import { ActionBar } from './components/ActionBar';
+import { Transcript, VideoInfo } from '../../types';
+import { fetchTranscripts, fetchVideoInfo, toggleFavoriteTranscript } from '../../api';
+import { useVideoPlayer } from './hooks/useVideoPlayer';
+import { WordModal } from '../../components/WordModal';
+import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns } from '../../utils/storage';
+import { CalendarCheck, Heart, SlidersHorizontal } from 'lucide-react';
+
+export type LangMode = 'bilingual' | 'en' | 'zh';
+
+export const VideoLearningPage: React.FC = () => {
+  const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [langMode, setLangMode] = useState<LangMode>('bilingual');
+  const [showHighlights, setShowHighlights] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+
+  const cycleLangMode = () => {
+    setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : 'bilingual');
+  };
+
+  const toggleHighlights = () => {
+    setShowHighlights(prev => !prev);
+  }
+
+  const videoContext = useVideoPlayer();
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const checkIns = getCheckIns();
+    if (checkIns.includes(today)) {
+      setIsCheckedIn(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [transcriptsData, videoData] = await Promise.all([
+          fetchTranscripts(),
+          fetchVideoInfo()
+        ]);
+        setTranscripts(transcriptsData);
+        setVideoInfo(videoData);
+        if (videoData) {
+          setIsFavorite(isVideoFavorite(videoData.id));
+        }
+      } catch (err) {
+        setError('Failed to load learning materials.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleToggleFavorite = async (id: string) => {
+    setTranscripts(prev => prev.map(t => 
+      t.id === id ? { ...t, isFavorite: !t.isFavorite } : t
+    ));
+    try {
+      await toggleFavoriteTranscript(id);
+    } catch {
+      setTranscripts(prev => prev.map(t => 
+        t.id === id ? { ...t, isFavorite: !t.isFavorite } : t
+      ));
+    }
+  };
+
+  const handleCheckIn = () => {
+    addCheckIn();
+    setIsCheckedIn(true);
+  };
+
+  const handleToggleVideoFavorite = () => {
+    if (videoInfo) {
+      toggleFavoriteVideoStorage(videoInfo);
+      setIsFavorite(isVideoFavorite(videoInfo.id));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-50/50">
+           <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error || !videoInfo) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gray-50">
+         <div className="bg-red-50 text-red-600 px-6 py-4 rounded-xl border border-red-100 shadow-sm font-medium">
+            {error || 'An unexpected error occurred'}
+         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans">
+      <Header 
+        title={videoInfo.title} 
+        rightNode={
+          <>
+            <button 
+              onClick={handleCheckIn} 
+              className={`p-1.5 rounded-full transition-colors cursor-pointer ${isCheckedIn ? 'text-[#94A684] bg-[#F4F6F1]' : 'hover:bg-[#EAEAE0] hover:text-[#5A5A40]'}`}
+            >
+              <CalendarCheck className="w-[22px] h-[22px]" />
+            </button>
+            <button 
+              onClick={handleToggleVideoFavorite} 
+              className={`p-1.5 rounded-full transition-colors cursor-pointer ${isFavorite ? 'text-[#D48166] bg-[#FCF5F3]' : 'hover:bg-[#EAEAE0] hover:text-[#5A5A40]'}`}
+            >
+              <Heart className={`w-[22px] h-[22px] ${isFavorite ? 'fill-current' : ''}`} />
+            </button>
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+            >
+              <SlidersHorizontal className="w-[22px] h-[22px]" />
+            </button>
+          </>
+        }
+      />
+      
+      <main className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden relative">
+         
+         <div className="flex-none lg:w-[50%] xl:w-[60%] lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10 transition-all">
+            {/* Video Area */}
+            <div className="w-full z-20">
+              <VideoPlayer videoInfo={videoInfo} {...videoContext} />
+            </div>
+
+            {/* Desktop Action Bar */}
+            <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] shadow-sm bg-white shrink-0">
+              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} />
+            </div>
+         </div>
+
+         {/* Transcript Column - Scrollable */}
+         <div className="flex-1 lg:h-full lg:overflow-hidden relative lg:bg-white lg:rounded-[32px] lg:m-6 lg:ml-0 lg:shadow-sm lg:border border-[#E0E0D5]">
+           <div className="h-full absolute inset-0">
+             <TranscriptList 
+               transcripts={transcripts} 
+               currentTime={videoContext.currentTime}
+               onSeek={videoContext.seek}
+               onToggleFavorite={handleToggleFavorite}
+               onWordClick={(w) => setSelectedWord(w)}
+               langMode={langMode}
+               showHighlights={showHighlights}
+             />
+           </div>
+         </div>
+      </main>
+
+      {/* Mobile Action Bar Fixed Bottom */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white">
+         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} />
+      </div>
+
+      <WordModal 
+        isOpen={!!selectedWord} 
+        onClose={() => setSelectedWord(null)} 
+        word={selectedWord || ''} 
+      />
+
+      <PlaybackSettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+    </div>
+  );
+};
+
