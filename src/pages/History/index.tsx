@@ -4,9 +4,11 @@ import { fetchHistoryData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useTranslation } from 'react-i18next';
 
 export const HistoryPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export const HistoryPage: React.FC = () => {
   }, [user]);
 
   if (!user) {
-    return <LoginPrompt message="Please login to view your watch history." />;
+    return <LoginPrompt message={t('messages.loginHistory')} />;
   }
 
   if (loading) {
@@ -49,7 +51,7 @@ export const HistoryPage: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-20">
-      <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2 px-2">Recent Learning</h2>
+      <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2 px-2">{t('history.title')}</h2>
       
       <div className="space-y-4">
          {history.map(v => (
@@ -70,8 +72,8 @@ export const HistoryPage: React.FC = () => {
                      <span className="text-[10px] uppercase tracking-widest font-bold bg-[#F5F5F0] text-[#6A6A5A] px-2 py-0.5 rounded-md border border-[#E0E0D5]">{v.tag}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-[#8A8A7A] font-bold mt-2">
-                     <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Watched {v.lastWatched}</span>
-                     <span className="text-[#94A684]">{v.progress}% Complete</span>
+                     <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {t('history.watched')} {v.lastWatched}</span>
+                     <span className="text-[#94A684]">{v.progress}% {t('history.complete')}</span>
                   </div>
                </div>
             </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, X, Plus, Star } from 'lucide-react';
 import { Highlight } from '../types';
 import { addVocabularyWord, fetchWordDetails, addFavoriteSentence } from '../api/general';
+import { useTranslation } from 'react-i18next';
 
 interface WordModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface WordModalProps {
 }
 
 export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) => {
+  const { t } = useTranslation();
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -99,11 +101,10 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) =
                <p className="text-[#8A8A7A] font-mono text-[15px] tracking-wide mb-3">{details.phonetic}</p>
                
                <h3 className="text-[17px] font-bold text-[#4A4A40] mb-4">{details.trans}</h3>
-               
-               <div className="mb-4">
+                              <div className="mb-4">
                   <div className="flex items-center gap-1.5 mb-2 text-[#6A6A5A] font-bold text-xs">
                      <div className="w-3 h-3 bg-[#D48166] rounded-sm transform rotate-45 flex items-center justify-center opacity-80" />
-                     <span>字幕例句 (Example from Subtitle)</span>
+                     <span>{t('video.subtitleExample')}</span>
                   </div>
                   <div className="bg-[#F9F9F7] border border-[#E0E0D5] p-3.5 rounded-xl">
                      <p className="text-[15px] font-medium text-[#4A4A40] mb-1.5 leading-relaxed">{details.example}</p>
@@ -118,7 +119,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) =
                      className={`flex-1 py-2.5 rounded-xl border-2 font-bold text-[15px] transition-colors overflow-hidden flex flex-col items-center justify-center gap-1 leading-none ${isFavorited ? 'border-[#E1B12C] text-[#E1B12C] bg-[#E1B12C]/10' : 'border-[#E0E0D5] text-[#5A5A40] hover:bg-[#F5F5F0]'} ${isFavoriting ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
                   >
                      <span className="flex items-center gap-1.5">
-                        {isFavoriting ? '处理中...' : isFavorited ? <><Star className="w-4 h-4 fill-current" /> 已收藏</> : <><Star className="w-4 h-4" /> 收藏</>}
+                        {isFavoriting ? t('video.processing') : isFavorited ? <><Star className="w-4 h-4 fill-current" /> {t('video.favorited')}</> : <><Star className="w-4 h-4" /> {t('video.favorite')}</>}
                      </span>
                   </button>
                   <button 
@@ -126,7 +127,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) =
                      disabled={isSaving}
                      className={`flex-1 py-2.5 rounded-xl font-bold text-[15px] transition-colors flex items-center justify-center gap-1.5 ${isSaved ? 'bg-[#F5F5F0] border border-[#E0E0D5] text-[#4A4A40]' : 'bg-[#2B6DF8] hover:bg-blue-600 text-white shadow-md shadow-blue-500/20'} ${isSaving ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
                   >
-                     {isSaving ? '处理中...' : isSaved ? '已加入' : '生词本'}
+                     {isSaving ? t('video.processing') : isSaved ? t('video.saved') : t('video.saveToVocab')}
                   </button>
                </div>
              </>

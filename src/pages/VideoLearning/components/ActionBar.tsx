@@ -1,6 +1,7 @@
 import React from 'react';
 import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, SkipBack, Play, Pause, SkipForward, EyeOff } from 'lucide-react';
 import { LangMode } from '../index';
+import { useTranslation } from 'react-i18next';
 
 interface ActionBarProps {
   isPlaying: boolean;
@@ -24,6 +25,7 @@ interface ActionBarProps {
 export const ActionBar: React.FC<ActionBarProps> = ({ 
   isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights
 }) => {
+  const { t, i18n } = useTranslation();
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -35,9 +37,9 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   
   const getLangLabel = () => {
     switch(langMode) {
-      case 'bilingual': return '双语';
-      case 'en': return '英语';
-      case 'zh': return '中文';
+      case 'bilingual': return i18n.language.startsWith('zh') ? '双语' : 'Bilingual';
+      case 'en': return i18n.language.startsWith('zh') ? '英语' : 'English';
+      case 'zh': return i18n.language.startsWith('zh') ? '中文' : 'Chinese';
     }
   };
 
@@ -48,27 +50,27 @@ export const ActionBar: React.FC<ActionBarProps> = ({
          <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
          <ToolButton 
             icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
-            label="倍速" 
+            label={i18n.language.startsWith('zh') ? "倍速" : "Speed"} 
             onClick={cyclePlaybackRate} 
          />
          <ToolButton 
             icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
-            label="复读" 
+            label={i18n.language.startsWith('zh') ? "复读" : "Repeat"} 
             onClick={repeatTranscript}
          />
          <ToolButton 
             icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
-            label="循环" 
+            label={i18n.language.startsWith('zh') ? "循环" : "Loop"} 
             onClick={() => setIsLooping(!isLooping)} 
             active={isLooping} 
          />
          <ToolButton 
             icon={<BookOpen className={`w-[22px] h-[22px] ${showHighlights ? 'text-[#D48166]' : ''}`} />} 
-            label="查词" 
+            label={i18n.language.startsWith('zh') ? "查词" : "Vocab"} 
             onClick={toggleHighlights}
             active={showHighlights}
          />
-         <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label="练习" />
+         <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} />
        </div>
 
        {/* Sub Progress bar */}

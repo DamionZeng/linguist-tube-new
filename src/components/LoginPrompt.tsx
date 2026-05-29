@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Lock } from 'lucide-react';
 import { loginApi } from '../api/auth';
+import { useTranslation } from 'react-i18next';
 
-export const LoginPrompt: React.FC<{ message?: string }> = ({ message = "Please login to access this page" }) => {
+export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -32,32 +34,32 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message = "Please 
         <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#5A5A40]">
           <Lock className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">Authentication</h2>
-        <p className="text-[#848464] mb-8 text-sm md:text-base">{message}</p>
+        <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('auth.authentication')}</h2>
+        <p className="text-[#848464] mb-8 text-sm md:text-base">{message || t('messages.loginHistory')}</p>
         
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-6 text-left border border-red-100">{error}</div>}
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-6 text-left border border-red-100">{t('auth.loginFailed')}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
           <div>
-            <label className="block text-sm font-bold text-[#5A5A40] mb-1">Username</label>
+            <label className="block text-sm font-bold text-[#5A5A40] mb-1">{t('auth.username')}</label>
             <input 
               type="text" 
               required
               className="w-full border border-[#E0E0D5] bg-[#F5F5F0] rounded-xl px-4 py-3 outline-none focus:border-[#D48166] transition-colors"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="Enter username"
+              placeholder={t('auth.enterUsername')}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-[#5A5A40] mb-1">Password</label>
+            <label className="block text-sm font-bold text-[#5A5A40] mb-1">{t('auth.password')}</label>
             <input 
               type="password"
               required
               className="w-full border border-[#E0E0D5] bg-[#F5F5F0] rounded-xl px-4 py-3 outline-none focus:border-[#D48166] transition-colors"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder={t('auth.enterPassword')}
             />
           </div>
           <button 
@@ -65,7 +67,7 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message = "Please 
             disabled={loading}
             className="w-full bg-[#D48166] text-white font-bold rounded-xl py-3 mt-2 hover:bg-[#C27055] transition-colors disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? t('auth.loggingIn') : t('auth.login')}
           </button>
         </form>
       </div>

@@ -13,6 +13,7 @@ import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, g
 import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useTranslation } from 'react-i18next';
 
 export type LangMode = 'bilingual' | 'en' | 'zh';
 
@@ -20,6 +21,7 @@ export const VideoLearningPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -124,16 +126,16 @@ export const VideoLearningPage: React.FC = () => {
                <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
                   <Lock className="w-8 h-8" />
                </div>
-               <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">VIP Content</h2>
-               <p className="text-[#848464] mb-8">This video is exclusively available for VIP members. Please login with a VIP account to continue learning.</p>
+               <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('video.vipContent')}</h2>
+               <p className="text-[#848464] mb-8">{t('video.vipDesc')}</p>
                
                {!user ? (
                  <button onClick={() => navigate('/library')} className="bg-[#D48166] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#C27055] transition-colors">
-                   Login Now
+                   {t('video.loginNow')}
                  </button>
                ) : (
                  <button onClick={() => navigate(-1)} className="bg-[#EAEAE0] text-[#5A5A40] px-8 py-3 rounded-xl font-bold hover:bg-[#E0E0D5] transition-colors">
-                   Go Back
+                   {t('video.goBack')}
                  </button>
                )}
             </div>

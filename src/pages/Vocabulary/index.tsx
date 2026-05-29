@@ -4,9 +4,11 @@ import { fetchVocabularyData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useTranslation } from 'react-i18next';
 
 export const VocabularyPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [vocab, setVocab] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,17 +47,17 @@ export const VocabularyPage: React.FC = () => {
   };
 
   if (!user) {
-    return <LoginPrompt message="Please login to access the Vocabulary Book." />;
+    return <LoginPrompt message={t('messages.loginVocab')} />;
   }
 
   if (user.role !== 'vip') {
     return (
       <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative pt-20 px-4 items-center flex-1">
          <div className="bg-white p-8 rounded-[24px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
-            <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">Members Only</h2>
-            <p className="text-[#848464] mb-6">Vocabulary Book is exclusively available for VIP members.</p>
+            <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('messages.membersOnly')}</h2>
+            <p className="text-[#848464] mb-6">{t('messages.vipVocab')}</p>
             <button className="bg-[#E1B12C] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#C29828] transition-colors" onClick={() => navigate(-1)}>
-               Go Back
+               {t('video.goBack')}
             </button>
          </div>
       </div>
@@ -86,7 +88,7 @@ export const VocabularyPage: React.FC = () => {
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-white/50 transition-colors">
                <ChevronLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-xl font-serif font-bold text-[#5A5A40]">Vocabulary Book</h1>
+            <h1 className="text-xl font-serif font-bold text-[#5A5A40]">{t('vocab.title')}</h1>
          </div>
          <div className="flex gap-2">
             <button 
@@ -102,14 +104,14 @@ export const VocabularyPage: React.FC = () => {
       {isEditing && (
          <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-[#E0E0D5] text-sm animate-in slide-in-from-top-2">
             <button onClick={handleSelectAll} className="flex items-center gap-1.5 text-[#6A6A5A] hover:text-[#4A4A40]">
-               <CheckSquare className="w-4 h-4" /> {selectedWords.size === vocab.length ? 'Deselect All' : 'Select All'}
+               <CheckSquare className="w-4 h-4" /> {selectedWords.size === vocab.length ? t('vocab.unselectAll') : t('vocab.selectAll')}
             </button>
             <div className="flex gap-4">
                <button className="flex items-center gap-1.5 text-[#94A684] disabled:opacity-50" disabled={selectedWords.size === 0}>
                    <Edit2 className="w-4 h-4" /> Move
                </button>
                <button className="flex items-center gap-1.5 text-[#D48166] disabled:opacity-50" disabled={selectedWords.size === 0}>
-                   <Trash2 className="w-4 h-4" /> Delete
+                   <Trash2 className="w-4 h-4" /> {t('vocab.deleteSelected')}
                </button>
             </div>
          </div>

@@ -5,9 +5,11 @@ import { getFavoriteVideos } from '../../utils/storage';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useTranslation } from 'react-i18next';
 
 export const FavoritesPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [data, setData] = useState<{videos: any[], sentences: any[]}>({ videos: [], sentences: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export const FavoritesPage: React.FC = () => {
   }, [user]);
 
   if (!user) {
-    return <LoginPrompt message="Please login to view your favorites." />;
+    return <LoginPrompt message={t('messages.loginFavorites')} />;
   }
 
   if (loading) {
@@ -80,7 +82,7 @@ export const FavoritesPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full">
       <div className="pt-6 px-6 pb-2 shrink-0">
-          <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-5">My Favorites</h2>
+          <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-5">{t('favorites.title')}</h2>
           
           <div className="flex bg-[#EAEAE0] p-1 rounded-2xl mb-2">
              <button 
@@ -91,14 +93,14 @@ export const FavoritesPage: React.FC = () => {
                    <PlayCircle className={`w-[18px] h-[18px] ${activeTab === 'videos' ? 'text-[#D48166]' : ''}`} />
                    {activeTab === 'videos' && <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-[#D48166] rounded-full border-2 border-white -mt-0.5 -mr-0.5" />}
                 </div>
-                Videos ({data.videos.length})
+                {t('favorites.videos')} ({data.videos.length})
              </button>
              <button 
                onClick={() => setActiveTab('sentences')}
                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'sentences' ? 'bg-white text-[#4A4A40] shadow-sm' : 'text-[#8A8A7A] hover:bg-white/50'}`}
              >
                 <Quote className={`w-[18px] h-[18px] ${activeTab === 'sentences' ? 'text-[#94A684]' : ''}`} />
-                Sentences ({data.sentences.length})
+                {t('favorites.sentences')} ({data.sentences.length})
              </button>
           </div>
       </div>

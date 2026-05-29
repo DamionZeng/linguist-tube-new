@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchExploreData } from "../../api/general";
+import { useTranslation } from "react-i18next";
 
 export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [data, setData] = useState<{ categories: string[]; videos: any[]; carousel: any[] }>({
     categories: [],
     videos: [],
@@ -94,8 +96,7 @@ export const ExplorePage: React.FC = () => {
                 }}
                 className="bg-[#D48166] hover:bg-[#C27055] text-white px-5 md:px-6 py-2 md:py-2.5 rounded-full font-bold transition-all shadow-md flex items-center gap-2 w-max text-sm"
               >
-                <Play className="w-[18px] h-[18px] fill-current" /> Start
-                Learning
+                <Play className="w-[18px] h-[18px] fill-current" /> {t('explore.startLearning')}
               </button>
             </div>
           </div>
@@ -131,13 +132,13 @@ export const ExplorePage: React.FC = () => {
       <section>
         <div className="flex items-center justify-between mb-4 md:mb-5 gap-2">
           <h2 className="text-xl md:text-2xl font-serif font-bold text-[#5A5A40] truncate">
-            Recommended for You
+            {t('explore.recommended')}
           </h2>
           <button 
              onClick={() => navigate('/youtube-news')}
              className="text-xs sm:text-sm font-bold text-[#D48166] hover:text-[#C27055] transition-colors flex items-center gap-1 bg-[#D48166]/10 px-2 sm:px-3 py-1.5 rounded-lg shrink-0 whitespace-nowrap"
           >
-            <Play className="w-3 h-3 sm:w-4 sm:h-4" /> YouTube News
+            <Play className="w-3 h-3 sm:w-4 sm:h-4" /> {t('explore.youtubeNews')}
           </button>
         </div>
 

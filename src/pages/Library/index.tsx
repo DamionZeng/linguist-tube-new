@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Star, Clock, Trophy, ArrowRight, LogOut, ShieldCheck } from 'lucide-react';
+import { BookOpen, Star, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe } from 'lucide-react';
 import { fetchLibraryData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useTranslation } from 'react-i18next';
 
 export const LibraryPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,11 +68,11 @@ export const LibraryPage: React.FC = () => {
             </h2>
             {user.role === 'vip' ? (
               <span className="bg-[#E1B12C]/10 border border-[#E1B12C]/30 text-[#C29828] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                <ShieldCheck className="w-3.5 h-3.5" /> VIP Member
+                <ShieldCheck className="w-3.5 h-3.5" /> {t('library.vip')}
               </span>
             ) : (
               <span className="bg-[#94A684]/10 border border-[#94A684]/30 text-[#71855F] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center shadow-sm">
-                Standard
+                {t('library.standard')}
               </span>
             )}
           </div>
@@ -79,21 +81,36 @@ export const LibraryPage: React.FC = () => {
       
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<Trophy className="w-6 h-6 text-[#D48166]" />} label="Day Streak" value={data.stats.streak} />
-        <StatCard icon={<BookOpen className="w-6 h-6 text-[#94A684]" />} label="Words Learned" value={data.stats.words} />
-        <StatCard icon={<Star className="w-6 h-6 text-[#E1B12C]" />} label="Saved Sentences" value={data.stats.sentences} />
-        <StatCard icon={<Clock className="w-6 h-6 text-[#5A5A40]" />} label="Hours Watched" value={data.stats.hours} />
+        <StatCard icon={<Trophy className="w-6 h-6 text-[#D48166]" />} label={t('library.perfectDays')} value={data.stats.streak} />
+        <StatCard icon={<BookOpen className="w-6 h-6 text-[#94A684]" />} label={t('library.vocabBuilt')} value={data.stats.words} />
+        <StatCard icon={<Star className="w-6 h-6 text-[#E1B12C]" />} label={t('library.totalStudy')} value={data.stats.sentences} />
+        <StatCard icon={<Clock className="w-6 h-6 text-[#5A5A40]" />} label={t('library.videosWatched')} value={data.stats.hours} />
       </div>
 
       <GithubHeatmap />
       
       {/* Settings / Sign Out Actions */}
-      <div className="pt-8 flex justify-center md:justify-start">
+      <div className="pt-8 flex flex-col md:flex-row items-center gap-4">
+        <div className="bg-white p-2 rounded-xl flex border border-[#E0E0D5] shadow-sm">
+           <button 
+             onClick={() => i18n.changeLanguage('en')}
+             className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('en') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+           >
+             <Globe className="w-4 h-4" /> {t('library.english')}
+           </button>
+           <button 
+             onClick={() => i18n.changeLanguage('zh')}
+             className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('zh') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+           >
+             <Globe className="w-4 h-4" /> {t('library.chinese')}
+           </button>
+        </div>
+
         <button 
           onClick={logout}
           className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-[#E0E0D5] text-[#8A8A7A] hover:bg-[#F9F9F7] hover:text-[#D48166] hover:border-[#D48166]/30 text-sm font-bold rounded-xl transition-all shadow-sm w-full md:w-auto"
         >
-          <LogOut className="w-4 h-4" /> Sign Out
+          <LogOut className="w-4 h-4" /> {t('library.signOut')}
         </button>
       </div>
     </div>

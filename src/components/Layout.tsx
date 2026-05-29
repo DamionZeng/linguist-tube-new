@@ -2,10 +2,12 @@ import React from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { Compass, BookText, Search, History, Star, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export const Layout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#F5F5F0] font-sans text-[#4A4A40] overflow-hidden max-w-[1920px] mx-auto">
@@ -22,7 +24,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] text-white shadow-md" : "text-[#6A6A5A] hover:bg-[#EAEAE0]"}`
               }
             >
-              首页
+              {t('nav.explore')}
             </NavLink>
             <NavLink
               to="/history"
@@ -30,7 +32,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] text-white shadow-md" : "text-[#6A6A5A] hover:bg-[#EAEAE0]"}`
               }
             >
-              最近学习
+              {t('nav.history')}
             </NavLink>
             <NavLink
               to="/favorites"
@@ -38,7 +40,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] text-white shadow-md" : "text-[#6A6A5A] hover:bg-[#EAEAE0]"}`
               }
             >
-              我的收藏
+              {t('nav.favorites')}
             </NavLink>
             <NavLink
               to="/vocab"
@@ -46,7 +48,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] text-white shadow-md" : "text-[#6A6A5A] hover:bg-[#EAEAE0]"}`
               }
             >
-              单词本
+              {t('nav.vocab')}
             </NavLink>
             <NavLink
               to="/library"
@@ -54,14 +56,14 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] text-white shadow-md" : "text-[#6A6A5A] hover:bg-[#EAEAE0]"}`
               }
             >
-              我的
+              {t('nav.library')}
             </NavLink>
           </div>
         </div>
         <div className="flex items-center gap-5">
           <div className="bg-[#EAEAE0] px-4 py-2 rounded-full flex items-center gap-3 border border-transparent focus-within:border-[#D48166] transition-colors cursor-text hover:bg-[#E0E0D5]">
             <span className="text-sm text-[#8A8A7A] font-medium select-none">
-              Search lessons...
+              {t('nav.search')}
             </span>
             <Search className="w-4 h-4 text-[#4A4A40]" />
           </div>
@@ -91,7 +93,7 @@ export const Layout: React.FC = () => {
           }
         >
           <Compass className="w-[20px] h-[20px]" />
-          <span className="text-[10px] font-bold tracking-wide">首页</span>
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.explore')}</span>
         </NavLink>
         <NavLink
           to="/history"
@@ -100,7 +102,7 @@ export const Layout: React.FC = () => {
           }
         >
           <History className="w-[20px] h-[20px]" />
-          <span className="text-[10px] font-bold tracking-wide">最近学习</span>
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.history')}</span>
         </NavLink>
         <NavLink
           to="/favorites"
@@ -109,7 +111,7 @@ export const Layout: React.FC = () => {
           }
         >
           <Star className="w-[20px] h-[20px]" />
-          <span className="text-[10px] font-bold tracking-wide">我的收藏</span>
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.favorites')}</span>
         </NavLink>
         <NavLink
           to="/vocab"
@@ -118,7 +120,7 @@ export const Layout: React.FC = () => {
           }
         >
           <BookText className="w-[20px] h-[20px]" />
-          <span className="text-[10px] font-bold tracking-wide">单词本</span>
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.vocab')}</span>
         </NavLink>
         <NavLink
           to="/library"
@@ -140,7 +142,7 @@ export const Layout: React.FC = () => {
             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
-          <span className="text-[10px] font-bold tracking-wide">我的</span>
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.library')}</span>
         </NavLink>
       </nav>
     </div>
