@@ -1,29 +1,38 @@
 import React from 'react';
 import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX } from 'lucide-react';
 import { VideoInfo } from '../../../types';
+import ReactPlayer from 'react-player';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
-  videoRef?: React.RefObject<HTMLVideoElement>;
+  playerRef?: any;
   isPlaying?: boolean;
+  setIsPlaying?: (v: boolean) => void;
   currentTime?: number;
+  setCurrentTime?: (t: number) => void;
   duration?: number;
+  setDuration?: (d: number) => void;
   togglePlay?: () => void;
   step?: (amount: number) => void;
   toggleMute?: () => void;
   isMuted?: boolean;
+  playbackRate?: number;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
   videoInfo, 
-  videoRef, 
+  playerRef,
   isPlaying, 
+  setIsPlaying,
   currentTime = 0, 
+  setCurrentTime,
   duration = 0, 
+  setDuration,
   togglePlay, 
   step,
   toggleMute,
-  isMuted 
+  isMuted,
+  playbackRate = 1
 }) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -32,73 +41,71 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const isYoutube = videoInfo.videoUrl.includes('youtube.com') || videoInfo.videoUrl.includes('youtu.be');
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!videoRef?.current || !duration) return;
+    if (!duration || !playerRef?.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = pos * duration;
+    const newTime = pos * duration;
+    
+    playerRef.current.seekTo(newTime, 'seconds');
   };
 
   return (
     <div className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl group shrink-0">
-      <video
-        ref={videoRef}
-        src={videoInfo.videoUrl}
-        poster={videoInfo.thumbnail}
-        className="w-full h-full object-cover"
-        playsInline
-        onClick={togglePlay}
-      />
+      <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
+         <ReactPlayer
+           ref={playerRef}
+           url={videoInfo.videoUrl}
+           width="100%"
+           height="100%"
+           playing={isPlaying}
+           muted={isMuted}
+           playbackRate={playbackRate}
+           onProgress={(state: any) => {
+             if (setCurrentTime && !isNaN(state.playedSeconds)) {
+               setCurrentTime(state.playedSeconds);
+             }
+           }}
+           onDuration={(d: number) => {
+             if (setDuration && !isNaN(d)) {
+               setDuration(d);
+             }
+           }}
+           onReady={(player: any) => {
+             if (setDuration && player && typeof player.getDuration === 'function') {
+               const d = player.getDuration();
+               if (d && !isNaN(d)) {
+                 setDuration(d);
+               }
+             }
+           }}
+           onError={(e) => console.error("ReactPlayer Error:", e)}
+           onPlay={() => setIsPlaying?.(true)}
+           onPause={() => setIsPlaying?.(false)}
+           playsinline={true}
+           controls={false}  // Hide native controls to use our custom ActionBar
+           config={{
+             youtube: {
+               playerVars: { 
+                 disablekb: 1,
+                 modestbranding: 1,
+                 rel: 0,
+                 controls: 0, // hide native youtube controls
+                 iv_load_policy: 3
+               }
+             }
+           }}
+         />
+      </div>
+
       {/* Top right gradient and Index */}
-      <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-      <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none">
+      <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
+      <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
         {videoInfo.index} <span className="opacity-70 mx-0.5">/</span> {videoInfo.total}
       </div>
 
-      {/* Bottom Controls Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-16 pb-3 px-4 flex flex-col gap-3 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        {/* Progress Bar */}
-        <div 
-           className="w-full h-1.5 bg-white/20 relative cursor-pointer group/progress"
-           onClick={handleProgressClick}
-        >
-          <div className="absolute top-0 left-0 h-full bg-[#D48166] transition-all" style={{ width: `${progress}%` }} />
-          <div 
-             className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-black/50 opacity-100 lg:opacity-0 group-hover/progress:opacity-100 transition-opacity" 
-             style={{ left: `calc(${progress}% - 7px)` }} 
-          />
-        </div>
-        
-        {/* Control Buttons */}
-        <div className="flex flex-row items-center justify-between text-white pb-1">
-          <div className="flex items-center gap-5">
-             <button onClick={(e) => { e.stopPropagation(); step?.(-10); }} className="hover:text-[#D48166] transition-colors drop-shadow-md">
-               <Rewind className="w-5 h-5 fill-current" />
-             </button>
-             <button onClick={(e) => { e.stopPropagation(); togglePlay?.(); }} className="hover:text-[#D48166] transition-colors drop-shadow-md">
-               {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
-             </button>
-             <button onClick={(e) => { e.stopPropagation(); step?.(10); }} className="hover:text-[#D48166] transition-colors drop-shadow-md">
-               <FastForward className="w-5 h-5 fill-current" />
-             </button>
-             <div className="hidden sm:block text-xs font-mono font-medium ml-3 tracking-wider drop-shadow-md">
-               <span>{formatTime(currentTime)}</span>
-               <span className="text-white/50 mx-1.5">/</span>
-               <span className="text-white/80">{formatTime(duration || 0)}</span>
-             </div>
-          </div>
-
-          <div className="flex items-center gap-5">
-             <button onClick={(e) => { e.stopPropagation(); toggleMute?.(); }} className="hover:text-[#D48166] transition-colors drop-shadow-md">
-               {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-             </button>
-             <button className="hover:text-[#D48166] transition-colors drop-shadow-md">
-               <Maximize className="w-5 h-5" />
-             </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

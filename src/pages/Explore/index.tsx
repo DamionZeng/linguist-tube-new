@@ -65,7 +65,7 @@ export const ExplorePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center">
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
         <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
       </div>
     );
@@ -146,6 +146,12 @@ export const ExplorePage: React.FC = () => {
           <h2 className="text-xl md:text-2xl font-serif font-bold text-[#5A5A40]">
             Recommended for You
           </h2>
+          <button 
+             onClick={() => navigate('/youtube-news')}
+             className="text-sm font-bold text-[#D48166] hover:text-[#C27055] transition-colors flex items-center gap-1 bg-[#D48166]/10 px-3 py-1.5 rounded-lg"
+          >
+            <Play className="w-4 h-4" /> YouTube News
+          </button>
         </div>
 
         {/* Categories */}

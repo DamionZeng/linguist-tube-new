@@ -17,7 +17,11 @@ export const LibraryPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#94A684] animate-spin" /></div>;
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+      </div>
+    );
   }
 
   return (

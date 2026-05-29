@@ -11,6 +11,7 @@ import { VideoLearningPage } from './pages/VideoLearning';
 import { VocabularyPage } from './pages/Vocabulary';
 import { HistoryPage } from './pages/History';
 import { FavoritesPage } from './pages/Favorites';
+import { YoutubeNewsPage } from './pages/YoutubeNews';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/explore" replace />} />
           <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/youtube-news" element={<YoutubeNewsPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/vocab" element={<VocabularyPage />} />
           <Route path="/history" element={<HistoryPage />} />

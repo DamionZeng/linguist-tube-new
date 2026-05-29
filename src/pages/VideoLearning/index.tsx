@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { VideoPlayer } from './components/VideoPlayer';
 import { TranscriptList } from './components/TranscriptList';
@@ -14,6 +15,7 @@ import { CalendarCheck, Heart, SlidersHorizontal } from 'lucide-react';
 export type LangMode = 'bilingual' | 'en' | 'zh';
 
 export const VideoLearningPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export const VideoLearningPage: React.FC = () => {
     setShowHighlights(prev => !prev);
   }
 
-  const videoContext = useVideoPlayer();
+  const videoContext = useVideoPlayer(transcripts);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -48,8 +50,8 @@ export const VideoLearningPage: React.FC = () => {
       try {
         setLoading(true);
         const [transcriptsData, videoData] = await Promise.all([
-          fetchTranscripts(),
-          fetchVideoInfo()
+          fetchTranscripts(id),
+          fetchVideoInfo(id)
         ]);
         setTranscripts(transcriptsData);
         setVideoInfo(videoData);
@@ -93,8 +95,8 @@ export const VideoLearningPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-50/50">
-           <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+        <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
       </div>
     );
   }

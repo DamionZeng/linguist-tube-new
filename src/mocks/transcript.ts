@@ -2,10 +2,10 @@ import { Transcript, VideoInfo } from '../types';
 
 export const mockVideoInfo: VideoInfo = {
   id: 'v1',
-  title: 'Tears of Steel (Sample Video)',
-  thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg',
-  videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-  duration: '12:14',
+  title: 'YouTube Video Example',
+  thumbnail: 'https://images.unsplash.com/photo-1605100804763-247f67b854d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+  videoUrl: 'https://www.youtube.com/watch?v=4E9YkJKiRTc',
+  duration: '00:10',
   index: 1,
   total: 5
 };

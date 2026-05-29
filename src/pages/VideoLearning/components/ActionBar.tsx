@@ -6,6 +6,8 @@ interface ActionBarProps {
   isPlaying: boolean;
   togglePlay: () => void;
   step: (amount: number) => void;
+  stepTranscript: (direction: 1 | -1) => void;
+  repeatTranscript: () => void;
   seek: (t: number) => void;
   currentTime: number;
   duration: number;
@@ -20,7 +22,7 @@ interface ActionBarProps {
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  isPlaying, togglePlay, step, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights
+  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights
 }) => {
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -49,7 +51,11 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             label="倍速" 
             onClick={cyclePlaybackRate} 
          />
-         <ToolButton icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} label="复读" />
+         <ToolButton 
+            icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
+            label="复读" 
+            onClick={repeatTranscript}
+         />
          <ToolButton 
             icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
             label="循环" 
@@ -66,14 +72,20 @@ export const ActionBar: React.FC<ActionBarProps> = ({
        </div>
 
        {/* Sub Progress bar */}
-       <div className="w-full pt-1 px-5 relative h-2 group cursor-pointer -mt-[2px] z-10" onClick={handleProgressClick}>
-          <div className="w-full h-1 bg-[#EAEAE0] rounded-full">
-             <div className="h-1 bg-[#D48166] rounded-full transition-all" style={{ width: `${progressPercentage}%` }} />
-          </div>
-          <div 
-             className="absolute top-[2px] w-3 h-3 bg-[#D48166] rounded-full shadow-[0_0_10px_rgba(212,129,102,0.5)] border-2 border-white transform transition-all group-hover:scale-125" 
-             style={{ left: `calc(${progressPercentage}% + 12px)` }} 
-          />
+       <div className="w-full pt-1 px-5 flex flex-col gap-1 -mt-[2px] z-10">
+         <div className="flex items-center justify-between text-[#8A8A7A] text-[10px] font-mono font-medium px-1">
+            <span>{Math.floor(currentTime / 60).toString().padStart(2, '0')}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}</span>
+            <span>{duration ? `${Math.floor(duration / 60).toString().padStart(2, '0')}:${Math.floor(duration % 60).toString().padStart(2, '0')}` : '00:00'}</span>
+         </div>
+         <div className="relative h-2 w-full group cursor-pointer" onClick={handleProgressClick}>
+            <div className="w-full h-1 bg-[#EAEAE0] rounded-full absolute top-[1px]">
+               <div className="h-1 bg-[#D48166] rounded-full transition-all" style={{ width: `${progressPercentage}%` }} />
+            </div>
+            <div 
+               className="absolute top-[-3px] w-3 h-3 bg-[#D48166] rounded-full shadow-[0_0_10px_rgba(212,129,102,0.5)] border-2 border-white transform transition-all group-hover:scale-125" 
+               style={{ left: `calc(${progressPercentage}% - 6px)` }} 
+            />
+         </div>
        </div>
 
        {/* Bottom Row: Play Controls */}
@@ -83,13 +95,13 @@ export const ActionBar: React.FC<ActionBarProps> = ({
          </button>
          
          <div className="flex items-center justify-center gap-8">
-            <button onClick={() => step(-5)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
+            <button onClick={() => stepTranscript(-1)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
                <SkipBack className="w-6 h-6 fill-current" />
             </button>
             <button onClick={togglePlay} className="w-14 h-14 bg-[#5A5A40] hover:bg-[#4A4A40] rounded-full flex items-center justify-center shadow-lg text-white transition-all transform hover:scale-105 active:scale-95">
                {isPlaying ? <Pause className="w-[26px] h-[26px] fill-current" /> : <Play className="w-[26px] h-[26px] ml-1 fill-current" />}
             </button>
-            <button onClick={() => step(5)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
+            <button onClick={() => stepTranscript(1)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
                <SkipForward className="w-6 h-6 fill-current" />
             </button>
          </div>
