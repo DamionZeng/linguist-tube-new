@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Download } from 'lucide-react';
+import { X, Download, SlidersHorizontal } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PlaybackSettingsModalProps {
   isOpen: boolean;
@@ -7,6 +8,8 @@ interface PlaybackSettingsModalProps {
 }
 
 export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -19,8 +22,8 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ is
         <div className="p-4 md:p-5 pb-safe">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-[#4A4A40] flex items-center gap-2">
-               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#5A5A40]"><path d="M21 3v18"/><path d="M3 3v18"/><path d="M21 12H3"/></svg>
-               播放设置
+               <SlidersHorizontal className="w-5 h-5 text-[#5A5A40]" />
+               {t('settings.playbackSettings')}
             </h3>
             <button onClick={onClose} className="p-1.5 bg-[#F9F9F7] text-[#8A8A7A] hover:bg-[#EAEAE0] hover:text-[#4A4A40] rounded-full transition-colors">
               <X className="w-5 h-5" />
@@ -29,25 +32,25 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ is
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between py-1.5">
-               <span className="font-bold text-[#4A4A40] text-sm">字幕下载</span>
+               <span className="font-bold text-[#4A4A40] text-sm">{t('settings.downloadSubtitles')}</span>
                <button className="bg-[#4169E1] text-white p-1.5 rounded-full hover:bg-blue-600 transition-colors">
                  <Download className="w-4 h-4" />
                </button>
             </div>
             
-            <SettingToggle label="隐藏标注" />
-            <SettingToggle label="全文音标" />
-            <SettingToggle label="自动词汇" />
-            <SettingToggle label="屏下字幕" />
-            <SettingToggle label="实时字幕" />
+            <SettingToggle label={t('settings.hideAnnotations')} />
+            <SettingToggle label={t('settings.showPhonetics')} />
+            <SettingToggle label={t('settings.autoVocab')} />
+            <SettingToggle label={t('settings.subtitlesUnderScreen')} />
+            <SettingToggle label={t('settings.realtimeSubtitles')} />
 
             <div className="pt-3 border-t border-[#EAEAE0]">
-               <div className="font-bold text-[#4A4A40] text-sm mb-2">字幕大小</div>
+               <div className="font-bold text-[#4A4A40] text-sm mb-2">{t('settings.subtitleSize')}</div>
                <div className="flex bg-[#F9F9F7] rounded-xl p-1 gap-1 border border-[#EAEAE0]">
-                  <SizeOption label="小号" />
-                  <SizeOption label="标准" isActive />
-                  <SizeOption label="中号" />
-                  <SizeOption label="大号" />
+                  <SizeOption label={t('settings.sizeSmall')} />
+                  <SizeOption label={t('settings.sizeStandard')} isActive />
+                  <SizeOption label={t('settings.sizeMedium')} />
+                  <SizeOption label={t('settings.sizeLarge')} />
                </div>
             </div>
           </div>

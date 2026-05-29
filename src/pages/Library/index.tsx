@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Star, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe } from 'lucide-react';
+import { BookOpen, Star, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
 import { fetchLibraryData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../context/ThemeContext';
 
 export const LibraryPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { t, i18n } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,24 +93,41 @@ export const LibraryPage: React.FC = () => {
       
       {/* Settings / Sign Out Actions */}
       <div className="pt-8 flex flex-col md:flex-row items-center gap-4">
-        <div className="bg-white p-2 rounded-xl flex border border-[#E0E0D5] shadow-sm">
-           <button 
-             onClick={() => i18n.changeLanguage('en')}
-             className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('en') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
-           >
-             <Globe className="w-4 h-4" /> {t('library.english')}
-           </button>
-           <button 
-             onClick={() => i18n.changeLanguage('zh')}
-             className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('zh') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
-           >
-             <Globe className="w-4 h-4" /> {t('library.chinese')}
-           </button>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="bg-white p-2 rounded-xl flex border border-[#E0E0D5] shadow-sm">
+             <button 
+               onClick={() => i18n.changeLanguage('en')}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('en') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+             >
+               <Globe className="w-4 h-4" /> {t('library.english')}
+             </button>
+             <button 
+               onClick={() => i18n.changeLanguage('zh')}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('zh') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+             >
+               <Globe className="w-4 h-4" /> {t('library.chinese')}
+             </button>
+          </div>
+
+          <div className="bg-white p-2 rounded-xl flex border border-[#E0E0D5] shadow-sm">
+             <button 
+               onClick={toggleTheme}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${theme === 'light' ? 'bg-[#4A4A40] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+             >
+               <Sun className="w-4 h-4" /> {t('library.lightMode')}
+             </button>
+             <button 
+               onClick={toggleTheme}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${theme === 'dark' ? 'bg-[#4A4A40] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+             >
+               <Moon className="w-4 h-4" /> {t('library.darkMode')}
+             </button>
+          </div>
         </div>
 
         <button 
           onClick={logout}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-[#E0E0D5] text-[#8A8A7A] hover:bg-[#F9F9F7] hover:text-[#D48166] hover:border-[#D48166]/30 text-sm font-bold rounded-xl transition-all shadow-sm w-full md:w-auto"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-[#E0E0D5] text-[#8A8A7A] hover:bg-[#F9F9F7] hover:text-[#D48166] hover:border-[#D48166]/30 text-sm font-bold rounded-xl transition-all shadow-sm w-full md:w-auto md:ml-auto"
         >
           <LogOut className="w-4 h-4" /> {t('library.signOut')}
         </button>

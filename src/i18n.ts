@@ -42,8 +42,8 @@ const resources = {
       },
       favorites: {
         title: "My Favorites",
-        videos: "Saved Videos",
-        sentences: "Saved Sentences"
+        videos: "Videos",
+        sentences: "Sentences"
       },
       vocab: {
         title: "Vocabulary Book",
@@ -71,10 +71,24 @@ const resources = {
         loginNow: "Login Now",
         goBack: "Go Back"
       },
+      settings: {
+        playbackSettings: "Playback Settings",
+        downloadSubtitles: "Download Subtitles",
+        hideAnnotations: "Hide Annotations",
+        showPhonetics: "Show Phonetics",
+        autoVocab: "Auto Vocabulary",
+        subtitlesUnderScreen: "Subtitles Under Screen",
+        realtimeSubtitles: "Real-time Subtitles",
+        subtitleSize: "Subtitle Size",
+        sizeSmall: "Small",
+        sizeStandard: "Standard",
+        sizeMedium: "Medium",
+        sizeLarge: "Large"
+      },
       library: {
         vip: "VIP Member",
         standard: "Standard",
-        totalStudy: "Total Study",
+        totalStudy: "Total Favorites",
         videosWatched: "Videos Watched",
         vocabBuilt: "Vocab Built",
         perfectDays: "Perfect Days",
@@ -82,7 +96,9 @@ const resources = {
         language: "Language",
         settings: "Settings",
         english: "English",
-        chinese: "中文"
+        chinese: "中文",
+        lightMode: "Light Mode",
+        darkMode: "Dark Mode"
       }
     }
   },
@@ -97,7 +113,7 @@ const resources = {
         search: "搜索课程..."
       },
       explore: {
-        recommended: "为你推荐",
+        recommended: "推荐",
         youtubeNews: "YouTube 新闻",
         startLearning: "开始学习"
       },
@@ -154,10 +170,24 @@ const resources = {
         loginNow: "立即登录",
         goBack: "返回"
       },
+      settings: {
+        playbackSettings: "播放设置",
+        downloadSubtitles: "字幕下载",
+        hideAnnotations: "隐藏标注",
+        showPhonetics: "全文音标",
+        autoVocab: "自动词汇",
+        subtitlesUnderScreen: "屏下字幕",
+        realtimeSubtitles: "实时字幕",
+        subtitleSize: "字幕大小",
+        sizeSmall: "小号",
+        sizeStandard: "标准",
+        sizeMedium: "中号",
+        sizeLarge: "大号"
+      },
       library: {
         vip: "VIP会员",
         standard: "普通用户",
-        totalStudy: "总学习时长",
+        totalStudy: "总收藏",
         videosWatched: "已看视频",
         vocabBuilt: "已记单词",
         perfectDays: "完美打卡",
@@ -165,7 +195,9 @@ const resources = {
         language: "语言要求",
         settings: "设置",
         english: "English",
-        chinese: "中文"
+        chinese: "中文",
+        lightMode: "浅色模式",
+        darkMode: "深色模式"
       }
     }
   }

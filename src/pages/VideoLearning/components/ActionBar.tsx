@@ -44,9 +44,9 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   };
 
   return (
-    <div className="w-full bg-white border-t border-[#E0E0D5] flex flex-col pt-3 pb-safe z-50">
+    <div className="w-full bg-white border-t border-[#E0E0D5] flex flex-col pt-2 pb-safe z-50">
        {/* Top Row: Tools */}
-       <div className="flex items-center justify-around px-2 pb-3.5 border-b border-[#E0E0D5]/50">
+       <div className="flex items-center justify-around px-2 pb-2 border-b border-[#E0E0D5]/50">
          <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
          <ToolButton 
             icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
@@ -91,7 +91,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
        </div>
 
        {/* Bottom Row: Play Controls */}
-       <div className="flex items-center justify-between px-6 py-4">
+       <div className="flex items-center justify-between px-6 py-2">
          <button className="text-[#8A8A7A] hover:text-[#4A4A40] p-2 -ml-2 rounded-full hover:bg-[#EAEAE0] transition-colors">
             <ChevronDown className="w-[26px] h-[26px]" />
          </button>
