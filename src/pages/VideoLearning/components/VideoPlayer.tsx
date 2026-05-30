@@ -23,6 +23,8 @@ interface VideoPlayerProps {
   setBuffered?: (v: number) => void;
   isBuffering?: boolean;
   setIsBuffering?: (v: boolean) => void;
+  activeIndex?: number;
+  totalTranscripts?: number;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -43,7 +45,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   buffered = 0,
   setBuffered,
   isBuffering = false,
-  setIsBuffering
+  setIsBuffering,
+  activeIndex = 0,
+  totalTranscripts = 0
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
 
@@ -157,7 +161,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Top right gradient and Index */}
       <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
       <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
-        {videoInfo.index} <span className="opacity-70 mx-0.5">/</span> {videoInfo.total}
+        {activeIndex !== -1 ? activeIndex + 1 : 0} <span className="opacity-70 mx-0.5">/</span> {totalTranscripts}
       </div>
 
       {/* Subtitle Mask */}

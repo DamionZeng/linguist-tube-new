@@ -71,7 +71,7 @@ export const ExplorePage: React.FC = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10"></div>
             <img
-              src={item.image}
+              src={item.image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80'}
               className="w-full h-full object-cover"
               alt={item.title}
             />
@@ -190,7 +190,7 @@ export const ExplorePage: React.FC = () => {
               <div className="relative aspect-video overflow-hidden bg-[#EAEAE0] p-1">
                 <div className="w-full h-full rounded-[20px] overflow-hidden relative">
                   <img
-                    src={v.thumb}
+                    src={v.thumb || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     alt={v.title}
                   />
