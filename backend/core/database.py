@@ -56,6 +56,7 @@ async def init_db():
     from models.favorite_sentence import FavoriteSentence  # noqa
     from models.favorite_video import FavoriteVideo  # noqa
     from models.check_in import CheckIn  # noqa
+    from models.word_cache import WordCache  # noqa
 
     async with _get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
