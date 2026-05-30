@@ -7,7 +7,22 @@ from models.video import Video
 from models.vocabulary import Vocabulary
 from models.watch_history import WatchHistory
 from models.favorite_sentence import FavoriteSentence
+from models.favorite_video import FavoriteVideo
 from models.check_in import CheckIn
+
+
+def _parse_duration_to_seconds(duration_str: str | None) -> int:
+    if not duration_str:
+        return 0
+    parts = duration_str.strip().split(":")
+    try:
+        if len(parts) == 2:
+            return int(parts[0]) * 60 + int(parts[1])
+        elif len(parts) == 3:
+            return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+    except (ValueError, TypeError):
+        return 0
+    return 0
 
 
 async def get_library_data(user_id: int) -> dict:
@@ -33,6 +48,7 @@ async def get_library_data(user_id: int) -> dict:
                 "exampleTrans": v.example_trans,
             })
 
+        total_watched_seconds = 0
         hist_result = await session.execute(
             select(WatchHistory, Video)
             .join(Video, WatchHistory.video_id == Video.id)
@@ -51,6 +67,9 @@ async def get_library_data(user_id: int) -> dict:
                 "progress": wh.progress,
                 "lastWatched": wh.last_watched,
             })
+            total_watched_seconds += int(
+                _parse_duration_to_seconds(v.duration) * wh.progress / 100
+            )
 
         words_count_result = await session.execute(
             select(func.count()).select_from(Vocabulary).where(Vocabulary.user_id == user_id)
@@ -62,11 +81,17 @@ async def get_library_data(user_id: int) -> dict:
         )
         sentences_count = sentences_count_result.scalar() or 0
 
+        fav_videos_count_result = await session.execute(
+            select(func.count()).select_from(FavoriteVideo).where(FavoriteVideo.user_id == user_id)
+        )
+        fav_videos_count = fav_videos_count_result.scalar() or 0
+        total_favorites = sentences_count + fav_videos_count
+
         checkin_result = await session.execute(
             select(func.count()).select_from(CheckIn).where(CheckIn.user_id == user_id)
         )
         streak = checkin_result.scalar() or 0
-        hours = round(streak * 0.5, 1)
+        hours = round(total_watched_seconds / 3600, 1)
 
         return {
             "vocab": vocab,
@@ -74,7 +99,7 @@ async def get_library_data(user_id: int) -> dict:
             "stats": {
                 "streak": streak,
                 "words": words_count,
-                "sentences": sentences_count,
+                "sentences": total_favorites,
                 "hours": hours,
             },
         }
