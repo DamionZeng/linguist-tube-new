@@ -92,3 +92,15 @@ class CheckInResponse(BaseModel):
     code: int = 200
     data: list[str]
     message: str = "success"
+
+
+class SaveHistoryRequest(BaseModel):
+    videoId: str
+    progress: int
+    lastWatched: str
+
+
+class SaveHistoryResponse(BaseModel):
+    code: int = 200
+    data: bool
+    message: str = "success"

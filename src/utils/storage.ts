@@ -74,6 +74,19 @@ function persistFavVideosCache(): void {
   localStorage.setItem('favorite_videos', JSON.stringify(_favVideosCache));
 }
 
+let _videoHistoryCache: any[] = (() => {
+  try {
+    const raw = localStorage.getItem('video_history');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+})();
+
+function persistVideoHistoryCache(): void {
+  localStorage.setItem('video_history', JSON.stringify(_videoHistoryCache));
+}
+
 export async function initStorageFromServer(): Promise<void> {
   const token = getStoredToken();
   if (!token) return;
@@ -88,6 +101,12 @@ export async function initStorageFromServer(): Promise<void> {
     const favVideos = await apiGet<any[]>('/api/favorites/videos');
     _favVideosCache = favVideos;
     persistFavVideosCache();
+  } catch { /* keep cache */ }
+
+  try {
+    const history = await apiGet<any[]>('/api/history');
+    _videoHistoryCache = history;
+    persistVideoHistoryCache();
   } catch { /* keep cache */ }
 }
 
@@ -128,34 +147,35 @@ export const isVideoFavorite = (id: string): boolean => {
 };
 
 export const getVideoHistory = (): any[] => {
-  const data = localStorage.getItem('video_history');
-  return data ? JSON.parse(data) : [];
+  return _videoHistoryCache;
 };
 
 export const saveVideoHistory = (videoInfo: any, currentTime: number, duration: number) => {
   if (!videoInfo || !videoInfo.id) return;
-  const history = getVideoHistory();
-  const existingIndex = history.findIndex(v => v.id === videoInfo.id);
-  
-  if (existingIndex >= 0) {
-    history.splice(existingIndex, 1);
-  }
 
   const progress = duration > 0 ? Math.round((currentTime / duration) * 100) : 0;
-  
-  history.unshift({
+  const lastWatched = getLocalDayStr();
+
+  const existingIndex = _videoHistoryCache.findIndex(v => v.id === videoInfo.id);
+
+  if (existingIndex >= 0) {
+    _videoHistoryCache.splice(existingIndex, 1);
+  }
+
+  _videoHistoryCache.unshift({
     ...videoInfo,
     currentTime,
     progress,
-    lastWatched: getLocalDayStr()
+    lastWatched
   });
 
-  localStorage.setItem('video_history', JSON.stringify(history));
+  persistVideoHistoryCache();
   window.dispatchEvent(new Event('history-updated'));
+
+  apiPost('/api/history', { videoId: videoInfo.id, progress, lastWatched }).catch(() => {});
 };
 
 export const getVideoTimeFromHistory = (id: string): number => {
-  const history = getVideoHistory();
-  const found = history.find(v => v.id === id);
+  const found = _videoHistoryCache.find(v => v.id === id);
   return found ? found.currentTime || 0 : 0;
 };

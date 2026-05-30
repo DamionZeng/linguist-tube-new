@@ -232,3 +232,30 @@ async def add_checkin(user_id: int, date_str: str) -> bool:
         session.add(checkin)
         await session.commit()
         return True
+
+
+async def save_history(user_id: int, video_id: str, progress: int, last_watched: str) -> bool:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        existing = await session.execute(
+            select(WatchHistory).where(
+                WatchHistory.user_id == user_id,
+                WatchHistory.video_id == video_id,
+            )
+        )
+        wh = existing.scalar_one_or_none()
+
+        if wh is not None:
+            wh.progress = progress
+            wh.last_watched = last_watched
+        else:
+            wh = WatchHistory(
+                user_id=user_id,
+                video_id=video_id,
+                progress=progress,
+                last_watched=last_watched,
+            )
+            session.add(wh)
+
+        await session.commit()
+        return True
