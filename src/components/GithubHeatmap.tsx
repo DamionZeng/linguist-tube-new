@@ -12,14 +12,18 @@ export const GithubHeatmap: React.FC = () => {
   }, []);
 
   const today = new Date();
-  const daysInCalendar = 120; // Around 4 months
   
-  const startDate = new Date();
-  startDate.setDate(today.getDate() - daysInCalendar);
-  startDate.setDate(startDate.getDate() - startDate.getDay());
+  const cMonth = today.getMonth();
+  const cYear = today.getFullYear();
   
-  const endDate = new Date(today);
-  endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+  const threeMonthsAgoStart = new Date(cYear, cMonth - 2, 1);
+  const currentMonthEnd = new Date(cYear, cMonth + 1, 0);
+
+  const startDate = new Date(threeMonthsAgoStart);
+  startDate.setDate(threeMonthsAgoStart.getDate() - threeMonthsAgoStart.getDay());
+  
+  const endDate = new Date(currentMonthEnd);
+  endDate.setDate(currentMonthEnd.getDate() + (6 - endDate.getDay()));
   
   const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const numWeeks = totalDays / 7;
@@ -35,9 +39,10 @@ export const GithubHeatmap: React.FC = () => {
         d.setDate(d.getDate() + (i * 7 + j));
         const dayStr = getLocalDayStr(d);
         const isFuture = d > today;
-        week.push({ date: d, dayStr, isFuture });
+        const isOutside3Months = d < threeMonthsAgoStart || d > currentMonthEnd;
+        week.push({ date: d, dayStr, isFuture, isOutside3Months });
 
-        if (j === 0 && d.getMonth() !== lastMonth) {
+        if (d.getMonth() !== lastMonth && !isOutside3Months) {
            monthLabels.push({ month: d.toLocaleString('default', { month: 'short' }), index: i });
            lastMonth = d.getMonth();
         }
@@ -72,16 +77,19 @@ export const GithubHeatmap: React.FC = () => {
                   </div>
                   
                   {/* Grid */}
-                  <div className="flex gap-1 items-start">
+                    <div className="flex gap-1 items-start">
                       {days.map((week, i) => (
                          <div key={i} className="grid grid-rows-7 gap-1">
                             {week.map((day, j) => {
+                               if (day.isOutside3Months) {
+                                  return <div key={j} className="w-3 h-3 bg-transparent" />;
+                               }
                                const isActive = !day.isFuture && checkIns.includes(day.dayStr);
                                return (
                                  <div 
                                    key={j} 
-                                   className={`w-3 h-3 rounded-[2px] transition-colors ${day.isFuture ? 'bg-transparent' : isActive ? 'bg-[#40c463]' : 'bg-[#ebedf0]'}`} 
-                                   title={`${day.dayStr}: ${isActive ? 'Checked In' : 'No activity'}`}
+                                   className={`w-3 h-3 rounded-[2px] transition-colors ${day.isFuture ? 'bg-[#ebedf0] opacity-50' : isActive ? 'bg-[#40c463]' : 'bg-[#ebedf0]'}`} 
+                                   title={`${day.dayStr}: ${day.isFuture ? 'Future date' : isActive ? 'Video watched' : 'No activity'}`}
                                  />
                                );
                             })}
