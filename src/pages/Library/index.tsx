@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Star, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
+import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
 import { fetchLibraryData } from '../../api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
@@ -93,7 +93,7 @@ export const LibraryPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={<Trophy className="w-6 h-6 text-[#D48166]" />} label={t('library.perfectDays')} value={data.stats.streak} />
         <StatCard icon={<BookOpen className="w-6 h-6 text-[#94A684]" />} label={t('library.vocabBuilt')} value={data.stats.words} />
-        <StatCard icon={<Star className="w-6 h-6 text-[#E1B12C]" />} label={t('library.totalStudy')} value={data.stats.sentences} />
+        <StatCard icon={<Heart className="w-6 h-6 text-[#D48166] fill-current" />} label={t('library.totalStudy')} value={data.stats.sentences} />
         <StatCard icon={<Clock className="w-6 h-6 text-[#5A5A40]" />} label={t('library.videosWatched')} value={data.stats.hours} />
       </div>
 

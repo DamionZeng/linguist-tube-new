@@ -107,3 +107,22 @@ async def toggle_favorite_video(user_id: int, video_id: str) -> bool:
         session.add(new_fav)
         await session.commit()
         return True
+
+
+async def remove_favorite_sentence(user_id: int, sentence_id: str) -> bool:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        existing = await session.execute(
+            select(FavoriteSentence).where(
+                FavoriteSentence.user_id == user_id,
+                FavoriteSentence.id == sentence_id,
+            )
+        )
+        sentence = existing.scalar_one_or_none()
+
+        if sentence is not None:
+            await session.delete(sentence)
+            await session.commit()
+            return True
+
+        return False

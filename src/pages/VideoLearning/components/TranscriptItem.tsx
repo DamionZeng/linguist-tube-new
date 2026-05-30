@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { Transcript } from '../../../types';
 import { renderHighlightedText } from '../../../utils/highlight';
 import { LangMode } from '../index';
@@ -57,7 +57,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
            className={`p-1 -mr-1 transition-all ${isActive || transcript.isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${transcript.isFavorite ? 'text-[#D48166]' : 'text-[#D0D0CE] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
         >
-          <Star className={`w-5 h-5 ${transcript.isFavorite ? 'fill-current' : ''}`} />
+          <Heart className={`w-5 h-5 ${transcript.isFavorite ? 'fill-current' : ''}`} />
         </button>
       </div>
       

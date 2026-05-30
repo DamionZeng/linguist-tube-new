@@ -12,6 +12,7 @@ from routers.video import router as video_router
 from routers.user import router as user_router
 from routers.favorites import router as favorites_router
 from routers.upload import router as upload_router
+from routers.search import router as search_router
 
 
 @asynccontextmanager
@@ -40,6 +41,7 @@ app.include_router(video_router)
 app.include_router(user_router)
 app.include_router(favorites_router)
 app.include_router(upload_router)
+app.include_router(search_router)
 
 
 @app.exception_handler(Exception)

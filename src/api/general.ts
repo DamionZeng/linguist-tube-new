@@ -177,3 +177,22 @@ export const addVocabularyWord = async (wordDetails: {
 }): Promise<boolean> => {
   return apiPost('/api/vocabulary', wordDetails);
 };
+
+async function apiDelete<T>(path: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
+  const json: ApiResponse<T> = await res.json();
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json.data;
+}
+
+export const removeFavoriteSentence = async (id: string): Promise<boolean> => {
+  return apiDelete(`/api/favorites/sentence/${encodeURIComponent(id)}`);
+};
+

@@ -5,6 +5,7 @@ from schemas.favorites import (
 )
 from services.favorites_service import (
     get_favorites, add_favorite_sentence, get_favorite_videos, toggle_favorite_video,
+    remove_favorite_sentence,
 )
 from core.deps import get_required_user
 from models.user import User
@@ -33,4 +34,10 @@ async def fav_videos(user: User = Depends(get_required_user)):
 @router.post("/videos/{video_id}/toggle", response_model=BoolResponse)
 async def toggle_video(video_id: str, user: User = Depends(get_required_user)):
     result = await toggle_favorite_video(user.id, video_id)
+    return {"code": 200, "data": result, "message": "success"}
+
+
+@router.delete("/sentence/{sentence_id}", response_model=BoolResponse)
+async def remove_sentence(sentence_id: str, user: User = Depends(get_required_user)):
+    result = await remove_favorite_sentence(user.id, sentence_id)
     return {"code": 200, "data": result, "message": "success"}
