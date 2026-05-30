@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { VideoPlayer } from './components/VideoPlayer';
@@ -45,19 +45,32 @@ export const VideoLearningPage: React.FC = () => {
   const videoContext = useVideoPlayer(transcripts);
 
   // Load start time
-  useEffect(() => {
+  const hasSeekedRef = useRef(false);
+
+  const handlePlayerReady = (player: any) => {
+    if (hasSeekedRef.current) return;
+    
     if (videoInfo && videoInfo.id) {
-      const savedTime = getVideoTimeFromHistory(videoInfo.id);
-      if (savedTime > 0 && videoContext.playerRef.current) {
-        // give it a tiny delay to ensure react-player is ready
-        setTimeout(() => {
-          if (videoContext.playerRef.current) {
-            videoContext.playerRef.current.seekTo(savedTime, 'seconds');
-          }
-        }, 500);
+      const jumpTimeStr = localStorage.getItem(`jump_time_${videoInfo.id}`);
+      let savedTime = 0;
+      
+      if (jumpTimeStr) {
+        savedTime = parseInt(jumpTimeStr, 10);
+        localStorage.removeItem(`jump_time_${videoInfo.id}`);
+      } else {
+        savedTime = getVideoTimeFromHistory(videoInfo.id);
       }
+
+      if (savedTime > 0) {
+        player.seekTo(savedTime, 'seconds');
+        if (videoContext.setIsPlaying) {
+           // Help react-player avoid play/pause interruption collisions by telling it to play after a seek
+           videoContext.setIsPlaying(true);
+        }
+      }
+      hasSeekedRef.current = true;
     }
-  }, [videoInfo]);
+  };
 
   // Save progress periodically when playing
   useEffect(() => {
@@ -205,6 +218,7 @@ export const VideoLearningPage: React.FC = () => {
                 {...videoContext} 
                 isMaskActive={isMaskActive} 
                 totalTranscripts={transcripts.length} 
+                onPlayerReady={handlePlayerReady}
               />
             </div>
 

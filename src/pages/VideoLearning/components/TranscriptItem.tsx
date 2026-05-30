@@ -23,7 +23,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
       onClick={onSeek}
       className={`p-4 mb-3 transition-all duration-300 cursor-pointer group border rounded-xl ${
       isActive 
-        ? 'bg-[#F9F9F7] border-[#D48166]/50 dark:bg-[#1E293B] dark:border-[#D48166]/50' 
+        ? 'bg-[#EAEAE0] border-[#D48166] dark:bg-[#1E293B] dark:border-[#D48166]' 
         : 'bg-white border-[#E0E0D5] hover:border-[#D48166]/30 hover:bg-[#F9F9F7] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B] dark:hover:bg-[#1C222C]'
     }`}>
       <div className="flex justify-between items-center mb-2.5">
@@ -32,7 +32,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         </span>
         <button 
            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-           className={`p-1 -mr-1 transition-all ${isActive || transcript.isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${transcript.isFavorite ? 'text-[#E1B12C]' : 'text-[#D0D0CE] hover:text-[#E1B12C] dark:text-[#475569] dark:hover:text-[#E1B12C]'}`}
+           className={`p-1 -mr-1 transition-all ${isActive || transcript.isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${transcript.isFavorite ? 'text-[#D48166]' : 'text-[#D0D0CE] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
         >
           <Star className={`w-5 h-5 ${transcript.isFavorite ? 'fill-current' : ''}`} />
         </button>
