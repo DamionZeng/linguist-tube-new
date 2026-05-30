@@ -1,94 +1,179 @@
-import { VideoInfo } from '../types';
-import { MOCK_CATEGORIES, MOCK_EXPLORE_VIDEOS, MOCK_VOCAB, MOCK_HISTORY, MOCK_FAVORITE_SENTENCES, MOCK_CAROUSEL_ITEMS } from '../mocks/general';
+import { getStoredToken } from './auth';
 
-export const fetchExploreData = (): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ categories: MOCK_CATEGORIES, videos: MOCK_EXPLORE_VIDEOS, carousel: MOCK_CAROUSEL_ITEMS }), 500);
+const BASE_URL = 'http://localhost:8000';
+
+interface ApiResponse<T> {
+  code: number;
+  data: T;
+  message: string;
+}
+
+async function apiGet<T>(path: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  const json: ApiResponse<T> = await res.json();
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json.data;
+}
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
   });
+  const json: ApiResponse<T> = await res.json();
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json.data;
+}
+
+export const fetchExploreData = async (): Promise<{
+  categories: string[];
+  videos: Array<{
+    id: string;
+    title: string;
+    duration: string | null;
+    level: string | null;
+    thumb: string | null;
+    tag: string | null;
+    isVipOnly: boolean;
+  }>;
+  carousel: Array<{
+    id: string;
+    title: string;
+    subtitle: string | null;
+    desc: string | null;
+    image: string | null;
+    tag: string | null;
+  }>;
+}> => {
+  return apiGet('/api/explore');
 };
 
-export const fetchLibraryData = (): Promise<any> => {
-  return new Promise((resolve) => {
-    // Return partial vocab and history for the library dashboard
-    setTimeout(() => resolve({ 
-      vocab: MOCK_VOCAB.slice(0, 3), 
-      history: MOCK_HISTORY,
-      stats: {streak: 12, words: 348, sentences: 56, hours: 24.5} 
-    }), 400);
-  });
+export const fetchLibraryData = async (): Promise<{
+  vocab: Array<{
+    id: string;
+    word: string;
+    phonetic: string | null;
+    pos: string | null;
+    mean: string | null;
+    trans: string | null;
+    added: string | null;
+    example: string | null;
+    exampleTrans: string | null;
+  }>;
+  history: Array<{
+    id: string;
+    title: string;
+    duration: string | null;
+    level: string | null;
+    thumb: string | null;
+    tag: string | null;
+    progress: number;
+    lastWatched: string | null;
+  }>;
+  stats: { streak: number; words: number; sentences: number; hours: number };
+}> => {
+  return apiGet('/api/library');
 };
 
-export const fetchHistoryData = (): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_HISTORY), 400);
-  });
+export const fetchHistoryData = async (): Promise<
+  Array<{
+    id: string;
+    title: string;
+    duration: string | null;
+    level: string | null;
+    thumb: string | null;
+    tag: string | null;
+    progress: number;
+    lastWatched: string | null;
+  }>
+> => {
+  return apiGet('/api/history');
 };
 
-export const fetchVocabularyData = (): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_VOCAB), 400);
-  });
+export const fetchVocabularyData = async (): Promise<
+  Array<{
+    id: string;
+    word: string;
+    phonetic: string | null;
+    pos: string | null;
+    mean: string | null;
+    trans: string | null;
+    added: string | null;
+    example: string | null;
+    exampleTrans: string | null;
+  }>
+> => {
+  return apiGet('/api/vocabulary');
 };
 
-export const fetchFavoritesData = (): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({
-      videos: MOCK_EXPLORE_VIDEOS.slice(0, 2),
-      sentences: MOCK_FAVORITE_SENTENCES
-    }), 500);
-  });
+export const fetchFavoritesData = async (): Promise<{
+  videos: Array<{
+    id: string;
+    title: string;
+    duration: string | null;
+    level: string | null;
+    thumb: string | null;
+    tag: string | null;
+    isVipOnly: boolean;
+  }>;
+  sentences: Array<{
+    id: string;
+    en: string;
+    zh: string;
+    videoTitle: string | null;
+    time: string | null;
+  }>;
+}> => {
+  return apiGet('/api/favorites');
 };
 
-export const fetchWordDetails = (word: string): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const existing = MOCK_VOCAB.find(v => v.word.toLowerCase() === word.toLowerCase());
-      if (existing) {
-        resolve({
-          ...existing,
-          // map fields correctly if necessary
-          example: existing.example || `This is an example for ${word}.`,
-          exampleTrans: existing.exampleTrans || '这是一个例句。',
-          isSaved: true
-        });
-        return;
-      }
-
-      const isBecause = word.toLowerCase().includes('because');
-      if (isBecause) {
-        resolve({
-          word: 'because', phonetic: "/bɪˈkɒz/", trans: 'conj. 因为', pos: 'conj.', mean: '因为', example: '"We are back home, because we wanted to freshen up a bit,"', exampleTrans: '我们回家了，因为我们想稍微梳洗打扮一下', isSaved: false
-        });
-      } else {
-        resolve({
-          word: word, phonetic: `/${word}/`, trans: 'n. 未知词汇', pos: 'n.', mean: '未知词汇', example: `This is an example for ${word}.`, exampleTrans: '这是一个例句。', isSaved: false
-        });
-      }
-    }, 300);
-  });
+export const fetchWordDetails = async (
+  word: string
+): Promise<{
+  word: string;
+  phonetic: string | null;
+  trans: string | null;
+  pos: string | null;
+  mean: string | null;
+  example: string | null;
+  exampleTrans: string | null;
+  isSaved: boolean;
+}> => {
+  return apiGet(`/api/vocabulary/${encodeURIComponent(word)}`);
 };
 
-export const addFavoriteSentence = (sentence: any): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      MOCK_FAVORITE_SENTENCES.unshift({
-        id: `s${Date.now()}`,
-        ...sentence
-      });
-      resolve(true);
-    }, 300);
-  });
+export const addFavoriteSentence = async (sentence: {
+  en: string;
+  zh: string;
+  videoTitle?: string;
+  time?: string;
+}): Promise<boolean> => {
+  return apiPost('/api/favorites/sentence', sentence);
 };
 
-export const addVocabularyWord = (wordDetails: any): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      MOCK_VOCAB.unshift({
-        id: `w${Date.now()}`,
-        ...wordDetails,
-        added: 'Just now'
-      });
-      resolve(true);
-    }, 300);
-  });
+export const addVocabularyWord = async (wordDetails: {
+  word: string;
+  phonetic?: string;
+  trans?: string;
+  pos?: string;
+  mean?: string;
+  example?: string;
+  exampleTrans?: string;
+}): Promise<boolean> => {
+  return apiPost('/api/vocabulary', wordDetails);
 };
