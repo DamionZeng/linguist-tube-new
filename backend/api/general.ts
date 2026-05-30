@@ -142,19 +142,22 @@ export const fetchFavoritesData = async (): Promise<{
   return apiGet('/api/favorites');
 };
 
-export const fetchWordDetails = async (
+export const fetchWordLookup = async (
   word: string
 ): Promise<{
+  bookId: string | null;
+  phrases: Array<{ p_cn: string; p_content: string }>;
+  relWords: Array<{ Hwds: Array<{ hwd?: string; tran?: string; word?: string }>; Pos: string }>;
+  sentences: Array<{ s_cn: string; s_content: string }>;
+  synonyms: Array<{ Hwds: Array<{ hwd?: string; tran?: string; word?: string }>; pos: string; tran: string }>;
+  translations: Array<{ pos: string; tran_cn: string }>;
+  ukphone: string | null;
+  ukspeech: string | null;
+  usphone: string | null;
+  usspeech: string | null;
   word: string;
-  phonetic: string | null;
-  trans: string | null;
-  pos: string | null;
-  mean: string | null;
-  example: string | null;
-  exampleTrans: string | null;
-  isSaved: boolean;
 }> => {
-  return apiGet(`/api/vocabulary/${encodeURIComponent(word)}`);
+  return apiGet(`/api/word/${encodeURIComponent(word)}`);
 };
 
 export const addFavoriteSentence = async (sentence: {
