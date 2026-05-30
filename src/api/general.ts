@@ -142,21 +142,6 @@ export const fetchFavoritesData = async (): Promise<{
   return apiGet('/api/favorites');
 };
 
-export const fetchWordDetails = async (
-  word: string
-): Promise<{
-  word: string;
-  phonetic: string | null;
-  trans: string | null;
-  pos: string | null;
-  mean: string | null;
-  example: string | null;
-  exampleTrans: string | null;
-  isSaved: boolean;
-}> => {
-  return apiGet(`/api/vocabulary/${encodeURIComponent(word)}`);
-};
-
 export const fetchWordLookup = async (
   word: string
 ): Promise<{

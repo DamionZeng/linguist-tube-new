@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fetchExploreData } from "../../api/general";
+import { fetchExploreData } from "@api/general";
 import { useTranslation } from "react-i18next";
 
 export const ExplorePage: React.FC = () => {

@@ -1,8 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, X, Plus, Heart } from 'lucide-react';
-import { Highlight } from '../types';
-import { addVocabularyWord, fetchWordDetails, addFavoriteSentence } from '../api/general';
+import { Volume2, X, Heart, ChevronDown, ChevronUp, BookOpen, ScrollText } from 'lucide-react';
+import { addVocabularyWord, fetchWordLookup, addFavoriteSentence } from '@api/general';
 import { useTranslation } from 'react-i18next';
+
+interface PhraseItem {
+  p_cn: string;
+  p_content: string;
+}
+
+interface HwdItem {
+  hwd?: string;
+  tran?: string;
+  word?: string;
+}
+
+interface RelWordGroup {
+  Hwds: HwdItem[];
+  Pos: string;
+}
+
+interface SentenceItem {
+  s_cn: string;
+  s_content: string;
+}
+
+interface SynonymGroup {
+  Hwds: HwdItem[];
+  pos: string;
+  tran: string;
+}
+
+interface TranslationItem {
+  pos: string;
+  tran_cn: string;
+}
+
+interface WordLookupData {
+  bookId: string | null;
+  phrases: PhraseItem[];
+  relWords: RelWordGroup[];
+  sentences: SentenceItem[];
+  synonyms: SynonymGroup[];
+  translations: TranslationItem[];
+  ukphone: string | null;
+  ukspeech: string | null;
+  usphone: string | null;
+  usspeech: string | null;
+  word: string;
+}
 
 interface WordModalProps {
   isOpen: boolean;
@@ -13,21 +58,34 @@ interface WordModalProps {
 
 export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onWordSaved }) => {
   const { t } = useTranslation();
-  const [isSaved, setIsSaved] = useState(false);
+  const [details, setDetails] = useState<WordLookupData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFavoriting, setIsFavoriting] = useState(false);
-  const [details, setDetails] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [showPhrases, setShowPhrases] = useState(false);
+  const [showSynonyms, setShowSynonyms] = useState(false);
+  const [showRelWords, setShowRelWords] = useState(false);
+  const [sentenceIndex, setSentenceIndex] = useState(0);
 
   useEffect(() => {
     if (isOpen && word) {
       setLoading(true);
-      fetchWordDetails(word).then(data => {
-        setDetails(data);
-        setIsSaved(data.isSaved || false);
-        setLoading(false);
-      });
+      setShowPhrases(false);
+      setShowSynonyms(false);
+      setShowRelWords(false);
+      setSentenceIndex(0);
+
+      fetchWordLookup(word)
+        .then(data => {
+          setDetails(data);
+          setLoading(false);
+        })
+        .catch(() => {
+          setDetails(null);
+          setLoading(false);
+        });
+
       setIsFavorited(false);
     } else {
       setDetails(null);
@@ -36,23 +94,40 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
 
   if (!isOpen) return null;
 
+  const playAudio = (url: string | null | undefined) => {
+    if (url) {
+      new Audio(url).play().catch(() => {});
+    }
+  };
+
+  const formatPhonetic = (): string => {
+    if (!details) return '';
+    const parts: string[] = [];
+    if (details.ukphone) parts.push(`UK: /${details.ukphone}/`);
+    if (details.usphone) parts.push(`US: /${details.usphone}/`);
+    return parts.join('  ');
+  };
+
+  const formatTrans = (): string => {
+    if (!details || !details.translations.length) return '';
+    return details.translations.map(t => `${t.pos} ${t.tran_cn}`).join('；');
+  };
+
   const handleSaveToVocab = async () => {
-    if (isSaved || !details) return; // already saved in current session
+    if (!details) return;
     setIsSaving(true);
     try {
       await addVocabularyWord({
-         word: details.word,
-         phonetic: details.phonetic,
-         trans: details.trans,
-         mean: details.mean,
-         pos: details.pos,
-         example: details.example,
-         exampleTrans: details.exampleTrans
+        word: details.word,
+        phonetic: formatPhonetic(),
+        trans: formatTrans(),
+        pos: details.translations[0]?.pos || '',
+        mean: details.translations[0]?.tran_cn || '',
+        example: details.sentences[0]?.s_content || '',
+        exampleTrans: details.sentences[0]?.s_cn || '',
       });
-      setIsSaved(true);
       if (onWordSaved) onWordSaved(details.word);
     } catch (e) {
-      // Handle error
     } finally {
       setIsSaving(false);
     }
@@ -60,80 +135,153 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
 
   const handleFavoriteSentence = async () => {
     if (isFavorited || !details) return;
+    const sent = details.sentences[sentenceIndex];
+    if (!sent) return;
     setIsFavoriting(true);
     try {
       await addFavoriteSentence({
-        en: details.example,
-        zh: details.exampleTrans,
+        en: sent.s_content,
+        zh: sent.s_cn,
         videoTitle: '生词例句 (Vocab Example)',
-        time: 'Word Card'
+        time: 'Word Card',
       });
       setIsFavorited(true);
     } catch (e) {
-      // Handle error
     } finally {
       setIsFavoriting(false);
     }
   };
 
+  const totalSentences = details?.sentences?.length || 0;
+
   return (
     <>
       <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60] transition-opacity" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 max-w-3xl mx-auto bg-white rounded-t-[24px] z-[70] shadow-2xl transform transition-transform animate-in slide-in-from-bottom-full overflow-hidden flex flex-col max-h-[60vh]">
-        <div className="flex justify-center pt-2 pb-1.5" onClick={onClose}>
-           <div className="w-10 h-1 bg-[#E0E0D5] rounded-full cursor-pointer" />
+      <div className="fixed bottom-0 left-0 right-0 max-w-3xl mx-auto bg-white rounded-t-[24px] z-[70] shadow-2xl transform transition-transform animate-in slide-in-from-bottom-full overflow-hidden flex flex-col max-h-[75vh]">
+        <div className="flex justify-center pt-2 pb-1.5 cursor-pointer" onClick={onClose}>
+          <div className="w-10 h-1 bg-[#E0E0D5] rounded-full" />
         </div>
-        
+
         <button onClick={onClose} className="absolute top-3 right-3 p-1.5 text-[#8A8A7A] hover:bg-[#F5F5F0] rounded-full transition-colors">
           <X className="w-5 h-5" />
         </button>
 
         <div className="p-5 md:p-6 overflow-y-auto w-full">
-           {loading || !details ? (
-              <div className="flex items-center justify-center p-8 min-h-[25vh]"><div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" /></div>
-           ) : (
-             <>
-               <div className="flex items-center gap-2 mb-1.5">
-                 <h2 className="text-2xl font-bold text-[#4A4A40]">{details.word}</h2>
-                 <button className="p-1.5 rounded-full text-[#D48166] bg-[#D48166]/10 hover:bg-[#D48166]/20 transition-colors">
-                    <Volume2 className="w-4 h-4" />
-                 </button>
-               </div>
-               
-               <p className="text-[#8A8A7A] font-mono text-[15px] tracking-wide mb-3">{details.phonetic}</p>
-               
-               <h3 className="text-[17px] font-bold text-[#4A4A40] mb-4">{details.trans}</h3>
-                              <div className="mb-4">
-                  <div className="flex items-center gap-1.5 mb-2 text-[#6A6A5A] font-bold text-xs">
-                     <div className="w-3 h-3 bg-[#D48166] rounded-sm transform rotate-45 flex items-center justify-center opacity-80" />
-                     <span>{t('video.subtitleExample')}</span>
+          {loading || !details ? (
+            <div className="flex items-center justify-center p-12 min-h-[25vh]">
+              <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+            </div>
+          ) : (
+            <div className="animate-in fade-in duration-300">
+              {/* Word Header */}
+              <div className="flex flex-col gap-2 mb-5 pb-5 border-b border-[#E0E0D5]/50">
+                <div className="flex items-center gap-3 overflow-x-auto pb-1">
+                  <h2 className="text-3xl font-bold text-[#4A4A40] tracking-tight">{details.word}</h2>
+                  <div className="flex shrink-0 gap-2">
+                    {details.ukspeech && (
+                      <button
+                        onClick={() => playAudio(details.ukspeech)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[#D48166] bg-[#FCF5F3] hover:bg-[#F2E5E1] transition-colors border border-[#D48166]/20"
+                        title="UK pronunciation"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">UK</span>
+                      </button>
+                    )}
+                    {details.usspeech && (
+                      <button
+                        onClick={() => playAudio(details.usspeech)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[#5A5A40] bg-[#EAEAE0] hover:bg-[#E0E0D5] transition-colors border border-[#5A5A40]/10"
+                        title="US pronunciation"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">US</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="bg-[#F9F9F7] border border-[#E0E0D5] p-3.5 rounded-xl">
-                     <p className="text-[15px] font-medium text-[#4A4A40] mb-1.5 leading-relaxed">{details.example}</p>
-                     <p className="text-[13px] text-[#6A6A5A] leading-relaxed">{details.exampleTrans}</p>
+                </div>
+
+                {/* Phonetic */}
+                {formatPhonetic() && (
+                  <p className="text-[#8A8A7A] font-mono text-xs tracking-widest">{formatPhonetic()}</p>
+                )}
+              </div>
+
+              {/* Translations */}
+              {details.translations.length > 0 && (
+                <div className="mb-6 pl-0.5">
+                  <div className="flex flex-col gap-2.5">
+                    {details.translations.map((tr, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="text-[10px] text-[#94A684] font-bold uppercase tracking-wider bg-[#F2F5F0] px-1.5 py-0.5 rounded shrink-0 mt-0.5">{tr.pos}</span>
+                        <span className="text-[15px] text-[#4A4A40] font-medium leading-relaxed">{tr.tran_cn}</span>
+                      </div>
+                    ))}
                   </div>
-               </div>
-               
-               <div className="flex gap-3 mt-4 pb-2">
-                  <button 
-                     onClick={handleFavoriteSentence}
-                     disabled={isFavoriting}
-                     className={`flex-1 py-2.5 rounded-xl border-2 font-bold text-[15px] transition-colors overflow-hidden flex flex-col items-center justify-center gap-1 leading-none ${isFavorited ? 'border-[#D48166] text-[#D48166] bg-[#D48166]/10' : 'border-[#E0E0D5] text-[#5A5A40] hover:bg-[#F5F5F0]'} ${isFavoriting ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
-                  >
-                     <span className="flex items-center gap-1.5">
-                        {isFavoriting ? t('video.processing') : isFavorited ? <><Heart className="w-4 h-4 fill-current" /> {t('video.favorited')}</> : <><Heart className="w-4 h-4" /> {t('video.favorite')}</>}
-                     </span>
-                  </button>
-                  <button 
-                     onClick={handleSaveToVocab}
-                     disabled={isSaving}
-                     className={`flex-1 py-2.5 rounded-xl font-bold text-[15px] transition-colors flex items-center justify-center gap-1.5 ${isSaved ? 'bg-[#F5F5F0] border border-[#E0E0D5] text-[#4A4A40]' : 'bg-[#2B6DF8] hover:bg-blue-600 text-white shadow-md shadow-blue-500/20'} ${isSaving ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
-                  >
-                     {isSaving ? t('video.processing') : isSaved ? t('video.saved') : t('video.saveToVocab')}
-                  </button>
-               </div>
-             </>
-           )}
+                </div>
+              )}
+
+              {/* Sentences with navigation */}
+              {details.sentences.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2.5 border-b-2 border-[#F5F5F0] pb-2">
+                    <div className="flex items-center gap-1.5 text-[#6A6A5A] font-bold text-xs tracking-wide">
+                      <ScrollText className="w-3.5 h-3.5 text-[#D48166]" />
+                      <span>{t('video.subtitleExample')} {totalSentences > 1 && <span className="text-[#8A8A7A] font-normal ml-0.5">({sentenceIndex + 1}/{totalSentences})</span>}</span>
+                    </div>
+                    {totalSentences > 1 && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setSentenceIndex(i => Math.max(0, i - 1))}
+                          disabled={sentenceIndex === 0}
+                          className="p-1 px-2.5 text-[10px] font-bold uppercase rounded-md bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Prev
+                        </button>
+                        <button
+                          onClick={() => setSentenceIndex(i => Math.min(totalSentences - 1, i + 1))}
+                          disabled={sentenceIndex >= totalSentences - 1}
+                          className="p-1 px-2.5 text-[10px] font-bold uppercase rounded-md bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-[#F9F9F7] border border-[#EAEAE0] p-4 rounded-xl relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#94A684]/60" />
+                    <p className="text-[14px] font-serif text-[#4A4A40] mb-2 leading-relaxed">{details.sentences[sentenceIndex]?.s_content}</p>
+                    <p className="text-[13px] text-[#6A6A5A] leading-relaxed">{details.sentences[sentenceIndex]?.s_cn}</p>
+                    <button
+                      onClick={handleFavoriteSentence}
+                      disabled={isFavoriting || details.sentences.length === 0}
+                      className={`absolute top-2 right-2 p-1.5 rounded-full transition-all 
+                                  ${isFavorited ? 'text-[#D48166] bg-[#FCF5F3]' : 'text-[#8A8A7A] bg-white opacity-0 group-hover:opacity-100 hover:text-[#D48166] hover:bg-[#FCF5F3] shadow-sm'}
+                                  ${isFavoriting ? 'opacity-50' : 'active:scale-95'}`}
+                      title={isFavorited ? 'Favorited' : 'Favorite sentence'}
+                    >
+                      <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2.5 pt-2 border-t border-[#E0E0D5]/50 pb-2 flex-col sm:flex-row">
+                <button
+                  onClick={handleSaveToVocab}
+                  disabled={isSaving}
+                  className={`flex-[2] py-3 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 
+                             bg-[#5A5A40] hover:bg-[#4A4A40] text-white shadow-md shadow-[#5A5A40]/10
+                             hover:shadow-lg hover:shadow-[#5A5A40]/20 active:scale-95
+                             ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  {isSaving ? t('video.processing', 'Saving...') : t('video.saveToVocab', 'Save to Vocabulary List')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -40,8 +40,13 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
     }
     
     if (newIndex !== activeIndexRef.current) {
-      activeIndexRef.current = newIndex;
-      setActiveIndex(newIndex);
+      if (newIndex !== -1) {
+        activeIndexRef.current = newIndex;
+        setActiveIndex(newIndex);
+      } else if (activeIndexRef.current === -1 && transcripts.length > 0) {
+         // If jumping to beginning before first subtitle, keep it 0 or -1? It displays as 0. 
+         // That's fine.
+      }
     }
 
     // Handle AB repeat loop
