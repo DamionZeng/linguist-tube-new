@@ -55,17 +55,17 @@ export const LibraryPage: React.FC = () => {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 pb-10">
       {/* User Profile Card */}
-      <div className="bg-white p-6 md:p-8 rounded-[32px] border border-[#E0E0D5] shadow-sm flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden">
+      <div className="bg-white p-6 md:p-8 rounded-[32px] border border-[#E0E0D5] shadow-sm flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden dark:bg-[#151B25] dark:border-[#1E293B]">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#D48166]/10 to-transparent rounded-bl-full pointer-events-none" />
         <div className="absolute bottom-0 right-20 w-40 h-40 bg-gradient-to-tl from-[#94A684]/5 to-transparent rounded-tl-full pointer-events-none" />
         
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#D48166] to-[#C27055] flex flex-shrink-0 items-center justify-center text-white text-3xl md:text-4xl font-serif font-bold shadow-lg uppercase border-[6px] border-[#F5F5F0]">
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#D48166] to-[#C27055] flex flex-shrink-0 items-center justify-center text-white text-3xl md:text-4xl font-serif font-bold shadow-lg uppercase border-[6px] border-[#F5F5F0] dark:border-[#0B0E14]">
           {user.username.charAt(0)}
         </div>
         
-        <div className="flex-1">
+        <div className="flex-1 z-10">
           <div className="flex flex-wrap items-center gap-3 mb-2">
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#5A5A40]">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#5A5A40] dark:text-[#F8FAFC]">
               {user.username}
             </h2>
             {user.role === 'vip' ? (
@@ -77,6 +77,14 @@ export const LibraryPage: React.FC = () => {
                 {t('library.standard')}
               </span>
             )}
+          </div>
+          <p className="text-[#8A8A7A] dark:text-[#64748B] text-sm mb-3 max-w-lg">
+            {i18n.language.startsWith('zh') ? "热爱学习语言，探索世界文化。每天进步一点点。" : "Passionate about language learning and exploring world cultures. Improving bit by bit every day."}
+          </p>
+          <div className="flex items-center gap-4 text-xs font-bold text-[#6A6A5A] dark:text-[#94A3B8]">
+            <span>
+              {i18n.language.startsWith('zh') ? "加入于" : "Joined"} 2026-01-12
+            </span>
           </div>
         </div>
       </div>

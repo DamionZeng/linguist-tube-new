@@ -44,9 +44,9 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   };
 
   return (
-    <div className="w-full bg-white border-t border-[#E0E0D5] flex flex-col pt-2 pb-safe z-50">
+    <div className="w-full bg-white dark:bg-[#151B25] border-t border-[#E0E0D5] dark:border-[#1E293B] flex flex-col pt-1.5 pb-safe z-50">
        {/* Top Row: Tools */}
-       <div className="flex items-center justify-around px-2 pb-2 border-b border-[#E0E0D5]/50">
+       <div className="flex items-center justify-around px-2 pb-1.5 border-b border-[#E0E0D5]/50 dark:border-[#1E293B]/50">
          <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
          <ToolButton 
             icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
@@ -91,25 +91,25 @@ export const ActionBar: React.FC<ActionBarProps> = ({
        </div>
 
        {/* Bottom Row: Play Controls */}
-       <div className="flex items-center justify-between px-6 py-2">
-         <button className="text-[#8A8A7A] hover:text-[#4A4A40] p-2 -ml-2 rounded-full hover:bg-[#EAEAE0] transition-colors">
-            <ChevronDown className="w-[26px] h-[26px]" />
+       <div className="flex items-center justify-between px-6 py-1.5">
+         <button className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -ml-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
+            <ChevronDown className="w-6 h-6" />
          </button>
          
-         <div className="flex items-center justify-center gap-8">
-            <button onClick={() => stepTranscript(-1)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
-               <SkipBack className="w-6 h-6 fill-current" />
+         <div className="flex items-center justify-center gap-6">
+            <button onClick={() => stepTranscript(-1)} className="text-[#4A4A40] dark:text-[#CBD5E1] hover:text-[#D48166] dark:hover:text-[#D48166] transition-colors active:scale-95 transform">
+               <SkipBack className="w-5 h-5 fill-current" />
             </button>
-            <button onClick={togglePlay} className="w-14 h-14 bg-[#5A5A40] hover:bg-[#4A4A40] rounded-full flex items-center justify-center shadow-lg text-white transition-all transform hover:scale-105 active:scale-95">
-               {isPlaying ? <Pause className="w-[26px] h-[26px] fill-current" /> : <Play className="w-[26px] h-[26px] ml-1 fill-current" />}
+            <button onClick={togglePlay} className="w-12 h-12 bg-[#5A5A40] dark:bg-[#334155] hover:bg-[#4A4A40] dark:hover:bg-[#1E293B] rounded-full flex items-center justify-center shadow-md text-white transition-all transform hover:scale-105 active:scale-95">
+               {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 ml-1 fill-current" />}
             </button>
-            <button onClick={() => stepTranscript(1)} className="text-[#4A4A40] hover:text-[#D48166] transition-colors active:scale-95 transform">
-               <SkipForward className="w-6 h-6 fill-current" />
+            <button onClick={() => stepTranscript(1)} className="text-[#4A4A40] dark:text-[#CBD5E1] hover:text-[#D48166] dark:hover:text-[#D48166] transition-colors active:scale-95 transform">
+               <SkipForward className="w-5 h-5 fill-current" />
             </button>
          </div>
 
-         <button className="text-[#8A8A7A] hover:text-[#4A4A40] p-2 -mr-2 rounded-full hover:bg-[#EAEAE0] transition-colors">
-            <EyeOff className="w-6 h-6" />
+         <button className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -mr-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
+            <EyeOff className="w-[22px] h-[22px]" />
          </button>
        </div>
     </div>
