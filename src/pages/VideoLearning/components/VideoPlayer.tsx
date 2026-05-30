@@ -37,7 +37,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   playbackRate = 1,
   isMaskActive
 }) => {
-  const [maskHeight, setMaskHeight] = useState(80);
+  const [maskHeight, setMaskHeight] = useState(60);
 
   const handleMaskResize = (e: React.PointerEvent) => {
     e.stopPropagation();
