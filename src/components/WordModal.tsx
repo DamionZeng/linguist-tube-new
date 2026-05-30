@@ -8,9 +8,10 @@ interface WordModalProps {
   isOpen: boolean;
   onClose: () => void;
   word: string;
+  onWordSaved?: (word: string) => void;
 }
 
-export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) => {
+export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onWordSaved }) => {
   const { t } = useTranslation();
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +50,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word }) =
          exampleTrans: details.exampleTrans
       });
       setIsSaved(true);
+      if (onWordSaved) onWordSaved(details.word);
     } catch (e) {
       // Handle error
     } finally {

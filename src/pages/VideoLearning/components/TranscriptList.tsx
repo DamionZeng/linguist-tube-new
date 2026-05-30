@@ -13,9 +13,12 @@ interface TranscriptListProps {
   langMode: LangMode;
   showHighlights: boolean;
   isMaskActive?: boolean;
+  savedWords?: string[];
+  highlightColor?: string;
+  subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, isMaskActive }) => {
+export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, isMaskActive, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +62,9 @@ export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, cur
             langMode={langMode}
             showHighlights={showHighlights}
             isMaskActive={isMaskActive}
+            savedWords={savedWords}
+            highlightColor={highlightColor}
+            subtitleSize={subtitleSize}
           />
         );
       })}

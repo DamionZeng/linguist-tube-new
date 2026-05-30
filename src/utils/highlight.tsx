@@ -1,23 +1,47 @@
 import React from 'react';
 import { Highlight } from '../types';
 
-export const renderHighlightedText = (text: string, highlights: Highlight[], onWordClick?: (word: string) => void, showHighlights: boolean = true) => {
+export const renderHighlightedText = (text: string, highlights: Highlight[], onWordClick?: (word: string) => void, showHighlights: boolean = true, savedWords: string[] = [], highlightColor: string = '#D48166') => {
   let parts = [{ text, isHighlight: false, color: '', targetWord: '' }];
 
-  if (highlights && highlights.length > 0) {
-    highlights.forEach(hl => {
+  const allHighlights = [...(highlights || [])];
+  
+  // Convert saved words to highlights if they exist in text
+  savedWords.forEach(word => {
+     if (word && word.length > 0 && typeof text === 'string') {
+        const regex = new RegExp(`\\b${word}\\b`, 'i');
+        if (regex.test(text)) {
+           // Only add if not already highlighted to avoid conflicts
+           if (!allHighlights.find(h => h.word.toLowerCase() === word.toLowerCase())) {
+              allHighlights.push({ word, color: highlightColor });
+           }
+        }
+     }
+  });
+
+  if (allHighlights && allHighlights.length > 0) {
+    allHighlights.forEach(hl => {
       parts = parts.flatMap(part => {
         if (part.isHighlight) return [part];
-        const lowerPart = part.text.toLowerCase();
+        const lowerPart = typeof part.text === 'string' ? part.text.toLowerCase() : '';
+        if (!lowerPart) return [part];
         const lowerSearch = hl.word.toLowerCase();
-        const splitIdx = lowerPart.indexOf(lowerSearch);
         
-        if (splitIdx === -1) return [part];
+        // Use regex search to find the whole word
+        const regex = new RegExp(`\\b${hl.word}\\b`, 'i');
+        const match = typeof part.text === 'string' ? part.text.match(regex) : null;
+        
+        if (!match || match.index === undefined) {
+           return [part];
+        }
+
+        const splitIdx = match.index;
+        const matchLen = match[0].length;
 
         return [
           { text: part.text.substring(0, splitIdx), isHighlight: false, color: '', targetWord: '' },
-          { text: part.text.substring(splitIdx, splitIdx + hl.word.length), isHighlight: true, color: hl.color, targetWord: hl.word },
-          { text: part.text.substring(splitIdx + hl.word.length), isHighlight: false, color: '', targetWord: '' }
+          { text: part.text.substring(splitIdx, splitIdx + matchLen), isHighlight: true, color: hl.color, targetWord: hl.word },
+          { text: part.text.substring(splitIdx + matchLen), isHighlight: false, color: '', targetWord: '' }
         ];
       });
     });
@@ -27,16 +51,18 @@ export const renderHighlightedText = (text: string, highlights: Highlight[], onW
     <>
       {parts.map((p, i) => {
         if (p.isHighlight) {
+           const isHexColor = p.color && (p.color.startsWith('#') || p.color.startsWith('rgb'));
            return (
              <span 
                key={i} 
                onClick={(e) => { 
                  e.stopPropagation();
-                 if (showHighlights && onWordClick) {
+                 if (onWordClick) {
                    onWordClick(p.targetWord); 
                  }
                }} 
-               className={showHighlights ? `font-semibold cursor-pointer rounded-sm px-0.5 hover:bg-[#D48166]/10 active:scale-95 transition-all ${p.color}` : ''}
+               className={`font-semibold rounded-sm transition-all ${!isHexColor ? p.color : ''} ${showHighlights ? 'cursor-pointer px-0.5 hover:bg-black/5 active:scale-95' : ''}`}
+               style={isHexColor ? { color: p.color } : undefined}
              >
                {p.text}
              </span>
