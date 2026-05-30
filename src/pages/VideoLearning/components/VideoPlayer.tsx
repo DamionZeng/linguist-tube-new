@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX } from 'lucide-react';
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
+import { motion } from 'motion/react';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
@@ -17,6 +18,7 @@ interface VideoPlayerProps {
   toggleMute?: () => void;
   isMuted?: boolean;
   playbackRate?: number;
+  isMaskActive?: boolean;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -32,8 +34,32 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   step,
   toggleMute,
   isMuted,
-  playbackRate = 1
+  playbackRate = 1,
+  isMaskActive
 }) => {
+  const [maskHeight, setMaskHeight] = useState(60);
+
+  const handleMaskResize = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = maskHeight;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      // Moving up decreases clientY, deltaY is negative. We want height to increase.
+      setMaskHeight(Math.max(30, startHeight - deltaY));
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -53,7 +79,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   return (
-    <div className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl group shrink-0">
+    <div className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl group shrink-0" id="video-container">
       <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
          <ReactPlayer
            ref={playerRef}
@@ -87,6 +113,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
            playsinline={true}
            controls={false}  // Hide native controls to use our custom ActionBar
            config={{
+             file: {
+               attributes: {
+                 preload: 'auto' // Caching / Preload mechanism
+               }
+             },
              youtube: {
                playerVars: { 
                  disablekb: 1,
@@ -104,6 +135,87 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
       <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
         {videoInfo.index} <span className="opacity-70 mx-0.5">/</span> {videoInfo.total}
+      </div>
+
+      {/* Subtitle Mask */}
+      {isMaskActive && (
+        <motion.div
+          drag="y"
+          dragConstraints={{ top: -300, bottom: 200 }}
+          dragElastic={0}
+          dragMomentum={false}
+          className="absolute left-0 right-0 z-30 cursor-move shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-white/10 backdrop-blur-md bg-black/40 overflow-visible"
+          style={{ 
+            height: `${maskHeight}px`, 
+            bottom: 0, 
+            touchAction: 'none' 
+          }}
+        >
+          {/* Top Resize Handle */}
+          <div 
+            onPointerDown={handleMaskResize}
+            className="absolute top-0 left-0 right-0 h-4 -mt-2 cursor-ns-resize flex items-center justify-center group z-40"
+          >
+            <div className="w-10 h-1 bg-white/20 group-hover:bg-white/60 rounded-full transition-colors" />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Custom Bottom Controls Overlay (Visible on hover/always on mobile sometimes) */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col gap-2">
+        {/* Progress Bar */}
+        <div 
+          className="w-full h-1.5 md:h-2 bg-white/30 rounded-full cursor-pointer relative"
+          onClick={handleProgressClick}
+        >
+          <div 
+            className="absolute top-0 left-0 h-full bg-[#D48166] rounded-full"
+            style={{ width: `${progress}%` }}
+          />
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 md:w-3.5 md:h-3.5 bg-white rounded-full shadow"
+            style={{ left: `calc(${progress}% - 6px)` }}
+          />
+        </div>
+        
+        {/* Controls Row */}
+        <div className="flex flex-wrap items-center justify-between text-white mt-1 gap-2">
+          <div className="flex items-center gap-2 md:gap-4">
+            <button onClick={() => step?.(-10)} className="hover:text-[#D48166] transition-colors p-1" title="-10s">
+              <Rewind className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <button onClick={togglePlay} className="hover:text-[#D48166] transition-colors p-1" title="Play/Pause">
+              {isPlaying ? <Pause className="w-5 h-5 md:w-6 md:h-6 fill-current" /> : <Play className="w-5 h-5 md:w-6 md:h-6 fill-current" />}
+            </button>
+            <button onClick={() => step?.(10)} className="hover:text-[#D48166] transition-colors p-1" title="+10s">
+              <FastForward className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <div className="text-xs md:text-sm font-medium tracking-wide ml-2 opacity-90 font-mono">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 md:gap-4">
+            <button onClick={toggleMute} className="hover:text-[#D48166] transition-colors p-1">
+              {isMuted ? <VolumeX className="w-4 h-4 md:w-5 md:h-5" /> : <Volume2 className="w-4 h-4 md:w-5 md:h-5" />}
+            </button>
+            <button 
+              className="hover:text-[#D48166] transition-colors p-1" 
+              onClick={() => {
+                const el = document.getElementById('video-container');
+                if (el) {
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                  } else {
+                    el.requestFullscreen();
+                  }
+                }
+              }}
+            >
+              <Maximize className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
     </div>
