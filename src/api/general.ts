@@ -92,3 +92,15 @@ export const addVocabularyWord = (wordDetails: any): Promise<boolean> => {
     }, 300);
   });
 };
+
+export const removeFavoriteSentence = (id: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const index = MOCK_FAVORITE_SENTENCES.findIndex(s => s.id === id);
+      if (index !== -1) {
+        MOCK_FAVORITE_SENTENCES.splice(index, 1);
+      }
+      resolve(true);
+    }, 100);
+  });
+};

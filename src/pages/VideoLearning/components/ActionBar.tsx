@@ -1,5 +1,5 @@
-import React from 'react';
-import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, SkipBack, Play, Pause, SkipForward, EyeOff, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, ChevronUp, SkipBack, Play, Pause, SkipForward, EyeOff, Eye } from 'lucide-react';
 import { LangMode } from '../index';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +29,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, isMaskActive, toggleMask, buffered = 0
 }) => {
   const { t, i18n } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -50,32 +51,34 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   return (
     <div className="w-full bg-white dark:bg-[#151B25] border-t border-[#E0E0D5] dark:border-[#1E293B] flex flex-col pt-1.5 pb-safe z-50">
        {/* Top Row: Tools */}
-       <div className="flex items-center justify-around px-2 pb-1.5 border-b border-[#E0E0D5]/50 dark:border-[#1E293B]/50">
-         <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
-         <ToolButton 
-            icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
-            label={i18n.language.startsWith('zh') ? "倍速" : "Speed"} 
-            onClick={cyclePlaybackRate} 
-         />
-         <ToolButton 
-            icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
-            label={i18n.language.startsWith('zh') ? "复读" : "Repeat"} 
-            onClick={repeatTranscript}
-         />
-         <ToolButton 
-            icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
-            label={i18n.language.startsWith('zh') ? "循环" : "Loop"} 
-            onClick={() => setIsLooping(!isLooping)} 
-            active={isLooping} 
-         />
-         <ToolButton 
-            icon={<BookOpen className={`w-[22px] h-[22px] ${showHighlights ? 'text-[#D48166]' : ''}`} />} 
-            label={i18n.language.startsWith('zh') ? "查词" : "Vocab"} 
-            onClick={toggleHighlights}
-            active={showHighlights}
-         />
-         <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} />
-       </div>
+       {isExpanded && (
+         <div className="flex items-center justify-around px-2 pb-1.5 border-b border-[#E0E0D5]/50 dark:border-[#1E293B]/50">
+           <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
+           <ToolButton 
+              icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
+              label={i18n.language.startsWith('zh') ? "倍速" : "Speed"} 
+              onClick={cyclePlaybackRate} 
+           />
+           <ToolButton 
+              icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
+              label={i18n.language.startsWith('zh') ? "复读" : "Repeat"} 
+              onClick={repeatTranscript}
+           />
+           <ToolButton 
+              icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
+              label={i18n.language.startsWith('zh') ? "循环" : "Loop"} 
+              onClick={() => setIsLooping(!isLooping)} 
+              active={isLooping} 
+           />
+           <ToolButton 
+              icon={<BookOpen className={`w-[22px] h-[22px] ${showHighlights ? 'text-[#D48166]' : ''}`} />} 
+              label={i18n.language.startsWith('zh') ? "查词" : "Vocab"} 
+              onClick={toggleHighlights}
+              active={showHighlights}
+           />
+           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} />
+         </div>
+       )}
 
        {/* Sub Progress bar */}
        <div className="w-full pt-1 px-5 flex flex-col gap-1 -mt-[2px] z-10">
@@ -97,8 +100,11 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
        {/* Bottom Row: Play Controls */}
        <div className="flex items-center justify-between px-6 py-1.5">
-         <button className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -ml-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
-            <ChevronDown className="w-6 h-6" />
+         <button 
+           onClick={() => setIsExpanded(!isExpanded)} 
+           className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -ml-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors"
+         >
+            {isExpanded ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
          </button>
          
          <div className="flex items-center justify-center gap-6">

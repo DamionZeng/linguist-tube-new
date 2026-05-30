@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Star, PlayCircle, Quote } from 'lucide-react';
-import { fetchFavoritesData } from '../../api/general';
-import { getFavoriteVideos } from '../../utils/storage';
+import { Heart, PlayCircle, Quote, Trash2 } from 'lucide-react';
+import { fetchFavoritesData, removeFavoriteSentence } from '../../api/general';
+import { getFavoriteVideos, toggleFavoriteVideoStorage } from '../../utils/storage';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
@@ -59,6 +59,24 @@ export const FavoritesPage: React.FC = () => {
     return () => window.removeEventListener('favorites-updated', handleUpdate);
   }, [user]);
 
+  const handleRemoveVideo = (e: React.MouseEvent, v: any) => {
+    e.stopPropagation();
+    toggleFavoriteVideoStorage(v);
+    setData(prev => ({
+      ...prev,
+      videos: prev.videos.filter(mv => mv.id !== v.id)
+    }));
+  };
+
+  const handleRemoveSentence = async (e: React.MouseEvent, sId: string) => {
+    e.stopPropagation();
+    await removeFavoriteSentence(sId);
+    setData(prev => ({
+      ...prev,
+      sentences: prev.sentences.filter(s => s.id !== sId)
+    }));
+  };
+
   if (!user) {
     return <LoginPrompt message={t('messages.loginFavorites')} />;
   }
@@ -112,9 +130,9 @@ export const FavoritesPage: React.FC = () => {
                 <div key={`${v.id}-${i}`} onClick={() => navigate(`/video/${v.id}`)} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#E0E0D5] hover:border-[#D48166] cursor-pointer group">
                   <div className="aspect-video bg-[#EAEAE0] relative">
                      <img src={v.thumb || v.thumbnail || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                     <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md p-1.5 rounded-full text-white">
-                        <Star className="w-3.5 h-3.5 fill-current text-[#E1B12C]" />
-                     </div>
+                     <button onClick={(e) => handleRemoveVideo(e, v)} className="absolute top-2 right-2 bg-[#FCF5F3] backdrop-blur-md p-1.5 rounded-full text-[#D48166] hover:bg-[#EAEAE0] hover:text-[#5A5A40] transition-colors">
+                        <Heart className="w-4 h-4 fill-current" />
+                     </button>
                   </div>
                   <div className="p-3">
                      <h3 className="font-bold text-sm line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">{v.title}</h3>
@@ -128,9 +146,9 @@ export const FavoritesPage: React.FC = () => {
             <div className="space-y-4">
               {data.sentences.map(s => (
                 <div key={s.id} className="bg-white rounded-[24px] p-5 shadow-sm border border-[#E0E0D5] relative group hover:border-[#94A684] transition-colors cursor-pointer">
-                  <div className="absolute top-5 right-5">
-                    <Star className="w-[20px] h-[20px] fill-current text-[#E1B12C]" />
-                  </div>
+                  <button onClick={(e) => handleRemoveSentence(e, s.id)} className="absolute top-5 right-5 text-[#D48166] hover:text-[#5A5A40] bg-[#FCF5F3] hover:bg-[#EAEAE0] p-1.5 rounded-full transition-colors">
+                    <Heart className="w-4 h-4 fill-current" />
+                  </button>
                   <div className="pr-8 mb-4">
                      <p className="text-[17px] font-bold text-[#4A4A40] leading-snug mb-1.5 text-balance">{s.en}</p>
                      <p className="text-[14px] text-[#6A6A5A] leading-snug">{s.zh}</p>

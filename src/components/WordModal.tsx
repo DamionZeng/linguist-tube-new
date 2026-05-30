@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, X, Plus, Star } from 'lucide-react';
+import { Volume2, X, Plus, Heart } from 'lucide-react';
 import { Highlight } from '../types';
 import { addVocabularyWord, fetchWordDetails, addFavoriteSentence } from '../api/general';
 import { useTranslation } from 'react-i18next';
@@ -118,10 +118,10 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
                   <button 
                      onClick={handleFavoriteSentence}
                      disabled={isFavoriting}
-                     className={`flex-1 py-2.5 rounded-xl border-2 font-bold text-[15px] transition-colors overflow-hidden flex flex-col items-center justify-center gap-1 leading-none ${isFavorited ? 'border-[#E1B12C] text-[#E1B12C] bg-[#E1B12C]/10' : 'border-[#E0E0D5] text-[#5A5A40] hover:bg-[#F5F5F0]'} ${isFavoriting ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
+                     className={`flex-1 py-2.5 rounded-xl border-2 font-bold text-[15px] transition-colors overflow-hidden flex flex-col items-center justify-center gap-1 leading-none ${isFavorited ? 'border-[#D48166] text-[#D48166] bg-[#D48166]/10' : 'border-[#E0E0D5] text-[#5A5A40] hover:bg-[#F5F5F0]'} ${isFavoriting ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
                   >
                      <span className="flex items-center gap-1.5">
-                        {isFavoriting ? t('video.processing') : isFavorited ? <><Star className="w-4 h-4 fill-current" /> {t('video.favorited')}</> : <><Star className="w-4 h-4" /> {t('video.favorite')}</>}
+                        {isFavoriting ? t('video.processing') : isFavorited ? <><Heart className="w-4 h-4 fill-current" /> {t('video.favorited')}</> : <><Heart className="w-4 h-4" /> {t('video.favorite')}</>}
                      </span>
                   </button>
                   <button 
