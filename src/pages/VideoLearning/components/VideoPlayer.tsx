@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX } from 'lucide-react';
+import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX, Loader2 } from 'lucide-react';
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
 import { motion } from 'motion/react';
@@ -19,6 +19,10 @@ interface VideoPlayerProps {
   isMuted?: boolean;
   playbackRate?: number;
   isMaskActive?: boolean;
+  buffered?: number;
+  setBuffered?: (v: number) => void;
+  isBuffering?: boolean;
+  setIsBuffering?: (v: boolean) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -35,7 +39,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   toggleMute,
   isMuted,
   playbackRate = 1,
-  isMaskActive
+  isMaskActive,
+  buffered = 0,
+  setBuffered,
+  isBuffering = false,
+  setIsBuffering
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
 
@@ -67,6 +75,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
   const isYoutube = videoInfo.videoUrl.includes('youtube.com') || videoInfo.videoUrl.includes('youtu.be');
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -93,7 +102,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
              if (setCurrentTime && !isNaN(state.playedSeconds)) {
                setCurrentTime(state.playedSeconds);
              }
+             if (setBuffered && !isNaN(state.loadedSeconds)) {
+               setBuffered(state.loadedSeconds);
+             }
            }}
+           onBuffer={() => setIsBuffering?.(true)}
+           onBufferEnd={() => setIsBuffering?.(false)}
            onDuration={(d: number) => {
              if (setDuration && !isNaN(d)) {
                setDuration(d);
@@ -131,6 +145,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
          />
       </div>
 
+      {/* Buffering Indicator */}
+      {isBuffering && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/50 rounded-full p-3">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+        </div>
+      )}
+
       {/* Top right gradient and Index */}
       <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
       <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
@@ -165,15 +188,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <div className="absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col gap-2">
         {/* Progress Bar */}
         <div 
-          className="w-full h-1.5 md:h-2 bg-white/30 rounded-full cursor-pointer relative"
+          className="w-full h-1.5 md:h-2 bg-white/30 rounded-full cursor-pointer relative group/progress"
           onClick={handleProgressClick}
         >
+          <div 
+            className="absolute top-0 left-0 h-full bg-white/20 rounded-full"
+            style={{ width: `${bufferedPercent}%` }}
+          />
           <div 
             className="absolute top-0 left-0 h-full bg-[#D48166] rounded-full"
             style={{ width: `${progress}%` }}
           />
           <div 
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 md:w-3.5 md:h-3.5 bg-white rounded-full shadow"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 md:w-3.5 md:h-3.5 bg-white rounded-full shadow opacity-0 group-hover/progress:opacity-100 transition-opacity"
             style={{ left: `calc(${progress}% - 6px)` }}
           />
         </div>

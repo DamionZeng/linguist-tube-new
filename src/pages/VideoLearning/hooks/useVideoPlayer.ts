@@ -20,6 +20,8 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLooping, setIsLooping] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [buffered, setBuffered] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
 
   // Keep track of the current active transcript index
   const activeIndexRef = useRef<number>(-1);
@@ -154,6 +156,10 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
     isLooping,
     setIsLooping: toggleLooping,
     isMuted,
+    buffered,
+    setBuffered,
+    isBuffering,
+    setIsBuffering,
     togglePlay,
     seek,
     step,

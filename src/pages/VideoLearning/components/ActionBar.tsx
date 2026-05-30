@@ -22,10 +22,11 @@ interface ActionBarProps {
   toggleHighlights: () => void;
   isMaskActive: boolean;
   toggleMask: () => void;
+  buffered?: number;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, isMaskActive, toggleMask
+  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, isMaskActive, toggleMask, buffered = 0
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -36,6 +37,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const bufferedPercentage = duration > 0 ? (buffered / duration) * 100 : 0;
   
   const getLangLabel = () => {
     switch(langMode) {
@@ -83,7 +85,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
          </div>
          <div className="relative h-2 w-full group cursor-pointer" onClick={handleProgressClick}>
             <div className="w-full h-1 bg-[#EAEAE0] rounded-full absolute top-[1px]">
-               <div className="h-1 bg-[#D48166] rounded-full transition-all" style={{ width: `${progressPercentage}%` }} />
+               <div className="absolute left-0 top-0 h-1 bg-[#EAEAE0]/80 rounded-full transition-all" style={{ width: `${bufferedPercentage}%`, backgroundColor: '#CBD5E1' }} />
+               <div className="absolute left-0 top-0 h-1 bg-[#D48166] rounded-full transition-all" style={{ width: `${progressPercentage}%` }} />
             </div>
             <div 
                className="absolute top-[-3px] w-3 h-3 bg-[#D48166] rounded-full shadow-[0_0_10px_rgba(212,129,102,0.5)] border-2 border-white transform transition-all group-hover:scale-125" 
