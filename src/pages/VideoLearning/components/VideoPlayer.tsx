@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX } from 'lucide-react';
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
+import { motion } from 'motion/react';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
@@ -17,6 +18,7 @@ interface VideoPlayerProps {
   toggleMute?: () => void;
   isMuted?: boolean;
   playbackRate?: number;
+  isMaskActive?: boolean;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -32,8 +34,32 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   step,
   toggleMute,
   isMuted,
-  playbackRate = 1
+  playbackRate = 1,
+  isMaskActive
 }) => {
+  const [maskHeight, setMaskHeight] = useState(80);
+
+  const handleMaskResize = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = maskHeight;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      // Moving up decreases clientY, deltaY is negative. We want height to increase.
+      setMaskHeight(Math.max(30, startHeight - deltaY));
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -110,6 +136,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
         {videoInfo.index} <span className="opacity-70 mx-0.5">/</span> {videoInfo.total}
       </div>
+
+      {/* Subtitle Mask */}
+      {isMaskActive && (
+        <motion.div
+          drag="y"
+          dragConstraints={{ top: -300, bottom: 200 }}
+          dragElastic={0}
+          dragMomentum={false}
+          className="absolute left-0 right-0 z-30 cursor-move shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-white/10 backdrop-blur-md bg-black/40 overflow-visible"
+          style={{ 
+            height: `${maskHeight}px`, 
+            bottom: 0, 
+            touchAction: 'none' 
+          }}
+        >
+          {/* Top Resize Handle */}
+          <div 
+            onPointerDown={handleMaskResize}
+            className="absolute top-0 left-0 right-0 h-4 -mt-2 cursor-ns-resize flex items-center justify-center group z-40"
+          >
+            <div className="w-10 h-1 bg-white/20 group-hover:bg-white/60 rounded-full transition-colors" />
+          </div>
+        </motion.div>
+      )}
 
       {/* Custom Bottom Controls Overlay (Visible on hover/always on mobile sometimes) */}
       <div className="absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col gap-2">

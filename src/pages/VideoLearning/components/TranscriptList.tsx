@@ -12,9 +12,10 @@ interface TranscriptListProps {
   onWordClick: (word: string) => void;
   langMode: LangMode;
   showHighlights: boolean;
+  isMaskActive?: boolean;
 }
 
-export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights }) => {
+export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, isMaskActive }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +58,7 @@ export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, cur
             forwardRef={isActive ? activeItemRef : null}
             langMode={langMode}
             showHighlights={showHighlights}
+            isMaskActive={isMaskActive}
           />
         );
       })}

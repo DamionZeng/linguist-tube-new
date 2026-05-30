@@ -13,9 +13,10 @@ interface TranscriptItemProps {
   forwardRef: React.Ref<HTMLDivElement>;
   langMode: LangMode;
   showHighlights: boolean;
+  isMaskActive?: boolean;
 }
 
-export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights }) => {
+export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, isMaskActive }) => {
   return (
     <div 
       ref={forwardRef}
@@ -37,7 +38,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         </button>
       </div>
       
-      <div className="flex flex-col gap-2">
+      <div className={`flex flex-col gap-2 transition-all duration-300 ${isMaskActive ? 'blur-md opacity-30 select-none pointer-events-none' : ''}`}>
         {(langMode === 'bilingual' || langMode === 'en') && (
           <p className={`text-[15px] font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
             {renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights)}

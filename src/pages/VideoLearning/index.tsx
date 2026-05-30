@@ -32,6 +32,7 @@ export const VideoLearningPage: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [isMaskActive, setIsMaskActive] = useState(false);
 
   const cycleLangMode = () => {
     setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : 'bilingual');
@@ -177,12 +178,12 @@ export const VideoLearningPage: React.FC = () => {
          <div className="flex-none lg:w-[50%] xl:w-[60%] lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10 transition-all">
             {/* Video Area */}
             <div className="w-full z-20">
-              <VideoPlayer videoInfo={videoInfo} {...videoContext} />
+              <VideoPlayer videoInfo={videoInfo} {...videoContext} isMaskActive={isMaskActive} />
             </div>
 
             {/* Desktop Action Bar */}
             <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] shadow-sm bg-white shrink-0">
-              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} />
+              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} isMaskActive={isMaskActive} toggleMask={() => setIsMaskActive(!isMaskActive)} />
             </div>
          </div>
 
@@ -197,6 +198,7 @@ export const VideoLearningPage: React.FC = () => {
                onWordClick={(w) => setSelectedWord(w)}
                langMode={langMode}
                showHighlights={showHighlights}
+               isMaskActive={isMaskActive}
              />
            </div>
          </div>
@@ -204,7 +206,7 @@ export const VideoLearningPage: React.FC = () => {
 
       {/* Mobile Action Bar Fixed Bottom */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white">
-         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} />
+         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} isMaskActive={isMaskActive} toggleMask={() => setIsMaskActive(!isMaskActive)} />
       </div>
 
       <WordModal 

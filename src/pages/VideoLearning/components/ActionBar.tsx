@@ -1,5 +1,5 @@
 import React from 'react';
-import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, SkipBack, Play, Pause, SkipForward, EyeOff } from 'lucide-react';
+import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, SkipBack, Play, Pause, SkipForward, EyeOff, Eye } from 'lucide-react';
 import { LangMode } from '../index';
 import { useTranslation } from 'react-i18next';
 
@@ -20,10 +20,12 @@ interface ActionBarProps {
   cycleLangMode: () => void;
   showHighlights: boolean;
   toggleHighlights: () => void;
+  isMaskActive: boolean;
+  toggleMask: () => void;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights
+  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, isMaskActive, toggleMask
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -108,8 +110,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             </button>
          </div>
 
-         <button className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -mr-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
-            <EyeOff className="w-[22px] h-[22px]" />
+         <button onClick={toggleMask} className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -mr-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
+            {isMaskActive ? <EyeOff className="w-[22px] h-[22px]" /> : <Eye className="w-[22px] h-[22px]" />}
          </button>
        </div>
     </div>
