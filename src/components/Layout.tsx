@@ -1,18 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { Compass, BookText, Search, History, Star, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { GlobalSearch } from "./GlobalSearch";
 
 export const Layout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#F5F5F0] font-sans text-[#4A4A40] overflow-hidden max-w-[1920px] mx-auto">
       {/* Top Nav (Desktop) */}
-      <nav className="hidden md:flex h-16 px-8 items-center justify-between bg-white/50 border-b border-[#E0E0D5] backdrop-blur-sm shrink-0 shadow-sm z-50">
+      <nav className="hidden md:flex h-16 px-8 items-center justify-between bg-white/50 border-b border-[#E0E0D5] backdrop-blur-sm shrink-0 shadow-sm z-40">
         <div className="flex items-center gap-8">
           <h1 className="text-2xl font-serif italic font-bold text-[#5A5A40]">
             LinguistTube
@@ -61,7 +63,10 @@ export const Layout: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-5">
-          <div className="bg-[#EAEAE0] px-4 py-2 rounded-full flex items-center gap-3 border border-transparent focus-within:border-[#D48166] transition-colors cursor-text hover:bg-[#E0E0D5]">
+          <div 
+            onClick={() => setIsSearchOpen(true)}
+            className="bg-[#EAEAE0] px-4 py-2 rounded-full flex items-center gap-3 border border-transparent hover:border-[#D48166] transition-colors cursor-pointer hover:bg-[#E0E0D5]"
+          >
             <span className="text-sm text-[#8A8A7A] font-medium select-none">
               {t('nav.search')}
             </span>
@@ -78,6 +83,18 @@ export const Layout: React.FC = () => {
           )}
         </div>
       </nav>
+
+      {/* Top Header (Mobile) */}
+      <div className="md:hidden flex items-center justify-between px-4 h-14 bg-white/80 backdrop-blur border-b border-[#E0E0D5] shrink-0 z-40">
+        <h1 className="text-xl font-serif italic font-bold text-[#5A5A40]">
+          LinguistTube
+        </h1>
+        <button onClick={() => setIsSearchOpen(true)} className="p-2 text-[#4A4A40]">
+          <Search className="w-5 h-5" />
+        </button>
+      </div>
+
+      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative z-0">

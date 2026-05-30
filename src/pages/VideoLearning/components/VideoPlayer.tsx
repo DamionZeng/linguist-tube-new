@@ -25,6 +25,7 @@ interface VideoPlayerProps {
   setIsBuffering?: (v: boolean) => void;
   activeIndex?: number;
   totalTranscripts?: number;
+  onPlayerReady?: (player: any) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -47,7 +48,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   isBuffering = false,
   setIsBuffering,
   activeIndex = 0,
-  totalTranscripts = 0
+  totalTranscripts = 0,
+  onPlayerReady
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
 
@@ -118,6 +120,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
              }
            }}
            onReady={(player: any) => {
+             if (onPlayerReady) {
+               onPlayerReady(player);
+             }
              if (setDuration && player && typeof player.getDuration === 'function') {
                const d = player.getDuration();
                if (d && !isNaN(d)) {
@@ -126,8 +131,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
              }
            }}
            onError={(e) => console.error("ReactPlayer Error:", e)}
-           onPlay={() => setIsPlaying?.(true)}
-           onPause={() => setIsPlaying?.(false)}
+           onEnded={() => setIsPlaying?.(false)}
            playsinline={true}
            controls={false}  // Hide native controls to use our custom ActionBar
            config={{
