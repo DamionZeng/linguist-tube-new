@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
-import { fetchLibraryData } from '../../api/general';
+import { fetchLibraryData } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
 import { useAuth } from '../../context/AuthContext';

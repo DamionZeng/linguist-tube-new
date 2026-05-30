@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Play, Clock, Video, BookText, Quote } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { searchExplore, searchHistory, searchFavorites, searchVocab, SearchResult } from '../api/search';
+import { searchExplore, searchHistory, searchFavorites, searchVocab, SearchResult } from '@api/search';
 import { useTranslation } from 'react-i18next';
 
 interface GlobalSearchProps {
@@ -59,7 +59,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
   const handleResultClick = (result: SearchResult) => {
     if (result.type === 'vocab') {
-      navigate('/vocab');
+      navigate(`/vocab/${result.title}`);
       onClose();
       return;
     }
@@ -92,6 +92,20 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
     if (location.pathname.startsWith('/favorites')) return 'favorites';
     if (location.pathname.startsWith('/vocab')) return 'vocabulary book';
     return 'videos, subtitles';
+  };
+
+  const getEmptyStateTitle = () => {
+    if (location.pathname.startsWith('/history')) return 'Search History';
+    if (location.pathname.startsWith('/favorites')) return 'Search Favorites';
+    if (location.pathname.startsWith('/vocab')) return 'Search Vocabulary';
+    return 'Search English Videos';
+  };
+
+  const getEmptyStateDesc = () => {
+    if (location.pathname.startsWith('/history')) return 'Search through your recently watched videos.';
+    if (location.pathname.startsWith('/favorites')) return 'Search your favorite videos and saved sentences.';
+    if (location.pathname.startsWith('/vocab')) return 'Search for words and translations in your vocab book.';
+    return 'You can search for video titles or specific subtitle lines.';
   };
 
   if (!isOpen) return null;
@@ -172,8 +186,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-[#8A8A7A]">
               <Search className="w-12 h-12 mb-4 opacity-20" />
-              <p className="font-medium text-lg">Search English Videos</p>
-              <p className="text-sm">You can search for video titles or specific subtitle lines.</p>
+              <p className="font-medium text-lg">{getEmptyStateTitle()}</p>
+              <p className="text-sm">{getEmptyStateDesc()}</p>
             </div>
           )}
         </div>
