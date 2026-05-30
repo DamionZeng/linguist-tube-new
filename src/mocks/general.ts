@@ -41,6 +41,15 @@ export const MOCK_EXPLORE_VIDEOS = [
   { id: 'v2', title: 'Coffee Shop Conversations', duration: '08:20', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80', tag: 'Daily Life', isVipOnly: false },
   { id: 'v3', title: 'Tech Interview Power Words', duration: '15:10', level: 'Advanced', thumb: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', tag: 'Business', isVipOnly: true },
   { id: 'v4', title: 'Airport & Customs Vocabulary', duration: '10:05', level: 'Beginner', thumb: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80', tag: 'Travel', isVipOnly: true },
+  {
+    "id": "v5",
+    "title": "The_War_Inside_Your_Head__Why_We_Exhaust_Ourselve",
+    "duration": "04:27",
+    "level": "Intermediate",
+    "thumb": "",
+    "tag": "Psychology",
+    "isVipOnly": false
+}
 ];
 
 export const MOCK_HISTORY = [

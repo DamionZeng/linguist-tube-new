@@ -107,7 +107,7 @@ export const YoutubeNewsPage: React.FC = () => {
                 <div className="relative aspect-video overflow-hidden bg-[#EAEAE0] p-1">
                   <div className="w-full h-full rounded-[20px] overflow-hidden relative">
                     <img
-                      src={v.thumb}
+                      src={v.thumb || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       alt={v.title}
                     />

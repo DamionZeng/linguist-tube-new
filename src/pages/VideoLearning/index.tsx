@@ -9,7 +9,7 @@ import { fetchTranscripts, fetchVideoInfo, toggleFavoriteTranscript } from '../.
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
-import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr } from '../../utils/storage';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr, saveVideoHistory, getVideoTimeFromHistory } from '../../utils/storage';
 import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
@@ -43,6 +43,28 @@ export const VideoLearningPage: React.FC = () => {
   }
 
   const videoContext = useVideoPlayer(transcripts);
+
+  // Load start time
+  useEffect(() => {
+    if (videoInfo && videoInfo.id) {
+      const savedTime = getVideoTimeFromHistory(videoInfo.id);
+      if (savedTime > 0 && videoContext.playerRef.current) {
+        // give it a tiny delay to ensure react-player is ready
+        setTimeout(() => {
+          if (videoContext.playerRef.current) {
+            videoContext.playerRef.current.seekTo(savedTime, 'seconds');
+          }
+        }, 500);
+      }
+    }
+  }, [videoInfo]);
+
+  // Save progress periodically when playing
+  useEffect(() => {
+    if (videoInfo && videoContext.currentTime > 0) {
+      saveVideoHistory(videoInfo, videoContext.currentTime, videoContext.duration);
+    }
+  }, [videoInfo, Math.floor(videoContext.currentTime / 5), videoContext.duration]); // save every 5 seconds rough
 
   useEffect(() => {
     const today = getLocalDayStr();
@@ -178,7 +200,12 @@ export const VideoLearningPage: React.FC = () => {
          <div className="flex-none lg:w-[50%] xl:w-[60%] lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10 transition-all">
             {/* Video Area */}
             <div className="w-full z-20">
-              <VideoPlayer videoInfo={videoInfo} {...videoContext} isMaskActive={isMaskActive} />
+              <VideoPlayer 
+                videoInfo={videoInfo} 
+                {...videoContext} 
+                isMaskActive={isMaskActive} 
+                totalTranscripts={transcripts.length} 
+              />
             </div>
 
             {/* Desktop Action Bar */}

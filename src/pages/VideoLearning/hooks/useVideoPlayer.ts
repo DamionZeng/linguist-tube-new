@@ -24,6 +24,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const [isBuffering, setIsBuffering] = useState(false);
 
   // Keep track of the current active transcript index
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
   const activeIndexRef = useRef<number>(-1);
 
   useEffect(() => {
@@ -38,7 +39,10 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
       }
     }
     
-    activeIndexRef.current = newIndex;
+    if (newIndex !== activeIndexRef.current) {
+      activeIndexRef.current = newIndex;
+      setActiveIndex(newIndex);
+    }
 
     // Handle AB repeat loop
     if (isLooping && newIndex !== -1 && isPlaying) {
@@ -166,6 +170,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
     stepTranscript,
     repeatTranscript,
     cyclePlaybackRate,
-    toggleMute
+    toggleMute,
+    activeIndex
   };
 };
