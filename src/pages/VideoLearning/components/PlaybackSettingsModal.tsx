@@ -5,9 +5,26 @@ import { useTranslation } from 'react-i18next';
 interface PlaybackSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  showHighlights: boolean;
+  onToggleHighlights: () => void;
+  highlightColor: string;
+  onHighlightColorChange: (color: string) => void;
+  subtitleSize: 'small' | 'standard' | 'medium' | 'large';
+  onChangeSubtitleSize: (size: 'small' | 'standard' | 'medium' | 'large') => void;
+  onDownloadSubtitles: () => void;
 }
 
-export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ isOpen, onClose }) => {
+export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ 
+  isOpen, 
+  onClose,
+  showHighlights,
+  onToggleHighlights,
+  highlightColor,
+  onHighlightColorChange,
+  subtitleSize,
+  onChangeSubtitleSize,
+  onDownloadSubtitles
+}) => {
   const { t } = useTranslation();
 
   if (!isOpen) return null;
@@ -32,25 +49,39 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ is
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between py-1.5">
-               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.downloadSubtitles')}</span>
-               <button className="bg-[#D48166] text-white p-1.5 rounded-full hover:bg-[#C27055] transition-colors">
+               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.downloadSubtitles') || '下载字幕'}</span>
+               <button onClick={onDownloadSubtitles} className="bg-[#D48166] text-white p-1.5 rounded-full hover:bg-[#C27055] transition-colors">
                  <Download className="w-4 h-4" />
                </button>
             </div>
             
-            <SettingToggle label={t('settings.hideAnnotations')} />
-            <SettingToggle label={t('settings.showPhonetics')} />
-            <SettingToggle label={t('settings.autoVocab')} />
-            <SettingToggle label={t('settings.subtitlesUnderScreen')} />
-            <SettingToggle label={t('settings.realtimeSubtitles')} />
+            <div className="flex items-center justify-between py-1.5">
+               <div className="flex items-center gap-3">
+                 <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.vocabHighlight', '生词标注')}</span>
+                 {showHighlights && (
+                    <input 
+                      type="color" 
+                      value={highlightColor} 
+                      onChange={(e) => onHighlightColorChange(e.target.value)}
+                      className="w-6 h-6 p-0 border-0 rounded cursor-pointer mt-0.5"
+                    />
+                 )}
+               </div>
+               <div 
+                 className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out cursor-pointer ${showHighlights ? 'bg-[#94A684]' : 'bg-[#E0E0D5] dark:bg-[#334155]'}`}
+                 onClick={onToggleHighlights}
+               >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${showHighlights ? 'translate-x-5' : 'translate-x-0'}`} />
+               </div>
+            </div>
 
             <div className="pt-3 border-t border-[#EAEAE0] dark:border-[#1E293B]">
-               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.subtitleSize')}</div>
+               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.subtitleSize') || '字幕大小'}</div>
                <div className="flex bg-[#F9F9F7] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#EAEAE0] dark:border-[#1E293B]">
-                  <SizeOption label={t('settings.sizeSmall')} />
-                  <SizeOption label={t('settings.sizeStandard')} isActive />
-                  <SizeOption label={t('settings.sizeMedium')} />
-                  <SizeOption label={t('settings.sizeLarge')} />
+                  <SizeOption label={t('settings.sizeSmall') || '小'} isActive={subtitleSize === 'small'} onClick={() => onChangeSubtitleSize('small')} />
+                  <SizeOption label={t('settings.sizeStandard') || '标准'} isActive={subtitleSize === 'standard'} onClick={() => onChangeSubtitleSize('standard')} />
+                  <SizeOption label={t('settings.sizeMedium') || '中'} isActive={subtitleSize === 'medium'} onClick={() => onChangeSubtitleSize('medium')} />
+                  <SizeOption label={t('settings.sizeLarge') || '大'} isActive={subtitleSize === 'large'} onClick={() => onChangeSubtitleSize('large')} />
                </div>
             </div>
           </div>
@@ -60,21 +91,11 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ is
   );
 };
 
-const SettingToggle = ({ label, defaultChecked = false }: { label: string, defaultChecked?: boolean }) => {
-   const [checked, setChecked] = React.useState(defaultChecked);
+const SizeOption = ({ label, isActive = false, onClick }: { label: string, isActive?: boolean, onClick?: () => void }) => {
    return (
-      <div className="flex items-center justify-between py-1.5 cursor-pointer select-none" onClick={() => setChecked(!checked)}>
-         <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{label}</span>
-         <div className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${checked ? 'bg-[#94A684]' : 'bg-[#E0E0D5] dark:bg-[#334155]'}`}>
-            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
-         </div>
-      </div>
-   );
-};
-
-const SizeOption = ({ label, isActive = false }: { label: string, isActive?: boolean }) => {
-   return (
-      <div className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${isActive ? 'bg-[#5A5A40] dark:bg-[#334155] text-white shadow-sm' : 'text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#151B25]'}`}>
+      <div 
+         onClick={onClick}
+         className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${isActive ? 'bg-[#5A5A40] dark:bg-[#334155] text-white shadow-sm' : 'text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#151B25]'}`}>
          {label}
       </div>
    );
