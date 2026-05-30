@@ -16,6 +16,9 @@ class Video(Base):
     is_vip_only: Mapped[bool] = mapped_column(Boolean, default=False)
     video_url: Mapped[str] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    video_id: Mapped[str] = mapped_column(String(50), nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(String(50), nullable=True)
 
     transcripts = relationship("Transcript", back_populates="video")
 
