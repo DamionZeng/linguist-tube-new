@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCheckIns, getLocalDayStr } from '../utils/storage';
+import { getCheckIns, getLocalDayStr } from '@api/storage';
 
 export const GithubHeatmap: React.FC = () => {
   const [checkIns, setCheckIns] = useState<string[]>([]);

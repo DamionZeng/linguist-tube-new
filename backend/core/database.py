@@ -1,9 +1,11 @@
 import os
+import asyncio
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import inspect, text
 from sqlalchemy.pool import NullPool
+from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from core.config import get_settings
 
@@ -23,13 +25,19 @@ def _get_engine():
         is_serverless = os.environ.get("VERCEL") == "1"
         engine_kwargs = {
             "echo": False,
-            "connect_args": {"ssl": "require"},
+            "connect_args": {
+                "ssl": "require",
+                "command_timeout": 60,
+            },
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+            "pool_timeout": 30,
         }
         if is_serverless:
             engine_kwargs["poolclass"] = NullPool
         else:
-            engine_kwargs["pool_size"] = 10
-            engine_kwargs["max_overflow"] = 20
+            engine_kwargs["pool_size"] = 5
+            engine_kwargs["max_overflow"] = 10
         _engine = create_async_engine(settings.database_url, **engine_kwargs)
     return _engine
 
@@ -50,6 +58,9 @@ async def get_db() -> AsyncSession:
     async with session_factory() as session:
         try:
             yield session
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 

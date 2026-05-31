@@ -10,7 +10,7 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
-import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr, saveVideoHistory, getVideoTimeFromHistory } from '../../utils/storage';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
 import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
@@ -122,16 +122,23 @@ export const VideoLearningPage: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [transcriptsData, videoData, vocabData] = await Promise.all([
+        const [transcriptsData, videoData] = await Promise.all([
           fetchTranscripts(id),
-          fetchVideoInfo(id),
-          fetchVocabularyData()
+          fetchVideoInfo(id)
         ]);
         setTranscripts(transcriptsData);
         setVideoInfo(videoData);
-        setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
         if (videoData) {
           setIsFavorite(isVideoFavorite(videoData.id));
+        }
+        
+        // 单独加载词汇表数据，失败不影响页面加载
+        try {
+          const vocabData = await fetchVocabularyData();
+          setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
+        } catch (vocabErr) {
+          // 词汇表加载失败不设置页面错误，仅保存空数组
+          setSavedWords([]);
         }
       } catch (err) {
         setError('Failed to load learning materials.');

@@ -31,6 +31,9 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
     headers: { ...getAuthHeaders(), ...options.headers },
   });
   const json = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }
