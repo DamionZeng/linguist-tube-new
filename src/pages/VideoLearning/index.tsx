@@ -122,16 +122,23 @@ export const VideoLearningPage: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [transcriptsData, videoData, vocabData] = await Promise.all([
+        const [transcriptsData, videoData] = await Promise.all([
           fetchTranscripts(id),
-          fetchVideoInfo(id),
-          fetchVocabularyData()
+          fetchVideoInfo(id)
         ]);
         setTranscripts(transcriptsData);
         setVideoInfo(videoData);
-        setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
         if (videoData) {
           setIsFavorite(isVideoFavorite(videoData.id));
+        }
+        
+        // 单独加载词汇表数据，失败不影响页面加载
+        try {
+          const vocabData = await fetchVocabularyData();
+          setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
+        } catch (vocabErr) {
+          // 词汇表加载失败不设置页面错误，仅保存空数组
+          setSavedWords([]);
         }
       } catch (err) {
         setError('Failed to load learning materials.');

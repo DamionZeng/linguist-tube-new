@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
+import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from core.config import get_settings
-from core.database import init_db
+from core.database import init_db, dispose_engine
 from routers.auth import router as auth_router
 from routers.explore import router as explore_router
 from routers.video import router as video_router
@@ -15,11 +17,15 @@ from routers.upload import router as upload_router
 from routers.search import router as search_router
 from routers.word import router as word_router
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     yield
+    await dispose_engine()
 
 
 app = FastAPI(
@@ -36,6 +42,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error(f"Database error: {str(exc)}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"code": 500, "data": None, "message": "Database error occurred"},
+    )
+
+
+@app.exception_handler(DBAPIError)
+async def dbapi_exception_handler(request: Request, exc: DBAPIError):
+    logger.error(f"Database connection error: {str(exc)}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"code": 500, "data": None, "message": "Database connection error"},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"code": 500, "data": None, "message": f"Internal server error: {str(exc)}"},
+    )
+
+
 app.include_router(auth_router)
 app.include_router(explore_router)
 app.include_router(video_router)
@@ -44,14 +78,6 @@ app.include_router(favorites_router)
 app.include_router(upload_router)
 app.include_router(search_router)
 app.include_router(word_router)
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"code": 500, "data": None, "message": f"Internal server error: {str(exc)}"},
-    )
 
 
 @app.get("/api/health")

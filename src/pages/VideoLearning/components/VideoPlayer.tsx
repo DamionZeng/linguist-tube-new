@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX, Loader2 } from 'lucide-react';
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
@@ -52,6 +52,44 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onPlayerReady
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
+  const [showControls, setShowControls] = useState(false);
+  const [centerIcon, setCenterIcon] = useState<'play' | 'pause' | null>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const activeControls = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+    };
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    activeControls();
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // Single click logic: just activate controls (already handled by pointer down/move)
+  };
+
+  const handleOverlayDoubleClick = (e: React.MouseEvent) => {
+    if (togglePlay) {
+      togglePlay();
+      const nextPlayingState = !isPlaying;
+      setCenterIcon(nextPlayingState ? 'pause' : 'play');
+      setTimeout(() => {
+        setCenterIcon(null);
+      }, 500); // hide icon after 500ms
+    }
+  };
 
   const handleMaskResize = (e: React.PointerEvent) => {
     e.stopPropagation();
@@ -61,7 +99,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      // Moving up decreases clientY, deltaY is negative. We want height to increase.
       setMaskHeight(Math.max(30, startHeight - deltaY));
     };
 
@@ -94,7 +131,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   return (
-    <div className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl group shrink-0" id="video-container">
+    <div 
+      className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl shrink-0" 
+      id="video-container"
+      onMouseMove={activeControls}
+      onPointerDown={handlePointerDown}
+      onMouseLeave={() => {
+        // Optionally hide immediately when mouse leaves, but 5s timeout handles it
+      }}
+    >
       <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
          <ReactPlayer
            ref={playerRef}
@@ -153,6 +198,34 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
          />
       </div>
 
+      {/* Click Overlay to catch double clicks on the video surface */}
+      <div 
+        className="absolute inset-0 z-10" 
+        onClick={handleOverlayClick}
+        onDoubleClick={handleOverlayDoubleClick}
+      />
+
+      {/* Center Action Icon Animation */}
+      <AnimatePresence>
+        {centerIcon && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.5 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+          >
+            <div className="bg-black/40 backdrop-blur-sm rounded-full p-6 text-white">
+              {centerIcon === 'play' ? (
+                <Play className="w-12 h-12 fill-current ml-1" />
+              ) : (
+                <Pause className="w-12 h-12 fill-current" />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Buffering Indicator */}
       {isBuffering && (
         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
@@ -162,10 +235,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         </div>
       )}
 
-      {/* Top right gradient and Index */}
-      <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
-      <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
-        {activeIndex !== -1 ? activeIndex + 1 : 0} <span className="opacity-70 mx-0.5">/</span> {totalTranscripts}
+      {/* Top right gradient and Index (controlled by showControls) */}
+      <div className={`transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
+        <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
+          {activeIndex !== -1 ? activeIndex + 1 : 0} <span className="opacity-70 mx-0.5">/</span> {totalTranscripts}
+        </div>
       </div>
 
       {/* Subtitle Mask */}
@@ -192,11 +267,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         </motion.div>
       )}
 
-      {/* Custom Bottom Controls Overlay (Visible on hover/always on mobile sometimes) */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col gap-2">
+      {/* Custom Bottom Controls Overlay */}
+      <div 
+        className={`absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 z-20 flex flex-col gap-2 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
         {/* Progress Bar */}
         <div 
-          className="w-full h-1.5 md:h-2 bg-white/30 rounded-full cursor-pointer relative group/progress"
+          className="w-full h-1.5 md:h-2 bg-white/30 rounded-full cursor-pointer relative group/progress pointer-events-auto"
           onClick={handleProgressClick}
         >
           <div 
@@ -214,7 +291,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         </div>
         
         {/* Controls Row */}
-        <div className="flex flex-wrap items-center justify-between text-white mt-1 gap-2">
+        <div className="flex flex-wrap items-center justify-between text-white mt-1 gap-2 pointer-events-auto">
           <div className="flex items-center gap-2 md:gap-4">
             <button onClick={() => step?.(-10)} className="hover:text-[#D48166] transition-colors p-1" title="-10s">
               <Rewind className="w-4 h-4 md:w-5 md:h-5" />
@@ -256,3 +333,4 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     </div>
   );
 };
+

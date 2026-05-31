@@ -29,7 +29,18 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const logout = () => {
     setUser(null);
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
   };
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
