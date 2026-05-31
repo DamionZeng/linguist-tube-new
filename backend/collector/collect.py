@@ -610,6 +610,9 @@ async def run(args):
         category=category,
     )
 
+    from core.database import dispose_engine
+    await dispose_engine()
+
     if success and not args.dry_run:
         save_id(next_id)
         print(f"\n✅ 入库成功! ID v{next_id} → v{next_id + 1}")

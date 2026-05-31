@@ -313,22 +313,26 @@ class CollectorApp:
             self._log(f"\n执行入库: v{next_id} - {short_title}")
 
             loop = asyncio.new_event_loop()
-            success = loop.run_until_complete(
-                do_import(
-                    video_id=next_id,
-                    title=short_title,
-                    video_path=output_dir / "video.mp4",
-                    srt_path=bilingual_srt_path,
-                    thumb_path=thumb_path,
-                    level=level,
-                    tag=tag,
-                    dry_run=dry_run,
-                    youtube_video_id=video_id,
-                    description=description,
-                    category=category,
+            try:
+                success = loop.run_until_complete(
+                    do_import(
+                        video_id=next_id,
+                        title=short_title,
+                        video_path=output_dir / "video.mp4",
+                        srt_path=bilingual_srt_path,
+                        thumb_path=thumb_path,
+                        level=level,
+                        tag=tag,
+                        dry_run=dry_run,
+                        youtube_video_id=video_id,
+                        description=description,
+                        category=category,
+                    )
                 )
-            )
-            loop.close()
+            finally:
+                from core.database import dispose_engine
+                loop.run_until_complete(dispose_engine())
+                loop.close()
 
             if success and not dry_run:
                 save_id(next_id)
