@@ -16,6 +16,9 @@ async function apiGet<T>(path: string): Promise<T> {
   }
   const res = await fetch(`${BASE_URL}${path}`, { headers });
   const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }
@@ -34,6 +37,9 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }
@@ -189,6 +195,9 @@ async function apiDelete<T>(path: string): Promise<T> {
   }
   const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
   const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }

@@ -78,8 +78,12 @@ export const ExplorePage: React.FC = () => {
             />
 
             <div className="absolute inset-x-0 bottom-0 top-0 p-6 md:p-10 flex flex-col justify-center z-20 text-white w-full md:w-2/3">
-              <div className="bg-white/20 backdrop-blur-md inline-block px-2.5 py-1 rounded w-max text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm">
-                {item.tag}
+              <div className="flex flex-wrap">
+                {item.tag && item.tag.split(',').map((t, idx) => t.trim().toUpperCase()).slice(0, 2).map((t, idx) => (
+                  <div key={idx} className="bg-white/20 backdrop-blur-md inline-block px-2.5 py-1 rounded w-max text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm mr-2">
+                    {t}
+                  </div>
+                ))}
               </div>
               <h3 className="text-xl md:text-3xl font-serif font-bold mb-1.5 md:mb-2 leading-tight drop-shadow-md">
                 {item.title}{" "}
@@ -183,7 +187,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.filter(v => activeCategory === "All" || v.tag === activeCategory).map((v) => (
+          {data.videos.filter(v => activeCategory === "All" || (v.tag && v.tag.split(',').map(t => t.trim()).includes(activeCategory))).map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}
@@ -200,9 +204,11 @@ export const ExplorePage: React.FC = () => {
                     {v.duration}
                   </div>
                   <div className="absolute top-2 left-2 flex gap-2">
-                    <div className="bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
-                      {v.tag}
-                    </div>
+                    {v.tag && v.tag.split(',').map((t, idx) => t.trim().toUpperCase()).slice(0, 2).map((t, idx) => (
+                      <div key={idx} className="bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
+                        {t}
+                      </div>
+                    ))}
                     {v.isVipOnly && (
                       <div className="bg-[#E1B12C]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md flex items-center gap-1">
                         <Lock className="w-3 h-3" /> VIP

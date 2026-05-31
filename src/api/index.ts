@@ -19,6 +19,9 @@ async function apiGet<T>(path: string, auth: boolean = false): Promise<T> {
   }
   const res = await fetch(`${BASE_URL}${path}`, { headers });
   const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }
@@ -33,6 +36,9 @@ async function apiPut<T>(path: string): Promise<T> {
   }
   const res = await fetch(`${BASE_URL}${path}`, { method: 'PUT', headers });
   const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `Request failed with status ${res.status}`);
   }
