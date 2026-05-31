@@ -1,17 +1,10 @@
 {
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build"
-    },
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": ["backend/**/*.py"]
-      }
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12",
+      "includeFiles": ["backend/**/*.py"]
     }
-  ],
+  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/index.html" }
