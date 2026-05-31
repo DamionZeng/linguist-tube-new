@@ -128,6 +128,15 @@ async def _auto_migrate(conn):
             await conn.execute(text(stmt))
 
 
+async def dispose_engine():
+    global _engine, _async_session
+    if _async_session is not None:
+        _async_session = None
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
+
+
 async def init_db():
     from models.user import User  # noqa
     from models.video import Video, Transcript  # noqa

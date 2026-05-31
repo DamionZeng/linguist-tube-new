@@ -407,6 +407,9 @@ async def main():
         category=args.category,
     )
 
+    from core.database import dispose_engine
+    await dispose_engine()
+
     if not success:
         sys.exit(1)
 
