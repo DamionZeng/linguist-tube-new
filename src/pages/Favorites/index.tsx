@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Heart, PlayCircle, Quote, Trash2 } from 'lucide-react';
 import { fetchFavoritesData, removeFavoriteSentence } from '@api/general';
-import { getFavoriteVideos, toggleFavoriteVideoStorage } from '../../utils/storage';
+import { getFavoriteVideos, toggleFavoriteVideoStorage } from '@api/storage';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';

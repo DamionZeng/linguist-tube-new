@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
-import { getVideoHistory } from '../../utils/storage';
+import { getVideoHistory } from '@api/storage';
 
 export const HistoryPage: React.FC = () => {
   const { user } = useAuth();
