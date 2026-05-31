@@ -5,7 +5,8 @@ import { VideoPlayer } from './components/VideoPlayer';
 import { TranscriptList } from './components/TranscriptList';
 import { ActionBar } from './components/ActionBar';
 import { Transcript, VideoInfo } from '../../types';
-import { fetchTranscripts, fetchVideoInfo, toggleFavoriteTranscript } from '../../api';
+import { fetchTranscripts, fetchVideoInfo, toggleFavoriteTranscript } from '@api/index';
+import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
@@ -28,11 +29,14 @@ export const VideoLearningPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [langMode, setLangMode] = useState<LangMode>('bilingual');
-  const [showHighlights, setShowHighlights] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(true);
+  const [highlightColor, setHighlightColor] = useState('#D48166');
+  const [subtitleSize, setSubtitleSize] = useState<'small' | 'standard' | 'medium' | 'large'>('standard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isMaskActive, setIsMaskActive] = useState(false);
+  const [savedWords, setSavedWords] = useState<string[]>([]);
 
   const cycleLangMode = () => {
     setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : 'bilingual');
@@ -41,6 +45,33 @@ export const VideoLearningPage: React.FC = () => {
   const toggleHighlights = () => {
     setShowHighlights(prev => !prev);
   }
+
+  const handleDownloadSubtitles = () => {
+    if (!transcripts || transcripts.length === 0) return;
+    
+    let content = '';
+    transcripts.forEach((t, i) => {
+      content += `${i + 1}\n`;
+      content += `${t.startTime} --> ${t.endTime}\n`;
+      if (langMode === 'bilingual' || langMode === 'en') {
+        content += `${t.en}\n`;
+      }
+      if (langMode === 'bilingual' || langMode === 'zh') {
+        content += `${t.zh}\n`;
+      }
+      content += '\n';
+    });
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `subtitles-${langMode}.srt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const videoContext = useVideoPlayer(transcripts);
 
@@ -91,12 +122,14 @@ export const VideoLearningPage: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [transcriptsData, videoData] = await Promise.all([
+        const [transcriptsData, videoData, vocabData] = await Promise.all([
           fetchTranscripts(id),
-          fetchVideoInfo(id)
+          fetchVideoInfo(id),
+          fetchVocabularyData()
         ]);
         setTranscripts(transcriptsData);
         setVideoInfo(videoData);
+        setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
         if (videoData) {
           setIsFavorite(isVideoFavorite(videoData.id));
         }
@@ -240,6 +273,9 @@ export const VideoLearningPage: React.FC = () => {
                langMode={langMode}
                showHighlights={showHighlights}
                isMaskActive={isMaskActive}
+               savedWords={savedWords}
+               highlightColor={highlightColor}
+               subtitleSize={subtitleSize}
              />
            </div>
          </div>
@@ -254,11 +290,19 @@ export const VideoLearningPage: React.FC = () => {
         isOpen={!!selectedWord} 
         onClose={() => setSelectedWord(null)} 
         word={selectedWord || ''} 
+        onWordSaved={(w) => setSavedWords(prev => [...prev, w.toLowerCase()])}
       />
 
       <PlaybackSettingsModal 
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        showHighlights={showHighlights}
+        onToggleHighlights={toggleHighlights}
+        highlightColor={highlightColor}
+        onHighlightColorChange={setHighlightColor}
+        subtitleSize={subtitleSize}
+        onChangeSubtitleSize={setSubtitleSize}
+        onDownloadSubtitles={handleDownloadSubtitles}
       />
     </div>
   );

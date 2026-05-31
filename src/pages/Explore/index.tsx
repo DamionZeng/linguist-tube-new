@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fetchExploreData } from "../../api/general";
+import { fetchExploreData } from "@api/general";
 import { useTranslation } from "react-i18next";
 
 export const ExplorePage: React.FC = () => {
@@ -15,6 +15,7 @@ export const ExplorePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeCategory, setActiveCategory] = useState("All");
 
   useEffect(() => {
     fetchExploreData()
@@ -172,7 +173,8 @@ export const ExplorePage: React.FC = () => {
           {data.categories.map((cat, i) => (
             <button
               key={i}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer shrink-0 ${i === 0 ? "bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm" : "bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#94A684] hover:text-[#4A4A40]"}`}
+              onClick={() => setActiveCategory(cat)}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer shrink-0 ${activeCategory === cat ? "bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm" : "bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#94A684] hover:text-[#4A4A40]"}`}
             >
               {cat}
             </button>
@@ -181,7 +183,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.map((v) => (
+          {data.videos.filter(v => activeCategory === "All" || v.tag === activeCategory).map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}

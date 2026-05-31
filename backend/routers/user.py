@@ -1,0 +1,72 @@
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
+
+from schemas.user import (
+    LibraryResponse, HistoryResponse, VocabListResponse,
+    WordDetailResponse, AddVocabRequest, BoolResponse, CheckInResponse,
+    SaveHistoryRequest, SaveHistoryResponse,
+)
+from services.user_service import (
+    get_library_data, get_history, get_vocabulary,
+    get_word_detail, add_vocabulary, get_checkins, add_checkin,
+    save_history,
+)
+from core.deps import get_required_user
+from models.user import User
+
+router = APIRouter(prefix="/api", tags=["user"])
+
+
+@router.get("/library", response_model=LibraryResponse)
+async def library(user: User = Depends(get_required_user)):
+    data = await get_library_data(user.id)
+    return {"code": 200, "data": data, "message": "success"}
+
+
+@router.get("/history", response_model=HistoryResponse)
+async def history(user: User = Depends(get_required_user)):
+    data = await get_history(user.id)
+    return {"code": 200, "data": data, "message": "success"}
+
+
+@router.get("/vocabulary", response_model=VocabListResponse)
+async def vocabulary(user: User = Depends(get_required_user)):
+    if user.role != "vip":
+        return JSONResponse(
+            status_code=403,
+            content={"code": 403, "data": None, "message": "VIP membership required"},
+        )
+    data = await get_vocabulary(user.id)
+    return {"code": 200, "data": data, "message": "success"}
+
+
+@router.get("/vocabulary/{word}", response_model=WordDetailResponse)
+async def word_detail(word: str, user: User = Depends(get_required_user)):
+    data = await get_word_detail(word, user.id)
+    return {"code": 200, "data": data, "message": "success"}
+
+
+@router.post("/vocabulary", response_model=BoolResponse)
+async def add_vocab(request: AddVocabRequest, user: User = Depends(get_required_user)):
+    result = await add_vocabulary(user.id, request.model_dump())
+    return {"code": 200, "data": result, "message": "success"}
+
+
+@router.get("/checkin", response_model=CheckInResponse)
+async def checkin_list(user: User = Depends(get_required_user)):
+    data = await get_checkins(user.id)
+    return {"code": 200, "data": data, "message": "success"}
+
+
+@router.post("/checkin", response_model=BoolResponse)
+async def checkin_add(user: User = Depends(get_required_user)):
+    from datetime import date
+    today = date.today().isoformat()
+    result = await add_checkin(user.id, today)
+    return {"code": 200, "data": result, "message": "success"}
+
+
+@router.post("/history", response_model=SaveHistoryResponse)
+async def save_watch_history(request: SaveHistoryRequest, user: User = Depends(get_required_user)):
+    result = await save_history(user.id, request.videoId, request.progress, request.lastWatched)
+    return {"code": 200, "data": result, "message": "success"}

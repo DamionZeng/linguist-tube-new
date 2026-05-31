@@ -9,6 +9,7 @@ import { ExplorePage } from './pages/Explore';
 import { LibraryPage } from './pages/Library';
 import { VideoLearningPage } from './pages/VideoLearning';
 import { VocabularyPage } from './pages/Vocabulary';
+import { WordDetailsPage } from './pages/WordDetails';
 import { HistoryPage } from './pages/History';
 import { FavoritesPage } from './pages/Favorites';
 import { YoutubeNewsPage } from './pages/YoutubeNews';
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="/youtube-news" element={<YoutubeNewsPage />} />
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/vocab" element={<VocabularyPage />} />
+              <Route path="/vocab/:word" element={<WordDetailsPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
             </Route>

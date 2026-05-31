@@ -18,6 +18,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@api/*": [
+        "./src/mock-api/*"
       ]
     },
     "allowImportingTsExtensions": true,

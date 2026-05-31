@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Compass, BookText, Search, History, Star, User } from "lucide-react";
+import { Compass, BookText, Search, History, Heart, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { GlobalSearch } from "./GlobalSearch";
@@ -127,7 +127,7 @@ export const Layout: React.FC = () => {
             `flex flex-col items-center gap-1.5 w-[20%] transition-colors ${isActive ? "text-[#D48166]" : "text-[#8A8A7A] hover:text-[#6A6A5A]"}`
           }
         >
-          <Star className="w-[20px] h-[20px]" />
+          <Heart className="w-[20px] h-[20px]" />
           <span className="text-[10px] font-bold tracking-wide">{t('nav.favorites')}</span>
         </NavLink>
         <NavLink

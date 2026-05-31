@@ -1,0 +1,106 @@
+from pydantic import BaseModel
+
+
+class VocabItem(BaseModel):
+    id: str
+    word: str
+    phonetic: str | None = None
+    pos: str | None = None
+    mean: str | None = None
+    trans: str | None = None
+    added: str | None = None
+    example: str | None = None
+    exampleTrans: str | None = None
+
+
+class HistoryItem(BaseModel):
+    id: str
+    title: str
+    duration: str | None = None
+    level: str | None = None
+    thumb: str | None = None
+    tag: str | None = None
+    progress: int = 0
+    lastWatched: str | None = None
+
+
+class LibraryStats(BaseModel):
+    streak: int = 0
+    words: int = 0
+    sentences: int = 0
+    hours: float = 0.0
+
+
+class LibraryData(BaseModel):
+    vocab: list[VocabItem]
+    history: list[HistoryItem]
+    stats: LibraryStats
+
+
+class LibraryResponse(BaseModel):
+    code: int = 200
+    data: LibraryData
+    message: str = "success"
+
+
+class HistoryResponse(BaseModel):
+    code: int = 200
+    data: list[HistoryItem]
+    message: str = "success"
+
+
+class VocabListResponse(BaseModel):
+    code: int = 200
+    data: list[VocabItem]
+    message: str = "success"
+
+
+class WordDetail(BaseModel):
+    word: str
+    phonetic: str | None = None
+    trans: str | None = None
+    pos: str | None = None
+    mean: str | None = None
+    example: str | None = None
+    exampleTrans: str | None = None
+    isSaved: bool = False
+
+
+class WordDetailResponse(BaseModel):
+    code: int = 200
+    data: WordDetail
+    message: str = "success"
+
+
+class AddVocabRequest(BaseModel):
+    word: str
+    phonetic: str | None = None
+    trans: str | None = None
+    pos: str | None = None
+    mean: str | None = None
+    example: str | None = None
+    exampleTrans: str | None = None
+
+
+class BoolResponse(BaseModel):
+    code: int = 200
+    data: bool
+    message: str = "success"
+
+
+class CheckInResponse(BaseModel):
+    code: int = 200
+    data: list[str]
+    message: str = "success"
+
+
+class SaveHistoryRequest(BaseModel):
+    videoId: str
+    progress: int
+    lastWatched: str
+
+
+class SaveHistoryResponse(BaseModel):
+    code: int = 200
+    data: bool
+    message: str = "success"

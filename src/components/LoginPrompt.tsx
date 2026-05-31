@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Lock } from 'lucide-react';
-import { loginApi } from '../api/auth';
+import { loginApi } from '@api/auth';
 import { useTranslation } from 'react-i18next';
 
 export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
