@@ -187,6 +187,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                }
              }
            }}
+           onPause={() => setIsPlaying?.(false)}
+           onPlay={() => {
+             setIsPlaying?.(true);
+             setIsBuffering?.(false);
+           }}
            onError={(e) => console.error("ReactPlayer Error:", e)}
            onEnded={() => {
              if (isLooping && playerRef?.current) {
