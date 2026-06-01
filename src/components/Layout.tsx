@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { Compass, BookText, Search, History, Heart, User, Maximize, Minimize } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -9,13 +9,13 @@ import { PullToRefresh } from "./PullToRefresh";
 export const Layout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
     const onFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };

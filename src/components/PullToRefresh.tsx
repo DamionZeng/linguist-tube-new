@@ -88,21 +88,16 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({ active, onRefresh 
       }}
     >
       <div
-        className="flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-200"
+        className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : ''}`}
         style={{
-          backgroundColor: `rgba(212, 129, 102, ${0.15 + progress * 0.7})`,
           opacity: shouldShow ? 1 : 0,
-          transform: `scale(${0.8 + progress * 0.2})`,
+          transform: isRefreshing ? 'scale(1)' : `rotate(${progress * 360}deg) scale(${0.8 + progress * 0.2})`,
         }}
       >
-        <div className={`transition-transform duration-300 ${isRefreshing ? 'animate-spin' : ''}`}
-          style={{ transform: isRefreshing ? undefined : `rotate(${progress * 360}deg)` }}
-        >
-          <RefreshCw
-            className="w-6 h-6 transition-colors duration-200"
-            style={{ color: `rgb(${80 + progress * 132}, ${65 + progress * 64}, ${64 + progress * 38})` }}
-          />
-        </div>
+        <RefreshCw
+          className="w-6 h-6 transition-colors duration-200"
+          style={{ color: `rgb(${80 + progress * 132}, ${65 + progress * 64}, ${64 + progress * 38})` }}
+        />
       </div>
     </div>
   );
