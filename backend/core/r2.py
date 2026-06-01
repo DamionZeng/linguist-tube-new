@@ -132,3 +132,28 @@ def delete_file(url: str) -> None:
         return
     key = url[len(prefix):]
     _get_client().delete_object(Bucket=_bucket(), Key=key)
+
+
+def file_exists_in_r2(key: str) -> str | None:
+    try:
+        _get_client().head_object(Bucket=_bucket(), Key=key)
+        return f"{_public_url()}/{key}"
+    except Exception:
+        return None
+
+
+def get_public_url(key: str) -> str:
+    return f"{_public_url()}/{key}"
+
+
+UPLOAD_CONTENT_TYPES = {
+    "jpg": "image/jpeg", "jpeg": "image/jpeg",
+    "png": "image/png", "webp": "image/webp",
+    "mp4": "video/mp4", "webm": "video/webm",
+}
+
+
+def upload_by_key(key: str, data: bytes, ext: str) -> str:
+    content_type = UPLOAD_CONTENT_TYPES.get(ext, "application/octet-stream")
+    _do_upload(key, data, content_type)
+    return f"{_public_url()}/{key}"

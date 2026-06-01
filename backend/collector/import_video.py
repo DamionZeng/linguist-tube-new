@@ -127,40 +127,7 @@ def _normalize_time(raw: str) -> str:
     return f"{mm:02d}:{ss:02d}"
 
 
-def upload_to_r2(filepath: str, folder: str, video_id: str, ext_override: str | None = None) -> str | None:
-    from core.r2 import upload_thumbnail, upload_video_file, upload_file, check_r2_connection
-
-    file_size = os.path.getsize(filepath)
-    print(f"  文件大小: {file_size / (1024*1024):.1f} MB")
-
-    if not check_r2_connection():
-        print("ERROR: R2 连接失败，请检查网络和配置")
-        return None
-
-    ext = ext_override or os.path.splitext(filepath)[1].lstrip(".").lower()
-    with open(filepath, "rb") as f:
-        content = f.read()
-
-    ct_map = {
-        "jpg": "image/jpeg", "jpeg": "image/jpeg",
-        "png": "image/png", "webp": "image/webp",
-        "mp4": "video/mp4", "webm": "video/webm",
-    }
-    content_type = ct_map.get(ext, "application/octet-stream")
-
-    try:
-        if folder == "thumbnails":
-            return upload_thumbnail(video_id, content, content_type, ext)
-        elif folder == "videos":
-            return upload_video_file(video_id, content, content_type, ext)
-        else:
-            return upload_file(folder, content, content_type, ext)
-    except Exception as e:
-        print(f"WARNING: R2 upload failed for {filepath}: {e}")
-        return None
-
-
-async def insert_video_record(
+async def _upsert_video_record(
     video_id, title, video_url, thumb_url, duration, level, tag,
     is_vip, sort_order, youtube_video_id=None, description=None, category=None,
 ):
@@ -172,7 +139,8 @@ async def insert_video_record(
     async with session_factory() as session:
         existing = await session.execute(select(Video).where(Video.id == video_id))
         if existing.scalar_one_or_none():
-            raise ValueError(f"Video id '{video_id}' already exists in database")
+            print(f"  Video record 已存在: {video_id}，跳过创建")
+            return
 
         if sort_order is None:
             max_order = await session.execute(select(func.max(Video.sort_order)))
@@ -195,15 +163,23 @@ async def insert_video_record(
         )
         session.add(video)
         await session.commit()
-        print(f"  Video record created: {video_id} - {title}")
+        print(f"  Video record 已创建: {video_id} - {title}")
 
 
-async def insert_transcripts(video_id: str, entries: list[dict]):
+async def _upsert_transcripts(video_id: str, entries: list[dict]):
+    from sqlalchemy import select, func
     from core.database import _get_async_session
     from models.video import Transcript
 
     session_factory = _get_async_session()
     async with session_factory() as session:
+        existing_count = await session.execute(
+            select(func.count()).where(Transcript.video_id == video_id)
+        )
+        if existing_count.scalar() > 0:
+            print(f"  Transcript entries 已存在: {video_id}，跳过创建")
+            return
+
         for i, entry in enumerate(entries, 1):
             transcript_id = f"t{video_id}_{i}"
             words_data = entry.get("words", {})
@@ -220,7 +196,7 @@ async def insert_transcripts(video_id: str, entries: list[dict]):
             )
             session.add(transcript)
         await session.commit()
-    print(f"  {len(entries)} transcript entries inserted")
+    print(f"  {len(entries)} transcript entries 已创建")
 
 
 def _load_words_json(path: str | None) -> list[dict] | None:
@@ -243,6 +219,38 @@ def fmt_duration(entries: list[dict]) -> str:
     mm = total // 60
     ss = total % 60
     return f"{mm:02d}:{ss:02d}"
+
+
+def _upload_file_to_r2(filepath: str, key: str) -> str | None:
+    from core.r2 import upload_by_key
+
+    ext = os.path.splitext(filepath)[1].lstrip(".").lower()
+    with open(filepath, "rb") as f:
+        data = f.read()
+    try:
+        return upload_by_key(key, data, ext)
+    except Exception as e:
+        print(f"  R2 上传失败: {e}")
+        return None
+
+
+async def _ensure_r2_file(filepath: str, key: str, timeout: int = 300) -> str | None:
+    from core.r2 import file_exists_in_r2
+
+    existing = file_exists_in_r2(key)
+    if existing:
+        print(f"  R2 已存在: {key}")
+        return existing
+
+    print(f"  上传到 R2: {key}")
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(_upload_file_to_r2, filepath, key),
+            timeout=timeout,
+        )
+    except asyncio.TimeoutError:
+        print(f"  R2 上传超时 ({timeout}s): {key}")
+        return None
 
 
 async def import_video(
@@ -321,41 +329,26 @@ async def import_video(
         thumb_url = thumb_path or ""
         print("Skipping R2 upload (--no-upload)")
     else:
-        print(f"Uploading video to R2: {video_path}")
-        try:
-            video_url = await asyncio.wait_for(
-                asyncio.to_thread(upload_to_r2, video_path, "videos", video_id),
-                timeout=600,
-            )
-        except asyncio.TimeoutError:
-            print("ERROR: video upload timed out (600s)")
-            return False
+        video_ext = os.path.splitext(video_path)[1].lstrip(".").lower()
+        video_key = f"videos/{video_id}.{video_ext}"
+        video_url = await _ensure_r2_file(video_path, video_key, timeout=600)
         if video_url is None:
             print("ERROR: video upload failed")
             return False
-        print(f"  Video URL: {video_url}")
 
         thumb_url = ""
         if thumb_path:
-            print(f"Uploading thumbnail to R2: {thumb_path}")
-            try:
-                thumb_url = await asyncio.wait_for(
-                    asyncio.to_thread(upload_to_r2, thumb_path, "thumbnails", video_id),
-                    timeout=60,
-                ) or ""
-            except asyncio.TimeoutError:
-                print("  Thumbnail upload timed out")
-                thumb_url = ""
-            if thumb_url:
-                print(f"  Thumbnail URL: {thumb_url}")
-            else:
+            thumb_ext = os.path.splitext(thumb_path)[1].lstrip(".").lower()
+            thumb_key = f"thumbnails/{video_id}.{thumb_ext}"
+            thumb_url = await _ensure_r2_file(thumb_path, thumb_key, timeout=60) or ""
+            if not thumb_url:
                 print("  Thumbnail upload failed, continuing without it")
 
     duration = fmt_duration(entries)
-    print(f"\nInserting into database...")
+    print(f"\n检查数据库...")
     print(f"  Duration: {duration} (from last subtitle timestamp)")
 
-    await insert_video_record(
+    await _upsert_video_record(
         video_id=video_id,
         title=title,
         video_url=video_url,
@@ -370,7 +363,7 @@ async def import_video(
         category=category,
     )
 
-    await insert_transcripts(video_id, entries)
+    await _upsert_transcripts(video_id, entries)
 
     print(f"\n{'='*60}")
     print(f"Import complete!")

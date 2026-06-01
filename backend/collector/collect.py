@@ -710,7 +710,7 @@ async def run(args):
     tags = meta.get("tags") or []
     category = args.category or ""
     if tags:
-        tag = ",".join(tags[:5])
+        tag = ",".join(tags[:3])
     elif category:
         tag = category
         print(f"  标签为空，使用分类作为标签: {tag}")

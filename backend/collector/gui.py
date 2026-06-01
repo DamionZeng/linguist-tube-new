@@ -250,7 +250,7 @@ class CollectorApp:
             self._log(f"  时长: {meta['duration']}")
             tags = meta.get("tags") or []
             if tags:
-                tag = ",".join(tags[:5])
+                tag = ",".join(tags[:3])
             elif category:
                 tag = category
                 self._log(f"  标签为空，使用分类作为标签: {tag}")
