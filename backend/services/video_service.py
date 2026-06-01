@@ -68,6 +68,13 @@ async def get_transcripts(video_id: str, user_id: int | None = None) -> list[dic
                 except (json.JSONDecodeError, TypeError):
                     pass
 
+            words = {}
+            if t.words_json:
+                try:
+                    words = json.loads(t.words_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
             items.append({
                 "id": t.id,
                 "startTime": t.start_time,
@@ -75,6 +82,7 @@ async def get_transcripts(video_id: str, user_id: int | None = None) -> list[dic
                 "en": t.en_text,
                 "zh": t.zh_text,
                 "highlights": highlights,
+                "words": words,
                 "isFavorite": t.id in fav_sentence_ids,
             })
 

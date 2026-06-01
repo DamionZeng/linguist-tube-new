@@ -33,6 +33,7 @@ class Transcript(Base):
     en_text: Mapped[str] = mapped_column(Text, nullable=False)
     zh_text: Mapped[str] = mapped_column(Text, nullable=False)
     highlights_json: Mapped[str] = mapped_column(Text, nullable=True)
+    words_json: Mapped[str] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
     video = relationship("Video", back_populates="transcripts")

@@ -206,6 +206,7 @@ async def insert_transcripts(video_id: str, entries: list[dict]):
     async with session_factory() as session:
         for i, entry in enumerate(entries, 1):
             transcript_id = f"t{video_id}_{i}"
+            words_data = entry.get("words", {})
             transcript = Transcript(
                 id=transcript_id,
                 video_id=video_id,
@@ -214,11 +215,23 @@ async def insert_transcripts(video_id: str, entries: list[dict]):
                 en_text=entry["en"],
                 zh_text=entry["zh"],
                 highlights_json=json.dumps([]),
+                words_json=json.dumps(words_data, ensure_ascii=False) if words_data else None,
                 sort_order=i,
             )
             session.add(transcript)
         await session.commit()
     print(f"  {len(entries)} transcript entries inserted")
+
+
+def _load_words_json(path: str | None) -> list[dict] | None:
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else None
+    except (json.JSONDecodeError, IOError):
+        return None
 
 
 def fmt_duration(entries: list[dict]) -> str:
@@ -237,6 +250,7 @@ async def import_video(
     srt_path: str | None = None,
     en_srt_path: str | None = None,
     zh_srt_path: str | None = None,
+    en_words_path: str | None = None,
     thumb_path: str | None = None,
     video_id: str = "",
     title: str = "",
@@ -294,6 +308,13 @@ async def import_video(
                 "zh": "",
             } for e in en_entries]
     print(f"  Parsed {len(entries)} subtitle entries")
+
+    en_words_list = _load_words_json(en_words_path) if en_words_path else None
+    for i, entry in enumerate(entries):
+        words_data = {}
+        if en_words_list and i < len(en_words_list):
+            words_data["en"] = en_words_list[i].get("words", [])
+        entry["words"] = words_data
 
     if no_upload:
         video_url = video_path

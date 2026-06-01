@@ -18,7 +18,6 @@ import asyncio
 import json
 import os
 import re
-import shutil
 import sys
 import time
 import urllib.request
@@ -100,6 +99,70 @@ def _load_cached_srt(path: Path) -> Optional[list[dict]]:
         return None
 
 
+def _parse_srt_segments(path: Path) -> list[dict]:
+    content = path.read_text(encoding="utf-8")
+    pat = re.compile(
+        r"(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*\n(.*?)(?=\n\n|\n*$)",
+        re.DOTALL,
+    )
+    matches = pat.findall(content)
+    result = []
+    for start_raw, end_raw, text in matches:
+        ss = _srt_time_to_seconds(start_raw)
+        es = _srt_time_to_seconds(end_raw)
+        dur = es - ss
+        if dur <= 0:
+            continue
+        result.append({"start": ss, "duration": dur, "text": text.strip()})
+    return result
+
+
+def _parse_json3_events(data: dict) -> Optional[list[dict]]:
+    events = data.get("events") or []
+    if not events:
+        return None
+
+    segments = []
+    for ev in events:
+        segs = ev.get("segs") or []
+        if not segs:
+            continue
+        t_start = ev.get("tStartMs", 0) / 1000.0
+        words = []
+        for s in segs:
+            utf8_text = s.get("utf8", "").strip()
+            if not utf8_text:
+                continue
+            offset_ms = s.get("tOffsetMs")
+            if offset_ms is None:
+                continue
+            word_start = t_start + offset_ms / 1000.0
+            words.append({
+                "text": utf8_text,
+                "start": round(word_start, 3),
+                "end": round(word_start + 0.3, 3),
+            })
+        if not words:
+            continue
+        for j in range(len(words)):
+            if j + 1 < len(words):
+                words[j]["end"] = words[j + 1]["start"]
+            else:
+                words[j]["end"] = round(words[j]["start"] + 0.4, 3)
+        segments.append({
+            "start": round(t_start, 3),
+            "end": round(words[-1]["end"], 3) if words else round(t_start + 1.0, 3),
+            "words": words,
+        })
+    return segments if segments else None
+
+
+def _srt_time_to_seconds(ts: str) -> float:
+    ts = ts.replace(",", ".")
+    h, m, s = ts.split(":")
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+
 def _load_cached_meta(path: Path, expected_video_id: str) -> Optional[dict]:
     if not _file_exists(path):
         return None
@@ -126,58 +189,7 @@ def save_id(num: int):
     ID_FILE.write_text(json.dumps({"next_num": num + 1}), encoding="utf-8")
 
 
-# ═══════════════════════════  Phase 2: 字幕 — EN 检测  ═══════════════════════════
-
-def fetch_en_transcript(video_id: str) -> Optional[list[dict]]:
-    from youtube_transcript_api import YouTubeTranscriptApi as YTA
-
-    for lang in ["en", "en-US", "en-GB"]:
-        try:
-            t = YTA().fetch(video_id, languages=[lang])
-            if t is not None and len(t) > 0:
-                print(f"  EN 字幕 (原生): {len(t)} 条 ({lang})")
-                return [{"start": s.start, "duration": s.duration, "text": s.text} for s in t]
-        except Exception:
-            pass
-
-    import yt_dlp
-    tmp = OUTPUT_BASE / "_en_check"
-    tmp.mkdir(parents=True, exist_ok=True)
-    try:
-        opts = {"writesubtitles": True, "writeautomaticsub": True,
-                "subtitleslangs": ["en"], "subtitlesformat": "vtt",
-                "skip_download": True, "outtmpl": str(tmp / "%(id)s"),
-                "quiet": True, "no_warnings": True}
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
-        for f in tmp.glob("*.vtt"):
-            segs = _parse_vtt(str(f))
-            if segs:
-                print(f"  EN 字幕 (yt-dlp): {len(segs)} 条")
-                return segs
-    except Exception:
-        pass
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-    return None
-
-
-# ═══════════════════════════  Phase 3: 字幕 — ZH (原生 / 翻译)  ═══════════════════════════
-
-def fetch_zh_transcript(video_id: str) -> Optional[list[dict]]:
-    from youtube_transcript_api import YouTubeTranscriptApi as YTA
-
-    for lang in ["zh", "zh-Hans", "zh-Hant", "zh-CN", "zh-TW"]:
-        try:
-            t = YTA().fetch(video_id, languages=[lang])
-            if t is not None and len(t) > 0:
-                print(f"  ZH 字幕 (原生): {len(t)} 条 ({lang})")
-                return [{"start": s.start, "duration": s.duration, "text": s.text} for s in t]
-        except Exception:
-            pass
-    return None
-
+# ═══════════════════════════  Phase 2: 字幕 — ZH (翻译)  ═══════════════════════════
 
 def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
     from deep_translator import GoogleTranslator
@@ -222,6 +234,181 @@ def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
 
     print(f"  ZH 字幕 (翻译): {len(zh_segments)} 条")
     return zh_segments
+
+
+# ═══════════════════════════  Phase 3: 词级字幕  ═══════════════════════════
+
+
+def fetch_word_level_transcript(video_id: str, lang: str) -> Optional[list[dict]]:
+    import yt_dlp
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = _fetch_json3_via_ytdlp(video_id, lang, tmpdir)
+        if result:
+            return result
+
+        vtt_path = _download_subtitle_vtt(video_id, lang, tmpdir)
+        if vtt_path:
+            segments = _parse_vtt_to_segments(vtt_path)
+            if segments:
+                print(f"  {lang} 词级: VTT 估算 ({len(segments)} 段)")
+                return _estimate_word_level_from_segments(segments)
+
+    return None
+
+
+def _fetch_json3_via_ytdlp(video_id: str, lang: str, tmpdir: str) -> Optional[list[dict]]:
+    import yt_dlp
+
+    tried = set()
+    for fmt in ["json3", "srv3", "srv2", "srv1"]:
+        if fmt in tried:
+            continue
+        tried.add(fmt)
+        try:
+            opts = {
+                "writesubtitles": True,
+                "writeautomaticsub": True,
+                "subtitleslangs": [lang],
+                "subtitlesformat": fmt,
+                "skip_download": True,
+                "outtmpl": f"{tmpdir}/%(id)s",
+                "quiet": True,
+                "no_warnings": True,
+            }
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+        except Exception:
+            continue
+
+        for f in Path(tmpdir).glob("*"):
+            raw = f.read_text(encoding="utf-8", errors="ignore").strip()
+            if not raw or raw[0] != "{":
+                continue
+            try:
+                data = json.loads(raw)
+                parsed = _parse_json3_events(data)
+                if parsed:
+                    return parsed
+            except json.JSONDecodeError:
+                continue
+        for p in Path(tmpdir).iterdir():
+            p.unlink(missing_ok=True)
+
+    return None
+
+
+def _download_subtitle_vtt(video_id: str, lang: str, tmpdir: str) -> Optional[str]:
+    import yt_dlp
+
+    try:
+        opts = {
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": [lang],
+            "subtitlesformat": "vtt",
+            "skip_download": True,
+            "outtmpl": f"{tmpdir}/%(id)s",
+            "quiet": True,
+            "no_warnings": True,
+        }
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+    except Exception:
+        return None
+
+    for f in Path(tmpdir).glob("*.vtt"):
+        return str(f)
+    for f in Path(tmpdir).glob("*"):
+        content = f.read_text(encoding="utf-8", errors="ignore")[:200]
+        if "WEBVTT" in content or "-->" in content:
+            return str(f)
+    return None
+
+
+def _parse_vtt_to_segments(vtt_path: str) -> list[dict]:
+    content = Path(vtt_path).read_text(encoding="utf-8", errors="ignore")
+    pat = re.compile(
+        r"(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})\s*\n(.*?)(?=\n\n|\n*$)",
+        re.DOTALL,
+    )
+    matches = pat.findall(content)
+    if len(matches) < 2:
+        pat2 = re.compile(
+            r"(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3}).*?\n(.*?)(?=\n\d|\n*$)",
+            re.DOTALL,
+        )
+        matches = pat2.findall(content)
+
+    result = []
+    for start_raw, end_raw, text in matches:
+        clean_text = re.sub(r"<[^>]+>", "", text).strip()
+        if not clean_text:
+            continue
+        sp = start_raw.split(":")
+        ep = end_raw.split(":")
+        ss = int(sp[0]) * 3600 + int(sp[1]) * 60 + float(sp[2])
+        es = int(ep[0]) * 3600 + int(ep[1]) * 60 + float(ep[2])
+        dur = es - ss
+        if dur <= 0:
+            dur = 0.5
+        result.append({"start": ss, "duration": dur, "text": clean_text})
+    return result
+
+
+def _estimate_word_level_from_segments(segments: list[dict]) -> list[dict]:
+    result = []
+    for seg in segments:
+        text = seg["text"].strip()
+        if not text:
+            continue
+        word_list = text.split()
+        if not word_list:
+            continue
+        seg_start = seg["start"]
+        seg_end = seg["start"] + seg["duration"]
+        total_chars = sum(len(w) for w in word_list)
+        if total_chars == 0:
+            continue
+        words = []
+        cursor = seg_start
+        for w in word_list:
+            w_dur = (len(w) / total_chars) * seg["duration"]
+            w_end = cursor + max(w_dur, 0.05)
+            words.append({
+                "text": w,
+                "start": round(cursor, 3),
+                "end": round(min(w_end, seg_end), 3),
+            })
+            cursor = w_end
+        if words:
+            words[-1]["end"] = round(seg_end, 3)
+        result.append({
+            "start": round(seg_start, 3),
+            "end": round(seg_end, 3),
+            "words": words,
+        })
+    return result
+
+
+def synthesize_segments_from_word_level(word_segments: list[dict], lang: str = "en") -> list[dict]:
+    result = []
+    for ws in word_segments:
+        words = ws.get("words", [])
+        if not words:
+            continue
+        if lang.startswith("zh"):
+            text = "".join(w["text"] for w in words)
+        else:
+            text = " ".join(w["text"] for w in words)
+        start = ws["start"]
+        end = ws["end"]
+        duration = end - start
+        if duration <= 0:
+            continue
+        result.append({"start": start, "duration": duration, "text": text})
+    return result
 
 
 # ═══════════════════════════  Phase 4: 元信息 & 媒体  ═══════════════════════════
@@ -320,6 +507,40 @@ def download_video(url: str, output_dir: Path, quality: Optional[str]) -> Option
 
 # ═══════════════════════════  Phase 5: SRT 生成  ═══════════════════════════
 
+_SOUND_TAGS = re.compile(
+    r"\[Music\]|\[音乐\]|\[Applause\]|\[掌声\]|\[Laughter\]|\[笑声\]|"
+    r"\[Background\s+Noise\]|\[背景噪音\]|\[Cheering\]|\[欢呼\]|"
+    r"\[Crowd\s+Noise\]|\[人群噪音\]",
+    re.IGNORECASE,
+)
+_LT_GT_TAGS = re.compile(r"\s*&lt;\s*\d+\s*&gt;\s*")
+_ANGLE_BRACKET_TAGS = re.compile(r"\s*>>\s*")
+_MULTI_SPACE = re.compile(r"\s+")
+
+
+def clean_text(text: str) -> str:
+    text = _SOUND_TAGS.sub("", text)
+    text = _LT_GT_TAGS.sub(" ", text)
+    text = _ANGLE_BRACKET_TAGS.sub(" ", text)
+    text = _MULTI_SPACE.sub(" ", text)
+    return text.strip()
+
+
+def normalize_segments(segments: list[dict]) -> list[dict]:
+    result = []
+    for i, seg in enumerate(segments):
+        end = seg["start"] + seg["duration"]
+        if i + 1 < len(segments):
+            next_start = segments[i + 1]["start"]
+            if end > next_start:
+                end = next_start
+        duration = end - seg["start"]
+        if duration <= 0:
+            continue
+        result.append({"start": seg["start"], "duration": duration, "text": seg["text"]})
+    return result
+
+
 def _seconds_to_srt(seconds: float) -> str:
     h, r = divmod(int(seconds), 3600)
     m, s = divmod(r, 60)
@@ -329,69 +550,40 @@ def _seconds_to_srt(seconds: float) -> str:
 
 def segments_to_srt(segments: list[dict]) -> str:
     lines = []
-    for i, seg in enumerate(segments, 1):
-        lines.append(str(i))
+    idx = 0
+    for seg in segments:
+        text = clean_text(seg["text"])
+        if not text:
+            continue
+        idx += 1
+        lines.append(str(idx))
         lines.append(f"{_seconds_to_srt(seg['start'])} --> {_seconds_to_srt(seg['start'] + seg['duration'])}")
-        lines.append(seg["text"].replace("\n", " "))
+        lines.append(text)
         lines.append("")
     return "\n".join(lines)
 
 
 def merge_to_bilingual_srt(en_segments: list[dict], zh_segments: list[dict]) -> str:
-    zh_idx, zh_len = 0, len(zh_segments)
+    count = min(len(en_segments), len(zh_segments))
     lines = []
-    for i, en in enumerate(en_segments, 1):
+    idx = 0
+    for i in range(count):
+        en = en_segments[i]
+        zh = zh_segments[i]
+        en_text = clean_text(en["text"])
+        zh_text = clean_text(zh["text"])
+        if not en_text and not zh_text:
+            continue
         en_start, en_end = en["start"], en["start"] + en["duration"]
-        while zh_idx < zh_len:
-            if zh_segments[zh_idx]["start"] + zh_segments[zh_idx]["duration"] <= en_start:
-                zh_idx += 1
-            else:
-                break
-        zh_parts = []
-        si = zh_idx
-        while si < zh_len and zh_segments[si]["start"] < en_end:
-            zh_parts.append(zh_segments[si]["text"])
-            si += 1
-        zh_text = " ".join(zh_parts)
-        text_block = f"{en['text'].replace(chr(10), ' ')}\n{zh_text}" if zh_text else en["text"].replace("\n", " ")
-        lines.append(str(i))
-        lines.append(f"{_seconds_to_srt(en_start)} --> {_seconds_to_srt(en_end)}")
-        lines.append(text_block)
+        zh_start, zh_end = zh["start"], zh["start"] + zh["duration"]
+        start = min(en_start, zh_start)
+        end = max(en_end, zh_end)
+        idx += 1
+        lines.append(str(idx))
+        lines.append(f"{_seconds_to_srt(start)} --> {_seconds_to_srt(end)}")
+        lines.append(f"{en_text}\n{zh_text}")
         lines.append("")
     return "\n".join(lines)
-
-
-def _parse_vtt(filepath: str) -> list[dict]:
-    if not os.path.exists(filepath):
-        return []
-    content = Path(filepath).read_text(encoding="utf-8")
-
-    pat = re.compile(
-        r"(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})\s*\n(.*?)(?=\n\n|\n*$)",
-        re.DOTALL,
-    )
-    matches = pat.findall(content)
-    if len(matches) < 2:
-        pat2 = re.compile(
-            r"(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3}).*?\n(.*?)(?=\n\d|\n*$)",
-            re.DOTALL,
-        )
-        matches = pat2.findall(content)
-
-    result = []
-    for start_raw, end_raw, text in matches:
-        clean = re.sub(r"<[^>]+>", "", text).strip()
-        if not clean:
-            continue
-        sp = start_raw.split(":")
-        ep = end_raw.split(":")
-        ss = int(sp[0]) * 3600 + int(sp[1]) * 60 + float(sp[2])
-        es = int(ep[0]) * 3600 + int(ep[1]) * 60 + float(ep[2])
-        dur = es - ss
-        if dur <= 0:
-            dur = 0.5
-        result.append({"start": ss, "duration": dur, "text": clean})
-    return result
 
 
 # ═══════════════════════════  Phase 6: 自动入库  ═══════════════════════════
@@ -408,6 +600,7 @@ async def do_import(
     youtube_video_id: str,
     description: str,
     category: str,
+    en_words_path: Optional[Path] = None,
 ):
     from collector.import_video import import_video
 
@@ -441,6 +634,7 @@ async def do_import(
             youtube_video_id=youtube_video_id,
             description=description,
             category=category,
+            en_words_path=str(en_words_path) if en_words_path and en_words_path.exists() else None,
         )
         return success
     except Exception as e:
@@ -471,29 +665,35 @@ async def run(args):
     cached_meta = _load_cached_meta(info_path, video_id)
 
     print(f"\n{'='*60}")
-    print("Phase 1/5: 检测英文字幕...")
+    print("Phase 1/5: 英文字幕...")
     en_segments = None
+    en_words_segments = None
     if _load_cached_srt(en_srt_path):
         print(f"  已有 en.srt，跳过英文字幕获取")
-        en_segments = True
+        en_segments = _parse_srt_segments(en_srt_path)
     else:
-        en_segments = fetch_en_transcript(video_id)
-        if not en_segments:
-            print("ERROR: 该视频没有英文字幕，无法继续。")
+        en_words_segments = fetch_word_level_transcript(video_id, "en")
+        if not en_words_segments:
+            print("ERROR: 该视频没有英文词级字幕，无法继续。")
             sys.exit(1)
+        print(f"  EN 词级字幕: {len(en_words_segments)} 段")
+        en_segments = synthesize_segments_from_word_level(en_words_segments, "en")
+        print(f"  合成 EN segments: {len(en_segments)} 条")
 
     print(f"\n{'='*60}")
-    print("Phase 2/5: 获取中文字幕...")
+    print("Phase 2/5: 中文字幕...")
     zh_segments = None
     if _load_cached_srt(zh_srt_path):
         print(f"  已有 zh.srt，跳过中文字幕获取")
-        zh_segments = True
+        zh_segments = _parse_srt_segments(zh_srt_path)
     else:
-        zh_segments = fetch_zh_transcript(video_id)
-        if zh_segments:
-            print(f"  ZH 字幕: {len(zh_segments)} 条 (原生)")
+        zh_words_segments = fetch_word_level_transcript(video_id, "zh-Hans")
+        if zh_words_segments:
+            print(f"  ZH 词级字幕: {len(zh_words_segments)} 段")
+            zh_segments = synthesize_segments_from_word_level(zh_words_segments, "zh-Hans")
+            print(f"  合成 ZH segments: {len(zh_segments)} 条")
         else:
-            print("  无原生中文字幕，启动 EN→ZH 翻译...")
+            print("  无中文词级字幕，启动 EN→ZH 翻译...")
             zh_segments = translate_en_to_zh(en_segments)
 
     print(f"\n{'='*60}")
@@ -545,21 +745,32 @@ async def run(args):
     print(f"\n{'='*60}")
     print("Phase 4/5: 生成 SRT 文件...")
 
+    en_normalized = normalize_segments(en_segments)
+    zh_normalized = normalize_segments(zh_segments)
+
     if not _load_cached_srt(en_srt_path):
-        en_srt_path.write_text(segments_to_srt(en_segments), encoding="utf-8")
-        print(f"  en.srt: {len(en_segments)} 条")
+        en_srt_path.write_text(segments_to_srt(en_normalized), encoding="utf-8")
+        print(f"  en.srt: {len(en_normalized)} 条")
     else:
         print(f"  en.srt: 已存在，跳过生成")
 
     if not _load_cached_srt(zh_srt_path):
-        zh_srt_path.write_text(segments_to_srt(zh_segments), encoding="utf-8")
-        print(f"  zh.srt: {len(zh_segments)} 条")
+        zh_srt_path.write_text(segments_to_srt(zh_normalized), encoding="utf-8")
+        print(f"  zh.srt: {len(zh_normalized)} 条")
     else:
         print(f"  zh.srt: 已存在，跳过生成")
 
+    en_words_path = output_dir / "en.words.json"
+
+    if not en_words_path.exists() and en_words_segments:
+        en_words_path.write_text(json.dumps(en_words_segments, ensure_ascii=False), encoding="utf-8")
+        print(f"  en.words.json: {len(en_words_segments)} 段")
+    elif en_words_path.exists():
+        print(f"  en.words.json: 已存在，跳过生成")
+
     if not _load_cached_srt(bilingual_srt_path):
-        bilingual_srt_path.write_text(merge_to_bilingual_srt(en_segments, zh_segments), encoding="utf-8")
-        print(f"  bilingual.srt: {len(en_segments)} 条")
+        bilingual_srt_path.write_text(merge_to_bilingual_srt(en_normalized, zh_normalized), encoding="utf-8")
+        print(f"  bilingual.srt: {len(en_normalized)} 条")
     else:
         print(f"  bilingual.srt: 已存在，跳过生成")
 
@@ -608,6 +819,7 @@ async def run(args):
         youtube_video_id=video_id,
         description=description,
         category=category,
+        en_words_path=en_words_path,
     )
 
     from core.database import dispose_engine
