@@ -88,7 +88,10 @@ const resources = {
         sizeSmall: "Small",
         sizeStandard: "Standard",
         sizeMedium: "Medium",
-        sizeLarge: "Large"
+        sizeLarge: "Large",
+        hideMask: "Mask Overlay",
+        videoCaptions: "Video Captions",
+        vocabHighlight: "Vocab Highlight"
       },
       library: {
         vip: "VIP Member",
@@ -173,7 +176,7 @@ const resources = {
         processing: "处理中...",
         favorited: "已收藏",
         favorite: "收藏",
-        saved: "已加入",
+        saved: "已加入生词本",
         saveToVocab: "生词本",
         vipContent: "VIP 专属内容",
         vipDesc: "此视频仅限 VIP 会员观看。请使用 VIP 账号登录以继续学习。",
@@ -192,7 +195,10 @@ const resources = {
         sizeSmall: "小号",
         sizeStandard: "标准",
         sizeMedium: "中号",
-        sizeLarge: "大号"
+        sizeLarge: "大号",
+        hideMask: "遮罩板",
+        videoCaptions: "视频字幕",
+        vocabHighlight: "生词标注"
       },
       library: {
         vip: "VIP会员",

@@ -54,13 +54,15 @@ interface WordModalProps {
   onClose: () => void;
   word: string;
   onWordSaved?: (word: string) => void;
+  savedWords?: string[];
 }
 
-export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onWordSaved }) => {
+export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onWordSaved, savedWords = [] }) => {
   const { t } = useTranslation();
   const [details, setDetails] = useState<WordLookupData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isWordSaved, setIsWordSaved] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFavoriting, setIsFavoriting] = useState(false);
   const [showPhrases, setShowPhrases] = useState(false);
@@ -75,6 +77,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
       setShowSynonyms(false);
       setShowRelWords(false);
       setSentenceIndex(0);
+      setIsWordSaved(savedWords.includes(word.toLowerCase()));
 
       fetchWordLookup(word)
         .then(data => {
@@ -90,7 +93,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
     } else {
       setDetails(null);
     }
-  }, [isOpen, word]);
+  }, [isOpen, word, savedWords]);
 
   if (!isOpen) return null;
 
@@ -114,7 +117,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
   };
 
   const handleSaveToVocab = async () => {
-    if (!details) return;
+    if (!details || isWordSaved) return;
     setIsSaving(true);
     try {
       await addVocabularyWord({
@@ -126,6 +129,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
         example: details.sentences[0]?.s_content || '',
         exampleTrans: details.sentences[0]?.s_cn || '',
       });
+      setIsWordSaved(true);
       if (onWordSaved) onWordSaved(details.word);
     } catch (e) {
     } finally {
@@ -158,15 +162,15 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
     <>
       <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60] transition-opacity" onClick={onClose} />
       <div className="fixed bottom-0 left-0 right-0 max-w-3xl mx-auto bg-white rounded-t-[24px] z-[70] shadow-2xl transform transition-transform animate-in slide-in-from-bottom-full overflow-hidden flex flex-col max-h-[75vh]">
-        <div className="flex justify-center pt-2 pb-1.5 cursor-pointer" onClick={onClose}>
+        <div className="flex justify-center pt-1.5 pb-1 cursor-pointer" onClick={onClose}>
           <div className="w-10 h-1 bg-[#E0E0D5] rounded-full" />
         </div>
 
-        <button onClick={onClose} className="absolute top-3 right-3 p-1.5 text-[#8A8A7A] hover:bg-[#F5F5F0] rounded-full transition-colors">
-          <X className="w-5 h-5" />
+        <button onClick={onClose} className="absolute top-2.5 right-3 p-1 text-[#8A8A7A] hover:bg-[#F5F5F0] rounded-full transition-colors">
+          <X className="w-4 h-4" />
         </button>
 
-        <div className="p-5 md:p-6 overflow-y-auto w-full min-h-[25vh]">
+        <div className="p-4 overflow-y-auto w-full min-h-[25vh]">
           {loading || !details ? (
             <div className="flex items-center justify-center min-h-[25vh]">
               <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
@@ -174,9 +178,9 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
           ) : (
             <div className="animate-in fade-in duration-300">
               {/* Word Header */}
-              <div className="flex flex-col gap-2 mb-5 pb-5 border-b border-[#E0E0D5]/50">
-                <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                  <h2 className="text-3xl font-bold text-[#4A4A40] tracking-tight">{details.word}</h2>
+              <div className="flex flex-col gap-1.5 mb-3 pb-3 border-b border-[#E0E0D5]/50">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <h2 className="text-xl font-bold text-[#4A4A40] tracking-tight">{details.word}</h2>
                   <div className="flex shrink-0 gap-2">
                     {details.ukspeech && (
                       <button
@@ -209,12 +213,12 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
 
               {/* Translations */}
               {details.translations.length > 0 && (
-                <div className="mb-6 pl-0.5">
-                  <div className="flex flex-col gap-2.5">
+                <div className="mb-4 pl-0.5">
+                  <div className="flex flex-col gap-1.5">
                     {details.translations.map((tr, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
+                      <div key={i} className="flex items-start gap-2">
                         <span className="text-[10px] text-[#94A684] font-bold uppercase tracking-wider bg-[#F2F5F0] px-1.5 py-0.5 rounded shrink-0 mt-0.5">{tr.pos}</span>
-                        <span className="text-[15px] text-[#4A4A40] font-medium leading-relaxed">{tr.tran_cn}</span>
+                        <span className="text-sm text-[#4A4A40] font-medium leading-relaxed">{tr.tran_cn}</span>
                       </div>
                     ))}
                   </div>
@@ -223,9 +227,9 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
 
               {/* Sentences with navigation */}
               {details.sentences.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2.5 border-b-2 border-[#F5F5F0] pb-2">
-                    <div className="flex items-center gap-1.5 text-[#6A6A5A] font-bold text-xs tracking-wide">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#F5F5F0]">
+                    <div className="flex items-center gap-1.5 text-[#6A6A5A] font-bold text-[11px] tracking-wide">
                       <ScrollText className="w-3.5 h-3.5 text-[#D48166]" />
                       <span>{t('video.subtitleExample')} {totalSentences > 1 && <span className="text-[#8A8A7A] font-normal ml-0.5">({sentenceIndex + 1}/{totalSentences})</span>}</span>
                     </div>
@@ -248,10 +252,10 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
                       </div>
                     )}
                   </div>
-                  <div className="bg-[#F9F9F7] border border-[#EAEAE0] p-4 rounded-xl relative overflow-hidden group">
+                  <div className="bg-[#F9F9F7] border border-[#EAEAE0] p-3 rounded-xl relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-[#94A684]/60" />
-                    <p className="text-[14px] font-serif text-[#4A4A40] mb-2 leading-relaxed">{details.sentences[sentenceIndex]?.s_content}</p>
-                    <p className="text-[13px] text-[#6A6A5A] leading-relaxed">{details.sentences[sentenceIndex]?.s_cn}</p>
+                    <p className="text-[13px] font-serif text-[#4A4A40] mb-1.5 leading-relaxed">{details.sentences[sentenceIndex]?.s_content}</p>
+                    <p className="text-xs text-[#6A6A5A] leading-relaxed">{details.sentences[sentenceIndex]?.s_cn}</p>
                     <button
                       onClick={handleFavoriteSentence}
                       disabled={isFavoriting || details.sentences.length === 0}
@@ -267,17 +271,18 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-2.5 pt-2 border-t border-[#E0E0D5]/50 pb-2 flex-col sm:flex-row">
+              <div className="flex gap-2 pt-2 border-t border-[#E0E0D5]/50 pb-1 flex-col sm:flex-row">
                 <button
                   onClick={handleSaveToVocab}
-                  disabled={isSaving}
-                  className={`flex-[2] py-3 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 
-                             bg-[#5A5A40] hover:bg-[#4A4A40] text-white shadow-md shadow-[#5A5A40]/10
-                             hover:shadow-lg hover:shadow-[#5A5A40]/20 active:scale-95
+                  disabled={isSaving || isWordSaved}
+                  className={`flex-[2] py-2.5 rounded-lg font-semibold text-[13px] transition-all flex items-center justify-center gap-2 
+                             ${isWordSaved 
+                               ? 'bg-[#94A684] text-white cursor-not-allowed' 
+                               : 'bg-[#5A5A40] hover:bg-[#4A4A40] text-white shadow-md shadow-[#5A5A40]/10 hover:shadow-lg hover:shadow-[#5A5A40]/20 active:scale-95'}
                              ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   <BookOpen className="w-4 h-4" />
-                  {isSaving ? t('video.processing', 'Saving...') : t('video.saveToVocab', 'Save to Vocabulary List')}
+                  {isSaving ? t('video.processing', 'Saving...') : isWordSaved ? t('video.saved', '已加入生词本') : t('video.saveToVocab', 'Save to Vocabulary List')}
                 </button>
               </div>
             </div>
