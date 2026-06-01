@@ -221,7 +221,7 @@ export const VideoLearningPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans">
+    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
         title={videoInfo.title} 
         rightNode={
@@ -289,7 +289,7 @@ export const VideoLearningPage: React.FC = () => {
       </main>
 
       {/* Mobile Action Bar Fixed Bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white" style={{ bottom: 0, paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
          <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} isMaskActive={isMaskActive} toggleMask={() => setIsMaskActive(!isMaskActive)} />
       </div>
 

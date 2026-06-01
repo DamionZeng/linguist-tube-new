@@ -11,7 +11,12 @@ const resources = {
         vocab: "Vocab Book",
         history: "History",
         library: "My Library",
-        search: "Search lessons..."
+        search: "Search lessons...",
+        fullscreen: "Enter Fullscreen",
+        exitFullscreen: "Exit Fullscreen",
+        pullToRefresh: "Pull to Refresh",
+        releaseToRefresh: "Release to Refresh",
+        refreshing: "Refreshing..."
       },
       explore: {
         recommended: "Recommended for You",
@@ -110,7 +115,12 @@ const resources = {
         vocab: "生词本",
         history: "历史记录",
         library: "我的",
-        search: "搜索课程..."
+        search: "搜索课程...",
+        fullscreen: "进入全屏",
+        exitFullscreen: "退出全屏",
+        pullToRefresh: "下拉刷新",
+        releaseToRefresh: "松开刷新",
+        refreshing: "刷新中..."
       },
       explore: {
         recommended: "推荐",

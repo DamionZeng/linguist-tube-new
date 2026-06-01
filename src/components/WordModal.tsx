@@ -166,9 +166,9 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-5 md:p-6 overflow-y-auto w-full">
+        <div className="p-5 md:p-6 overflow-y-auto w-full min-h-[25vh]">
           {loading || !details ? (
-            <div className="flex items-center justify-center p-12 min-h-[25vh]">
+            <div className="flex items-center justify-center min-h-[25vh]">
               <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
             </div>
           ) : (
