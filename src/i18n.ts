@@ -192,7 +192,7 @@ const resources = {
         vocabBuilt: "已记单词",
         perfectDays: "完美打卡",
         signOut: "退出登录",
-        language: "语言要求",
+        language: "语言",
         settings: "设置",
         english: "English",
         chinese: "中文",
@@ -203,12 +203,20 @@ const resources = {
   }
 };
 
+// 自定义语言检测器，确保设置被持久化
+const languageDetector = new LanguageDetector(null, {
+  order: ['localStorage', 'navigator'],
+  caches: ['localStorage'],
+  lookupLocalStorage: 'linguist-tube-language'
+});
+
 i18n
-  .use(LanguageDetector)
+  .use(languageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: 'en',
+    supportedLngs: ['en', 'zh'],
     interpolation: {
       escapeValue: false, 
     }

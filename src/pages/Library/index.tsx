@@ -102,16 +102,16 @@ export const LibraryPage: React.FC = () => {
       {/* Settings / Sign Out Actions */}
       <div className="pt-8 flex flex-col md:flex-row items-center gap-4">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white p-2 rounded-xl flex border border-[#E0E0D5] shadow-sm">
+          <div className="bg-white dark:bg-[#151B25] p-2 rounded-xl flex border border-[#E0E0D5] dark:border-[#1E293B] shadow-sm">
              <button 
                onClick={() => i18n.changeLanguage('en')}
-               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('en') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('en') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] dark:text-[#94A3B8] hover:bg-[#F5F5F0] dark:hover:bg-[#1E293B]'}`}
              >
                <Globe className="w-4 h-4" /> {t('library.english')}
              </button>
              <button 
                onClick={() => i18n.changeLanguage('zh')}
-               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('zh') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] hover:bg-[#F5F5F0]'}`}
+               className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 transition-all ${i18n.language.startsWith('zh') ? 'bg-[#94A684] text-white' : 'text-[#8A8A7A] dark:text-[#94A3B8] hover:bg-[#F5F5F0] dark:hover:bg-[#1E293B]'}`}
              >
                <Globe className="w-4 h-4" /> {t('library.chinese')}
              </button>

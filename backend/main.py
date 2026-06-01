@@ -1,10 +1,9 @@
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from core.config import get_settings
 from core.database import init_db, dispose_engine
@@ -17,7 +16,6 @@ from routers.upload import router as upload_router
 from routers.search import router as search_router
 from routers.word import router as word_router
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +23,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     await init_db()
     yield
-    await dispose_engine()
+    try:
+        await dispose_engine()
+    except Exception:
+        pass
 
 
 app = FastAPI(
@@ -41,24 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
-    logger.error(f"Database error: {str(exc)}")
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"code": 500, "data": None, "message": "Database error occurred"},
-    )
-
-
-@app.exception_handler(DBAPIError)
-async def dbapi_exception_handler(request: Request, exc: DBAPIError):
-    logger.error(f"Database connection error: {str(exc)}")
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"code": 500, "data": None, "message": "Database connection error"},
-    )
 
 
 @app.exception_handler(Exception)
