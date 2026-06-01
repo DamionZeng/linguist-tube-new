@@ -304,6 +304,7 @@ export const VideoLearningPage: React.FC = () => {
              <TranscriptList 
                transcripts={transcripts} 
                currentTime={videoContext.currentTime}
+               activeIndex={videoContext.activeIndex}
                onSeek={videoContext.seek}
                onToggleFavorite={handleToggleFavorite}
                onWordClick={(w) => setSelectedWord(w)}

@@ -7,6 +7,7 @@ import { LangMode } from '../index';
 interface TranscriptListProps {
   transcripts: Transcript[];
   currentTime: number;
+  activeIndex: number;
   onSeek: (time: number) => void;
   onToggleFavorite: (id: string) => void;
   onWordClick: (word: string) => void;
@@ -17,23 +18,9 @@ interface TranscriptListProps {
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, activeIndex, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
-
-  const getActiveIndex = () => {
-    // Determine active transcript based on current time
-    for (let i = 0; i < transcripts.length; i++) {
-       const t = transcripts[i];
-       const start = parseTime(t.startTime);
-       const end = parseTime(t.endTime);
-       // Allow a little slack for the last one or slightly overlapping
-       if (currentTime >= start && currentTime < end) return i;
-    }
-    return -1;
-  };
-
-  const activeIndex = getActiveIndex();
   const prevActiveIndex = useRef(activeIndex);
 
   useEffect(() => {

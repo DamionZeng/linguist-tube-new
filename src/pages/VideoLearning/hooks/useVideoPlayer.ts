@@ -26,6 +26,33 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   // Keep track of the current active transcript index
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const activeIndexRef = useRef<number>(-1);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use a more frequent interval to get the current time when playing
+  useEffect(() => {
+    if (isPlaying && playerRef.current) {
+      // Update current time every 100ms when playing
+      intervalRef.current = setInterval(() => {
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+          const time = playerRef.current.getCurrentTime();
+          if (!isNaN(time)) {
+            setCurrentTime(time);
+          }
+        }
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPlaying]);
 
   useEffect(() => {
     // Find active transcript index based on time
@@ -49,7 +76,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
       }
     }
 
-  }, [currentTime, transcripts, isPlaying]);
+  }, [currentTime, transcripts]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
