@@ -74,7 +74,10 @@ const resources = {
         vipContent: "VIP Content",
         vipDesc: "This video is exclusively available for VIP members. Please login with a VIP account to continue learning.",
         loginNow: "Login Now",
-        goBack: "Go Back"
+        goBack: "Go Back",
+        checkInSuccess: "Checked In!",
+        checkInSuccessDesc: "Awesome! You've made great progress today. Keep up the learning momentum!",
+        continue: "Continue Learning"
       },
       settings: {
         playbackSettings: "Playback Settings",
@@ -107,6 +110,11 @@ const resources = {
         chinese: "中文",
         lightMode: "Light Mode",
         darkMode: "Dark Mode"
+      },
+      checkin: {
+        title: "Check-in Records",
+        noVideos: "No check-in records for this day",
+        checkedIn: "Checked In"
       }
     }
   },
@@ -181,7 +189,10 @@ const resources = {
         vipContent: "VIP 专属内容",
         vipDesc: "此视频仅限 VIP 会员观看。请使用 VIP 账号登录以继续学习。",
         loginNow: "立即登录",
-        goBack: "返回"
+        goBack: "返回",
+        checkInSuccess: "打卡成功！",
+        checkInSuccessDesc: "太棒了！你今天又进步了一点，继续保持学习的热情吧！",
+        continue: "继续学习"
       },
       settings: {
         playbackSettings: "播放设置",
@@ -214,6 +225,11 @@ const resources = {
         chinese: "中文",
         lightMode: "浅色模式",
         darkMode: "深色模式"
+      },
+      checkin: {
+        title: "打卡记录",
+        noVideos: "当天没有打卡记录",
+        checkedIn: "已打卡"
       }
     }
   }

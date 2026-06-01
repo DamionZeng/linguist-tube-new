@@ -8,6 +8,7 @@ class ExploreVideoItem(BaseModel):
     level: str | None = None
     thumb: str | None = None
     tag: str | None = None
+    category: str | None = None
     isVipOnly: bool = False
 
 

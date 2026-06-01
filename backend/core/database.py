@@ -150,3 +150,21 @@ async def init_db():
     async with _get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await _auto_migrate(conn)
+        await _migrate_checkin_constraints(conn)
+
+
+async def _migrate_checkin_constraints(conn):
+    result = await conn.execute(text(
+        "SELECT constraint_name FROM information_schema.table_constraints "
+        "WHERE table_schema = 'public' AND table_name = 'check_ins' AND constraint_type = 'UNIQUE'"
+    ))
+    existing_constraints = {row[0] for row in result}
+
+    if "uq_user_checkin_date" in existing_constraints and "uq_user_checkin_date_video" not in existing_constraints:
+        print("  [Auto-Migrate] Dropping old constraint uq_user_checkin_date from check_ins")
+        await conn.execute(text("ALTER TABLE check_ins DROP CONSTRAINT uq_user_checkin_date"))
+        print("  [Auto-Migrate] Adding new constraint uq_user_checkin_date_video to check_ins")
+        await conn.execute(text(
+            "ALTER TABLE check_ins ADD CONSTRAINT uq_user_checkin_date_video "
+            "UNIQUE (user_id, check_in_date, video_id)"
+        ))

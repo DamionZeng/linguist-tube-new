@@ -10,8 +10,9 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
+import { CelebrationModal } from './components/CelebrationModal';
 import { DisplayMode } from './components/ActionBar';
-import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, isVideoCheckedIn, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
 import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
@@ -40,6 +41,7 @@ export const VideoLearningPage: React.FC = () => {
   const [showVideoCaptions, setShowVideoCaptions] = useState(false);
   const [videoDisplayMode, setVideoDisplayMode] = useState<DisplayMode>('normal');
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const cycleDisplayMode = () => {
     setVideoDisplayMode(prev => prev === 'normal' ? 'hidden' : 'normal');
@@ -130,12 +132,10 @@ export const VideoLearningPage: React.FC = () => {
   }, [videoInfo, Math.floor(videoContext.currentTime / 5), videoContext.duration]); // save every 5 seconds rough
 
   useEffect(() => {
-    const today = getLocalDayStr();
-    const checkIns = getCheckIns();
-    if (checkIns.includes(today)) {
-      setIsCheckedIn(true);
+    if (videoInfo && videoInfo.id) {
+      setIsCheckedIn(isVideoCheckedIn(videoInfo.id));
     }
-  }, []);
+  }, [videoInfo]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -183,8 +183,10 @@ export const VideoLearningPage: React.FC = () => {
   };
 
   const handleCheckIn = () => {
-    addCheckIn();
+    if (isCheckedIn || !videoInfo?.id) return;
+    addCheckIn(videoInfo.id);
     setIsCheckedIn(true);
+    setShowCelebration(true);
   };
 
   const handleToggleVideoFavorite = () => {
@@ -345,6 +347,11 @@ export const VideoLearningPage: React.FC = () => {
         onToggleMask={() => setIsMaskActive(!isMaskActive)}
         showVideoCaptions={showVideoCaptions}
         onToggleVideoCaptions={() => setShowVideoCaptions(!showVideoCaptions)}
+      />
+
+      <CelebrationModal 
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
       />
     </div>
   );
