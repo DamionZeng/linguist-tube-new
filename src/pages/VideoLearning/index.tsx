@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { VideoPlayer } from './components/VideoPlayer';
@@ -10,7 +10,9 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
-import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, getCheckIns, getLocalDayStr, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
+import { CelebrationModal } from './components/CelebrationModal';
+import { DisplayMode } from './components/ActionBar';
+import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, isVideoCheckedIn, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
 import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
@@ -36,7 +38,14 @@ export const VideoLearningPage: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isMaskActive, setIsMaskActive] = useState(false);
+  const [showVideoCaptions, setShowVideoCaptions] = useState(false);
+  const [videoDisplayMode, setVideoDisplayMode] = useState<DisplayMode>('normal');
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  const cycleDisplayMode = () => {
+    setVideoDisplayMode(prev => prev === 'normal' ? 'hidden' : 'normal');
+  };
 
   const cycleLangMode = () => {
     setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : 'bilingual');
@@ -75,6 +84,18 @@ export const VideoLearningPage: React.FC = () => {
 
   const videoContext = useVideoPlayer(transcripts);
 
+  const activeTranscript = useMemo(() => {
+    if (videoContext.activeIndex < 0 || videoContext.activeIndex >= transcripts.length) {
+      return { en: '', zh: '' };
+    }
+    const t = transcripts[videoContext.activeIndex];
+    return { en: t.en, zh: t.zh };
+  }, [videoContext.activeIndex, transcripts]);
+
+  const handleVideoEnded = () => {
+    navigate('/library');
+  };
+
   // Load start time
   const hasSeekedRef = useRef(false);
 
@@ -111,12 +132,10 @@ export const VideoLearningPage: React.FC = () => {
   }, [videoInfo, Math.floor(videoContext.currentTime / 5), videoContext.duration]); // save every 5 seconds rough
 
   useEffect(() => {
-    const today = getLocalDayStr();
-    const checkIns = getCheckIns();
-    if (checkIns.includes(today)) {
-      setIsCheckedIn(true);
+    if (videoInfo && videoInfo.id) {
+      setIsCheckedIn(isVideoCheckedIn(videoInfo.id));
     }
-  }, []);
+  }, [videoInfo]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -164,8 +183,10 @@ export const VideoLearningPage: React.FC = () => {
   };
 
   const handleCheckIn = () => {
-    addCheckIn();
+    if (isCheckedIn || !videoInfo?.id) return;
+    addCheckIn(videoInfo.id);
     setIsCheckedIn(true);
+    setShowCelebration(true);
   };
 
   const handleToggleVideoFavorite = () => {
@@ -221,7 +242,7 @@ export const VideoLearningPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans">
+    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
         title={videoInfo.title} 
         rightNode={
@@ -248,38 +269,49 @@ export const VideoLearningPage: React.FC = () => {
         }
       />
       
-      <main className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden relative">
+      <main className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden relative gap-1 lg:gap-0">
          
-         <div className="flex-none lg:w-[50%] xl:w-[60%] lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10 transition-all">
-            {/* Video Area */}
-            <div className="w-full z-20">
+         {/* Video Area - always rendered so playback continues even when hidden */}
+         <div className={`${
+           videoDisplayMode === 'hidden'
+             ? 'fixed left-[-200vw] top-0'
+             : 'flex-none lg:w-1/2 lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10'
+         } transition-all`}>
+            <div className={`${videoDisplayMode === 'hidden' ? 'w-[640px]' : 'w-full px-3 md:px-5'} z-20`}>
               <VideoPlayer 
                 videoInfo={videoInfo} 
                 {...videoContext} 
                 isMaskActive={isMaskActive} 
                 totalTranscripts={transcripts.length} 
                 onPlayerReady={handlePlayerReady}
+                showVideoCaptions={showVideoCaptions}
+                langMode={langMode}
+                activeTranscriptEn={activeTranscript.en}
+                activeTranscriptZh={activeTranscript.zh}
+                onVideoEnded={handleVideoEnded}
               />
             </div>
 
             {/* Desktop Action Bar */}
+            {videoDisplayMode === 'normal' && (
             <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] shadow-sm bg-white shrink-0">
-              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} isMaskActive={isMaskActive} toggleMask={() => setIsMaskActive(!isMaskActive)} />
+              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} />
             </div>
+            )}
          </div>
 
          {/* Transcript Column - Scrollable */}
-         <div className="flex-1 lg:h-full lg:overflow-hidden relative lg:bg-white lg:rounded-[32px] lg:m-6 lg:ml-0 lg:shadow-sm lg:border border-[#E0E0D5]">
-           <div className="h-full absolute inset-0">
+         <div className={`${videoDisplayMode === 'hidden' ? 'flex-1 w-full' : 'flex-1 lg:flex-none lg:w-1/2'} lg:h-full lg:overflow-hidden relative lg:bg-white rounded-2xl lg:rounded-[32px] lg:m-6 lg:ml-0 lg:shadow-sm lg:border border-[#E0E0D5]`}>
+           <div className="h-full absolute inset-0 lg:rounded-[32px] overflow-hidden">
              <TranscriptList 
                transcripts={transcripts} 
                currentTime={videoContext.currentTime}
+               activeIndex={videoContext.activeIndex}
                onSeek={videoContext.seek}
                onToggleFavorite={handleToggleFavorite}
                onWordClick={(w) => setSelectedWord(w)}
                langMode={langMode}
                showHighlights={showHighlights}
-               isMaskActive={isMaskActive}
                savedWords={savedWords}
                highlightColor={highlightColor}
                subtitleSize={subtitleSize}
@@ -289,8 +321,8 @@ export const VideoLearningPage: React.FC = () => {
       </main>
 
       {/* Mobile Action Bar Fixed Bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white">
-         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} isMaskActive={isMaskActive} toggleMask={() => setIsMaskActive(!isMaskActive)} />
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white" style={{ bottom: 0, paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
+         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} />
       </div>
 
       <WordModal 
@@ -298,6 +330,7 @@ export const VideoLearningPage: React.FC = () => {
         onClose={() => setSelectedWord(null)} 
         word={selectedWord || ''} 
         onWordSaved={(w) => setSavedWords(prev => [...prev, w.toLowerCase()])}
+        savedWords={savedWords}
       />
 
       <PlaybackSettingsModal 
@@ -310,6 +343,15 @@ export const VideoLearningPage: React.FC = () => {
         subtitleSize={subtitleSize}
         onChangeSubtitleSize={setSubtitleSize}
         onDownloadSubtitles={handleDownloadSubtitles}
+        isMaskActive={isMaskActive}
+        onToggleMask={() => setIsMaskActive(!isMaskActive)}
+        showVideoCaptions={showVideoCaptions}
+        onToggleVideoCaptions={() => setShowVideoCaptions(!showVideoCaptions)}
+      />
+
+      <CelebrationModal 
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
       />
     </div>
   );

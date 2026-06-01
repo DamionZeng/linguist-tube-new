@@ -12,7 +12,7 @@ async def get_explore_data() -> dict:
     session_factory = _get_async_session()
     async with session_factory() as session:
         cat_result = await session.execute(select(Category).order_by(Category.id))
-        categories = [c.name for c in cat_result.scalars().all()]
+        categories = ["All"] + [c.name for c in cat_result.scalars().all()]
 
         vid_result = await session.execute(
             select(Video).order_by(Video.sort_order, Video.id)
@@ -26,6 +26,7 @@ async def get_explore_data() -> dict:
                 "level": v.level,
                 "thumb": v.thumb,
                 "tag": v.tag,
+                "category": v.category,
                 "isVipOnly": v.is_vip_only,
             })
 

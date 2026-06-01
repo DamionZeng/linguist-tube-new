@@ -54,4 +54,13 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  /* 防止手机端浏览器工具栏/状态栏影响布局 */
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  /* 底部安全区域扩展 */
+  .pb-safe-extended {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
+  }
 }

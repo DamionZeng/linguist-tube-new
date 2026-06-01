@@ -187,7 +187,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.filter(v => activeCategory === "All" || (v.tag && v.tag.split(',').map(t => t.trim()).includes(activeCategory))).map((v) => (
+          {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}

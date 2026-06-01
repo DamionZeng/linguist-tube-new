@@ -7,47 +7,33 @@ import { LangMode } from '../index';
 interface TranscriptListProps {
   transcripts: Transcript[];
   currentTime: number;
+  activeIndex: number;
   onSeek: (time: number) => void;
   onToggleFavorite: (id: string) => void;
   onWordClick: (word: string) => void;
   langMode: LangMode;
   showHighlights: boolean;
-  isMaskActive?: boolean;
   savedWords?: string[];
   highlightColor?: string;
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, isMaskActive, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, activeIndex, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
-
-  const getActiveIndex = () => {
-    // Determine active transcript based on current time
-    for (let i = 0; i < transcripts.length; i++) {
-       const t = transcripts[i];
-       const start = parseTime(t.startTime);
-       const end = parseTime(t.endTime);
-       // Allow a little slack for the last one or slightly overlapping
-       if (currentTime >= start && currentTime < end) return i;
-    }
-    return -1;
-  };
-
-  const activeIndex = getActiveIndex();
   const prevActiveIndex = useRef(activeIndex);
 
   useEffect(() => {
     if (activeIndex !== prevActiveIndex.current && activeIndex !== -1) {
        if (activeItemRef.current) {
-          activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
        }
        prevActiveIndex.current = activeIndex;
     }
   }, [activeIndex]);
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-y-auto px-4 py-5 md:px-6">
+    <div ref={containerRef} className="w-full h-full overflow-y-auto px-3 py-5 md:px-5">
       {transcripts.map((t, index) => {
         const isActive = index === activeIndex;
         return (
@@ -61,7 +47,6 @@ export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, cur
             forwardRef={isActive ? activeItemRef : null}
             langMode={langMode}
             showHighlights={showHighlights}
-            isMaskActive={isMaskActive}
             savedWords={savedWords}
             highlightColor={highlightColor}
             subtitleSize={subtitleSize}

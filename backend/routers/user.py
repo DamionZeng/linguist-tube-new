@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from schemas.user import (
     LibraryResponse, HistoryResponse, VocabListResponse,
     WordDetailResponse, AddVocabRequest, BoolResponse, CheckInResponse,
+    CheckInRequest, CheckInDateResponse, CheckInStatusResponse,
     SaveHistoryRequest, SaveHistoryResponse,
 )
 from services.user_service import (
     get_library_data, get_history, get_vocabulary,
     get_word_detail, add_vocabulary, get_checkins, add_checkin,
+    get_checkins_by_date, is_video_checked_in,
     save_history,
 )
 from core.deps import get_required_user
@@ -58,11 +60,25 @@ async def checkin_list(user: User = Depends(get_required_user)):
     return {"code": 200, "data": data, "message": "success"}
 
 
+@router.get("/checkin/status", response_model=CheckInStatusResponse)
+async def checkin_status(video_id: str = Query(..., alias="videoId"), user: User = Depends(get_required_user)):
+    from datetime import date as date_mod
+    today = date_mod.date.today().isoformat()
+    result = await is_video_checked_in(user.id, video_id, today)
+    return {"code": 200, "data": result, "message": "success"}
+
+
+@router.get("/checkin/{date}", response_model=CheckInDateResponse)
+async def checkin_by_date(date: str, user: User = Depends(get_required_user)):
+    data = await get_checkins_by_date(user.id, date)
+    return {"code": 200, "data": data, "message": "success"}
+
+
 @router.post("/checkin", response_model=BoolResponse)
-async def checkin_add(user: User = Depends(get_required_user)):
+async def checkin_add(request: CheckInRequest, user: User = Depends(get_required_user)):
     from datetime import date
     today = date.today().isoformat()
-    result = await add_checkin(user.id, today)
+    result = await add_checkin(user.id, today, request.videoId)
     return {"code": 200, "data": result, "message": "success"}
 
 

@@ -55,6 +55,7 @@ export const fetchExploreData = async (): Promise<{
     level: string | null;
     thumb: string | null;
     tag: string | null;
+    category: string | null;
     isVipOnly: boolean;
   }>;
   carousel: Array<{

@@ -53,9 +53,7 @@ class CollectorApp:
         self.category_var = tk.StringVar()
         category_combo = ttk.Combobox(
             main, textvariable=self.category_var, width=30,
-            values=["Daily Life", "Business", "Psychology", "Education",
-                    "Entertainment", "Technology", "Health", "Travel",
-                    "Food", "Music", "News", "Sports", "Science", "Culture"],
+            values=["News", "Vlog", "Travel", "Education", "Technology", "Psychology"],
         )
         category_combo.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
@@ -174,10 +172,11 @@ class CollectorApp:
         try:
             from collector.collect import (
                 _check_deps, extract_video_id, read_next_id, save_id,
-                fetch_en_transcript, fetch_zh_transcript, translate_en_to_zh,
+                translate_en_to_zh,
                 fetch_meta, download_thumbnail, download_video,
-                segments_to_srt, merge_to_bilingual_srt, do_import,
-                _file_exists, _load_cached_srt, _load_cached_meta,
+                normalize_segments, clean_text, segments_to_srt, merge_to_bilingual_srt,
+                fetch_word_level_transcript, synthesize_segments_from_word_level, do_import,
+                _file_exists, _load_cached_srt, _load_cached_meta, _parse_srt_segments,
                 _shorten_title,
                 OUTPUT_BASE,
             )
@@ -209,28 +208,34 @@ class CollectorApp:
 
             cached_meta = _load_cached_meta(info_path, video_id)
 
-            self._log("\nPhase 1/5: 检测英文字幕...")
+            self._log("\nPhase 1/5: 英文字幕...")
             en_segments = None
+            en_words_segments = None
             if _load_cached_srt(en_srt_path):
                 self._log("  已有 en.srt，跳过英文字幕获取")
-                en_segments = True
+                en_segments = _parse_srt_segments(en_srt_path)
             else:
-                en_segments = fetch_en_transcript(video_id)
-                if not en_segments:
-                    self._log("ERROR: 该视频没有英文字幕，无法继续。")
+                en_words_segments = fetch_word_level_transcript(video_id, "en")
+                if not en_words_segments:
+                    self._log("ERROR: 该视频没有英文词级字幕，无法继续。")
                     return
+                self._log(f"  EN 词级字幕: {len(en_words_segments)} 段")
+                en_segments = synthesize_segments_from_word_level(en_words_segments, "en")
+                self._log(f"  合成 EN segments: {len(en_segments)} 条")
 
-            self._log("\nPhase 2/5: 获取中文字幕...")
+            self._log("\nPhase 2/5: 中文字幕...")
             zh_segments = None
             if _load_cached_srt(zh_srt_path):
                 self._log("  已有 zh.srt，跳过中文字幕获取")
-                zh_segments = True
+                zh_segments = _parse_srt_segments(zh_srt_path)
             else:
-                zh_segments = fetch_zh_transcript(video_id)
-                if zh_segments:
-                    self._log(f"  ZH 字幕: {len(zh_segments)} 条 (原生)")
+                zh_words_segments = fetch_word_level_transcript(video_id, "zh-Hans")
+                if zh_words_segments:
+                    self._log(f"  ZH 词级字幕: {len(zh_words_segments)} 段")
+                    zh_segments = synthesize_segments_from_word_level(zh_words_segments, "zh-Hans")
+                    self._log(f"  合成 ZH segments: {len(zh_segments)} 条")
                 else:
-                    self._log("  无原生中文字幕，启动 EN→ZH 翻译...")
+                    self._log("  无中文词级字幕，启动 EN→ZH 翻译...")
                     zh_segments = translate_en_to_zh(en_segments)
 
             self._log("\nPhase 3/5: 获取元信息 & 媒体...")
@@ -245,7 +250,7 @@ class CollectorApp:
             self._log(f"  时长: {meta['duration']}")
             tags = meta.get("tags") or []
             if tags:
-                tag = ",".join(tags[:5])
+                tag = ",".join(tags[:3])
             elif category:
                 tag = category
                 self._log(f"  标签为空，使用分类作为标签: {tag}")
@@ -277,18 +282,29 @@ class CollectorApp:
                 self._log("  跳过视频下载")
 
             self._log("\nPhase 4/5: 生成 SRT 文件...")
+            en_normalized = normalize_segments(en_segments)
+            zh_normalized = normalize_segments(zh_segments)
+
             if not _load_cached_srt(en_srt_path):
-                en_srt_path.write_text(segments_to_srt(en_segments), encoding="utf-8")
+                en_srt_path.write_text(segments_to_srt(en_normalized), encoding="utf-8")
             else:
                 self._log("  en.srt: 已存在，跳过生成")
 
             if not _load_cached_srt(zh_srt_path):
-                zh_srt_path.write_text(segments_to_srt(zh_segments), encoding="utf-8")
+                zh_srt_path.write_text(segments_to_srt(zh_normalized), encoding="utf-8")
             else:
                 self._log("  zh.srt: 已存在，跳过生成")
 
+            en_words_path = output_dir / "en.words.json"
+
+            if not en_words_path.exists() and en_words_segments:
+                en_words_path.write_text(json.dumps(en_words_segments, ensure_ascii=False), encoding="utf-8")
+                self._log(f"  en.words.json: {len(en_words_segments)} 段")
+            elif en_words_path.exists():
+                self._log("  en.words.json: 已存在，跳过生成")
+
             if not _load_cached_srt(bilingual_srt_path):
-                bilingual_srt_path.write_text(merge_to_bilingual_srt(en_segments, zh_segments), encoding="utf-8")
+                bilingual_srt_path.write_text(merge_to_bilingual_srt(en_normalized, zh_normalized), encoding="utf-8")
             else:
                 self._log("  bilingual.srt: 已存在，跳过生成")
 
@@ -310,6 +326,35 @@ class CollectorApp:
                 return
 
             description = meta.get("description", "")
+            self._log(f"\n准备入库: v{next_id} - {short_title}")
+
+            confirmed = threading.Event()
+            confirm_result = [False]
+
+            def _ask_confirm():
+                en_count = len([s for s in en_normalized if clean_text(s["text"])])
+                zh_count = len([s for s in zh_normalized if clean_text(s["text"])])
+                msg = (
+                    f"确认入库以下内容？\n\n"
+                    f"ID: v{next_id}\n"
+                    f"标题: {short_title}\n"
+                    f"分类: {category or '(未指定)'}\n"
+                    f"等级: {level}\n"
+                    f"EN 字幕: {en_count} 条\n"
+                    f"ZH 字幕: {zh_count} 条\n"
+                    f"视频文件: video.mp4\n\n"
+                    f"点击「是」确认入库，点击「否」取消。"
+                )
+                confirm_result[0] = messagebox.askyesno("确认入库", msg)
+                confirmed.set()
+
+            self.root.after(0, _ask_confirm)
+            confirmed.wait()
+
+            if not confirm_result[0]:
+                self._log("用户取消入库。")
+                return
+
             self._log(f"\n执行入库: v{next_id} - {short_title}")
 
             loop = asyncio.new_event_loop()
@@ -327,6 +372,7 @@ class CollectorApp:
                         youtube_video_id=video_id,
                         description=description,
                         category=category,
+                        en_words_path=en_words_path,
                     )
                 )
             finally:

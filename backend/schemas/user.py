@@ -88,9 +88,39 @@ class BoolResponse(BaseModel):
     message: str = "success"
 
 
+class CheckInItem(BaseModel):
+    date: str
+    videoId: str | None = None
+
+
 class CheckInResponse(BaseModel):
     code: int = 200
-    data: list[str]
+    data: list[CheckInItem]
+    message: str = "success"
+
+
+class CheckInRequest(BaseModel):
+    videoId: str
+
+
+class CheckInVideoItem(BaseModel):
+    id: str
+    title: str
+    duration: str | None = None
+    level: str | None = None
+    thumb: str | None = None
+    tag: str | None = None
+
+
+class CheckInDateResponse(BaseModel):
+    code: int = 200
+    data: list[CheckInVideoItem]
+    message: str = "success"
+
+
+class CheckInStatusResponse(BaseModel):
+    code: int = 200
+    data: bool
     message: str = "success"
 
 

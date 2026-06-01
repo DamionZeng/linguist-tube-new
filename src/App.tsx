@@ -13,6 +13,7 @@ import { WordDetailsPage } from './pages/WordDetails';
 import { HistoryPage } from './pages/History';
 import { FavoritesPage } from './pages/Favorites';
 import { YoutubeNewsPage } from './pages/YoutubeNews';
+import { CheckInVideosPage } from './pages/CheckInVideos';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -28,11 +29,12 @@ export default function App() {
               <Route path="/youtube-news" element={<YoutubeNewsPage />} />
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/vocab" element={<VocabularyPage />} />
-              <Route path="/vocab/:word" element={<WordDetailsPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
             </Route>
             <Route path="/video/:id" element={<VideoLearningPage />} />
+            <Route path="/checkin/:date" element={<CheckInVideosPage />} />
+            <Route path="/vocab/:word" element={<WordDetailsPage />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

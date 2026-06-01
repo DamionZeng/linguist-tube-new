@@ -230,7 +230,7 @@ async def add_vocabulary(user_id: int, word_data: dict) -> bool:
         return True
 
 
-async def get_checkins(user_id: int) -> list[str]:
+async def get_checkins(user_id: int) -> list[dict]:
     session_factory = _get_async_session()
     async with session_factory() as session:
         result = await session.execute(
@@ -238,22 +238,58 @@ async def get_checkins(user_id: int) -> list[str]:
             .where(CheckIn.user_id == user_id)
             .order_by(CheckIn.check_in_date)
         )
-        return [c.check_in_date for c in result.scalars().all()]
+        return [{"date": c.check_in_date, "videoId": c.video_id} for c in result.scalars().all()]
 
 
-async def add_checkin(user_id: int, date_str: str) -> bool:
+async def get_checkins_by_date(user_id: int, date_str: str) -> list[dict]:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(CheckIn, Video)
+            .join(Video, CheckIn.video_id == Video.id)
+            .where(CheckIn.user_id == user_id, CheckIn.check_in_date == date_str)
+            .order_by(CheckIn.id)
+        )
+        videos = []
+        for ci, v in result.all():
+            videos.append({
+                "id": v.id,
+                "title": v.title,
+                "duration": v.duration,
+                "level": v.level,
+                "thumb": v.thumb,
+                "tag": v.tag,
+            })
+        return videos
+
+
+async def is_video_checked_in(user_id: int, video_id: str, date_str: str) -> bool:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(CheckIn).where(
+                CheckIn.user_id == user_id,
+                CheckIn.video_id == video_id,
+                CheckIn.check_in_date == date_str,
+            )
+        )
+        return result.scalar_one_or_none() is not None
+
+
+async def add_checkin(user_id: int, date_str: str, video_id: str) -> bool:
     session_factory = _get_async_session()
     async with session_factory() as session:
         existing = await session.execute(
             select(CheckIn).where(
                 CheckIn.user_id == user_id,
                 CheckIn.check_in_date == date_str,
+                CheckIn.video_id == video_id,
             )
         )
         if existing.scalar_one_or_none() is not None:
             return True
 
-        checkin = CheckIn(user_id=user_id, check_in_date=date_str)
+        checkin = CheckIn(user_id=user_id, check_in_date=date_str, video_id=video_id)
         session.add(checkin)
         await session.commit()
         return True
