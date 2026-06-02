@@ -137,13 +137,28 @@ async def _upsert_video_record(
 
     session_factory = _get_async_session()
     async with session_factory() as session:
-        existing = await session.execute(select(Video).where(Video.id == video_id))
+        for attempt in range(2):
+            try:
+                existing = await session.execute(select(Video).where(Video.id == video_id))
+                break
+            except Exception:
+                if attempt == 1:
+                    raise
+                await session.rollback()
+
         if existing.scalar_one_or_none():
             print(f"  Video record 已存在: {video_id}，跳过创建")
             return
 
         if sort_order is None:
-            max_order = await session.execute(select(func.max(Video.sort_order)))
+            for attempt in range(2):
+                try:
+                    max_order = await session.execute(select(func.max(Video.sort_order)))
+                    break
+                except Exception:
+                    if attempt == 1:
+                        raise
+                    await session.rollback()
             max_val = max_order.scalar() or 0
             sort_order = max_val + 1
 
@@ -173,9 +188,17 @@ async def _upsert_transcripts(video_id: str, entries: list[dict]):
 
     session_factory = _get_async_session()
     async with session_factory() as session:
-        existing_count = await session.execute(
-            select(func.count()).where(Transcript.video_id == video_id)
-        )
+        for attempt in range(2):
+            try:
+                existing_count = await session.execute(
+                    select(func.count()).where(Transcript.video_id == video_id)
+                )
+                break
+            except Exception:
+                if attempt == 1:
+                    raise
+                await session.rollback()
+
         if existing_count.scalar() > 0:
             print(f"  Transcript entries 已存在: {video_id}，跳过创建")
             return

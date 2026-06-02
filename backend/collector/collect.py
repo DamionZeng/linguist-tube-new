@@ -622,6 +622,9 @@ async def do_import(
 
     print(f"执行入库: v{video_id} - {title}")
     try:
+        from core.database import init_db, dispose_engine
+        await init_db()
+        await dispose_engine()
         success = await import_video(
             video_path=str(video_path),
             srt_path=str(srt_path),
