@@ -88,10 +88,10 @@ export const VideoLearningPage: React.FC = () => {
 
   const activeTranscript = useMemo(() => {
     if (videoContext.activeIndex < 0 || videoContext.activeIndex >= transcripts.length) {
-      return { en: '', zh: '' };
+      return { en: '', zh: '', words: undefined };
     }
     const t = transcripts[videoContext.activeIndex];
-    return { en: t.en, zh: t.zh };
+    return { en: t.en, zh: t.zh, words: t.words };
   }, [videoContext.activeIndex, transcripts]);
 
   const handleVideoEnded = () => {
@@ -300,6 +300,7 @@ export const VideoLearningPage: React.FC = () => {
                 langMode={langMode}
                 activeTranscriptEn={activeTranscript.en}
                 activeTranscriptZh={activeTranscript.zh}
+                activeTranscriptWords={activeTranscript.words}
                 onVideoEnded={handleVideoEnded}
               />
             </div>

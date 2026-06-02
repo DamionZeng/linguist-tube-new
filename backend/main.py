@@ -15,6 +15,7 @@ from routers.favorites import router as favorites_router
 from routers.upload import router as upload_router
 from routers.search import router as search_router
 from routers.word import router as word_router
+from routers.speech import router as speech_router
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ app.include_router(favorites_router)
 app.include_router(upload_router)
 app.include_router(search_router)
 app.include_router(word_router)
+app.include_router(speech_router)
 
 
 @app.get("/api/health")

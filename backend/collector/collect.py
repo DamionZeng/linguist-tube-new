@@ -464,14 +464,14 @@ def download_video(url: str, output_dir: Path, quality: Optional[str]) -> Option
     formats_to_try = []
     if h:
         formats_to_try.append(
-            f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
-        )
-        formats_to_try.append(
             f"best[ext=mp4][height<={h}]/best[ext=mp4]/best[height<={h}]/best"
         )
+        formats_to_try.append(
+            f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+        )
     else:
-        formats_to_try.append("bestvideo+bestaudio/best")
         formats_to_try.append("best[ext=mp4]/best")
+        formats_to_try.append("bestvideo+bestaudio/best")
 
     for i, fmt in enumerate(formats_to_try):
         need_merge = "+" in fmt

@@ -58,3 +58,19 @@ export const fetchVideoInfo = async (id?: string): Promise<VideoInfo> => {
 export const toggleFavoriteTranscript = async (id: string): Promise<boolean> => {
   return apiPut(`/api/video/transcript/${id}/favorite`);
 };
+
+export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'recording.webm');
+
+  const res = await fetch(`${BASE_URL}/api/speech/transcribe`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json: ApiResponse<{ text: string }> = await res.json();
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || 'Speech recognition failed');
+  }
+  return json.data.text;
+};

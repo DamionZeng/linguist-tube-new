@@ -1,6 +1,102 @@
 import React from 'react';
 import { Highlight } from '../types';
 
+export interface TimedWord {
+  text: string;
+  start: number;
+  end: number;
+}
+
+export const renderTimedWords = (
+  words: TimedWord[],
+  currentTime: number,
+  onWordClick?: (word: string) => void,
+  savedWords: string[] = [],
+  highlightColor: string = '#D48166',
+  isActiveTranscript: boolean = true
+) => {
+  let activeWordIndex = -1;
+  for (let i = 0; i < words.length; i++) {
+    if (currentTime >= words[i].start && currentTime < words[i].end) {
+      activeWordIndex = i;
+      break;
+    }
+  }
+
+  return (
+    <>
+      {words.map((w, i) => {
+        const isActive = isActiveTranscript && i === activeWordIndex;
+        const isVocabWord = savedWords.some(
+          sw => sw.toLowerCase() === w.text.toLowerCase()
+        );
+
+        return (
+          <React.Fragment key={i}>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onWordClick && /^[a-zA-Z]+(?:'[a-zA-Z]+)?$/.test(w.text)) {
+                  onWordClick(w.text);
+                }
+              }}
+              className={`transition-colors duration-150 rounded-sm ${
+                isActive
+                  ? 'font-bold text-[#D48166] dark:text-[#E8A87C]'
+                  : isVocabWord
+                    ? 'font-semibold cursor-pointer hover:bg-black/5'
+                    : /^[a-zA-Z]+(?:'[a-zA-Z]+)?$/.test(w.text)
+                      ? 'cursor-pointer hover:bg-black/5'
+                      : ''
+              }`}
+              style={!isActive && isVocabWord ? { color: highlightColor } : undefined}
+            >
+              {w.text}
+            </span>
+            {i < words.length - 1 ? ' ' : ''}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
+
+export const renderTimedWordsUnderline = (
+  words: TimedWord[],
+  currentTime: number,
+  highlightColor: string = '#D48166'
+) => {
+  let activeWordIndex = -1;
+  for (let i = 0; i < words.length; i++) {
+    if (currentTime >= words[i].start && currentTime < words[i].end) {
+      activeWordIndex = i;
+      break;
+    }
+  }
+
+  return (
+    <>
+      {words.map((w, i) => {
+        const isActive = i === activeWordIndex;
+        return (
+          <React.Fragment key={i}>
+            <span
+              className={`transition-colors duration-150 ${
+                isActive
+                  ? 'font-bold text-[#D48166] dark:text-[#E8A87C]'
+                  : ''
+              }`}
+            >
+              {w.text}
+            </span>
+            {i < words.length - 1 ? ' ' : ''}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
+
 export const renderHighlightedText = (text: string, highlights: Highlight[], onWordClick?: (word: string) => void, showHighlights: boolean = true, savedWords: string[] = [], highlightColor: string = '#D48166') => {
   let parts = [{ text, isHighlight: false, color: '', targetWord: '' }];
 

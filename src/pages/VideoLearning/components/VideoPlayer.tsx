@@ -3,6 +3,7 @@ import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX, Loader2 }
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
 import { motion, AnimatePresence } from 'motion/react';
+import { renderTimedWords, TimedWord } from '../../../utils/highlight';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
@@ -30,6 +31,7 @@ interface VideoPlayerProps {
   langMode?: 'bilingual' | 'en' | 'zh';
   activeTranscriptEn?: string;
   activeTranscriptZh?: string;
+  activeTranscriptWords?: { en?: TimedWord[]; zh?: TimedWord[] };
   isLooping?: boolean;
   onVideoEnded?: () => void;
 }
@@ -60,6 +62,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   langMode = 'bilingual',
   activeTranscriptEn = '',
   activeTranscriptZh = '',
+  activeTranscriptWords,
   isLooping = true,
   onVideoEnded
 }) => {
@@ -235,7 +238,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center">
             {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
-              <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">{activeTranscriptEn}</p>
+              <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">
+                {activeTranscriptWords?.en && activeTranscriptWords.en.length > 0
+                  ? renderTimedWords(activeTranscriptWords.en, currentTime)
+                  : activeTranscriptEn
+                }
+              </p>
             )}
             {(langMode === 'bilingual' || langMode === 'zh') && activeTranscriptZh && (
               <p className="text-white/75 text-[10px] leading-snug mt-0.5 drop-shadow-md">{activeTranscriptZh}</p>

@@ -16,3 +16,8 @@ export const toggleFavoriteTranscript = async (id: string) => {
   await delay(200);
   return true;
 };
+
+export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+  await delay(1500);
+  return "This is a mock transcription of the recording";
+};

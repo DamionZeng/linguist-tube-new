@@ -80,6 +80,12 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({ active, onRefresh 
   const progress = Math.min(pullDistance / THRESHOLD, 1);
   const shouldShow = pullDistance > 0 || isRefreshing;
 
+  // Detect dark mode for spinner color
+  const isDark = document.documentElement.classList.contains('dark');
+  const spinColor = isDark
+    ? `rgb(${148 + progress * 64}, ${163 + progress * (-34)}, ${184 + progress * (-82)})` // #94A3B8 -> #D48166
+    : `rgb(${80 + progress * 132}, ${65 + progress * 64}, ${64 + progress * 38})`; // #504140 -> #D48166
+
   return (
     <div
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center pointer-events-none transition-transform duration-200"
@@ -96,7 +102,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({ active, onRefresh 
       >
         <RefreshCw
           className="w-6 h-6 transition-colors duration-200"
-          style={{ color: `rgb(${80 + progress * 132}, ${65 + progress * 64}, ${64 + progress * 38})` }}
+          style={{ color: spinColor }}
         />
       </div>
     </div>

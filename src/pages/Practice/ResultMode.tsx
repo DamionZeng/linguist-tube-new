@@ -1,28 +1,92 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Award, ArrowRight, RefreshCw, Home, Trophy, Target, Activity } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useTranslation } from 'react-i18next';
+import { SentenceScore } from '../../utils/scoring';
+
+interface ScoreData {
+  scores: Record<number, SentenceScore>;
+  overallScore: number;
+  transcripts: Array<{ id: string; en: string; zh: string; startTime: string }>;
+}
 
 export const ResultMode: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
 
-  // Mock score data
-  const totalScore = 85;
-  const metrics = [
-    { label: 'Fluency', value: 92, icon: <Activity className="w-4 h-4" /> },
-    { label: 'Completeness', value: 88, icon: <Trophy className="w-4 h-4" /> },
-    { label: 'Accuracy', value: 76, icon: <Target className="w-4 h-4" /> },
-  ];
+  const stateData = (location.state as ScoreData) || null;
+  const hasRealData = stateData?.scores && Object.keys(stateData.scores).length > 0;
 
-  // Mock weakness sentences
-  const weaknesses = [
-    { id: 1, text: "It's not that I'm so smart, it's just that I stay with problems longer.", score: 62 },
-    { id: 2, text: "Life is like riding a bicycle. To keep your balance, you must keep moving.", score: 65 },
-    { id: 3, text: "The measure of intelligence is the ability to change.", score: 70 }
-  ];
+  const totalScore = hasRealData ? stateData!.overallScore : 85;
+
+  const metrics = useMemo(() => {
+    if (!hasRealData) {
+      return [
+        { label: 'Fluency', value: 92, icon: <Activity className="w-4 h-4" /> },
+        { label: 'Completeness', value: 88, icon: <Trophy className="w-4 h-4" /> },
+        { label: 'Accuracy', value: 76, icon: <Target className="w-4 h-4" /> },
+      ];
+    }
+
+    const allScores = Object.values(stateData!.scores);
+    const scoredSentences = allScores.filter((s) => s.words.some((w) => w.status !== 'unrecognized'));
+
+    const accuracy = scoredSentences.length > 0
+      ? Math.round(scoredSentences.reduce((sum, s) => sum + s.score, 0) / scoredSentences.length)
+      : 0;
+
+    const completeness = allScores.length > 0
+      ? Math.round((scoredSentences.length / allScores.length) * 100)
+      : 0;
+
+    const correctCount = scoredSentences.reduce(
+      (sum, s) => sum + s.words.filter((w) => w.status === 'correct').length, 0
+    );
+    const totalWords = scoredSentences.reduce(
+      (sum, s) => sum + s.words.filter((w) => w.status !== 'unrecognized').length, 0
+    );
+    const fluency = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0;
+
+    return [
+      { label: 'Accuracy', value: accuracy, icon: <Target className="w-4 h-4" /> },
+      { label: 'Fluency', value: fluency, icon: <Activity className="w-4 h-4" /> },
+      { label: 'Completeness', value: completeness, icon: <Trophy className="w-4 h-4" /> },
+    ];
+  }, [hasRealData, stateData]);
+
+  const weaknesses = useMemo(() => {
+    if (!hasRealData) {
+      return [
+        { id: 1, text: "It's not that I'm so smart, it's just that I stay with problems longer.", score: 62 },
+        { id: 2, text: "Life is like riding a bicycle. To keep your balance, you must keep moving.", score: 65 },
+        { id: 3, text: "The measure of intelligence is the ability to change.", score: 70 },
+      ];
+    }
+
+    const entries = Object.entries(stateData!.scores)
+      .map(([idxStr, score]) => {
+        const idx = parseInt(idxStr, 10);
+        const hasEval = score.words.some((w) => w.status !== 'unrecognized');
+        return {
+          index: idx,
+          text: stateData!.transcripts[idx]?.en || '',
+          score: hasEval ? score.score : -1,
+          id: stateData!.transcripts[idx]?.id || '',
+        };
+      })
+      .filter((e) => e.score >= 0)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 5);
+
+    return entries.map((e, i) => ({
+      id: i + 1,
+      text: e.text,
+      score: e.score,
+    }));
+  }, [hasRealData, stateData]);
 
   return (
     <div className="w-full h-screen bg-[#F5F5F0] dark:bg-[#0B0E14] text-[#4A4A40] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
@@ -34,7 +98,6 @@ export const ResultMode: React.FC = () => {
           {/* Total Score Section */}
           <section className="flex flex-col items-center justify-center pt-4">
             <div className="relative w-48 h-48 flex items-center justify-center">
-              {/* Decorative Ring */}
               <svg className="absolute inset-0 w-full h-full -rotate-90">
                 <circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="12" fill="none" className="text-[#EAEAE0] dark:text-[#1E293B]" />
                 <circle 
@@ -55,7 +118,7 @@ export const ResultMode: React.FC = () => {
             </div>
           </section>
 
-          {/* 3D Ability Slots */}
+          {/* Metrics */}
           <section className="bg-white dark:bg-[#151B25] rounded-[24px] p-6 shadow-sm border border-[#E0E0D5] dark:border-[#1E293B]">
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-[#E17055]" />
@@ -117,7 +180,6 @@ export const ResultMode: React.FC = () => {
         </div>
       </main>
 
-      {/* Bottom Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F5F5F0] via-[#F5F5F0] dark:from-[#0B0E14] dark:via-[#0B0E14] to-transparent pointer-events-none pb-safe pt-24">
         <div className="max-w-xl mx-auto flex gap-4 pointer-events-auto">
           <button 

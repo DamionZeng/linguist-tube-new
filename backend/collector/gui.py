@@ -53,7 +53,7 @@ class CollectorApp:
         self.category_var = tk.StringVar()
         category_combo = ttk.Combobox(
             main, textvariable=self.category_var, width=30,
-            values=["News", "Vlog", "Travel", "Education", "Technology", "Psychology"],
+            values=["News", "Vlog", "Travel", "Education", "Technology", "Psychology", "TED"],
         )
         category_combo.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
@@ -223,20 +223,14 @@ class CollectorApp:
                 en_segments = synthesize_segments_from_word_level(en_words_segments, "en")
                 self._log(f"  合成 EN segments: {len(en_segments)} 条")
 
-            self._log("\nPhase 2/5: 中文字幕...")
+            self._log("\nPhase 2/5: 中文字幕 (EN→ZH 翻译)...")
             zh_segments = None
             if _load_cached_srt(zh_srt_path):
                 self._log("  已有 zh.srt，跳过中文字幕获取")
                 zh_segments = _parse_srt_segments(zh_srt_path)
             else:
-                zh_words_segments = fetch_word_level_transcript(video_id, "zh-Hans")
-                if zh_words_segments:
-                    self._log(f"  ZH 词级字幕: {len(zh_words_segments)} 段")
-                    zh_segments = synthesize_segments_from_word_level(zh_words_segments, "zh-Hans")
-                    self._log(f"  合成 ZH segments: {len(zh_segments)} 条")
-                else:
-                    self._log("  无中文词级字幕，启动 EN→ZH 翻译...")
-                    zh_segments = translate_en_to_zh(en_segments)
+                self._log("  启动 EN→ZH 翻译...")
+                zh_segments = translate_en_to_zh(en_segments)
 
             self._log("\nPhase 3/5: 获取元信息 & 媒体...")
             meta = cached_meta
