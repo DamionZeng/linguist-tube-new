@@ -6,6 +6,17 @@ class HighlightItem(BaseModel):
     color: str
 
 
+class TimedWordItem(BaseModel):
+    text: str
+    start: float
+    end: float
+
+
+class WordsData(BaseModel):
+    en: list[TimedWordItem] | None = None
+    zh: list[TimedWordItem] | None = None
+
+
 class TranscriptItem(BaseModel):
     id: str
     startTime: str
@@ -13,6 +24,7 @@ class TranscriptItem(BaseModel):
     en: str
     zh: str
     highlights: list[HighlightItem] = []
+    words: WordsData | None = None
     isFavorite: bool = False
 
 

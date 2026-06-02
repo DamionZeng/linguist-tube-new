@@ -28,8 +28,8 @@ class Transcript(Base):
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
     video_id: Mapped[str] = mapped_column(String(50), ForeignKey("videos.id"), nullable=False)
-    start_time: Mapped[str] = mapped_column(String(10), nullable=False)
-    end_time: Mapped[str] = mapped_column(String(10), nullable=False)
+    start_time: Mapped[str] = mapped_column(String(20), nullable=False)
+    end_time: Mapped[str] = mapped_column(String(20), nullable=False)
     en_text: Mapped[str] = mapped_column(Text, nullable=False)
     zh_text: Mapped[str] = mapped_column(Text, nullable=False)
     highlights_json: Mapped[str] = mapped_column(Text, nullable=True)
