@@ -187,7 +187,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.filter(v => activeCategory === "All" || (v.tag && v.tag.split(',').map(t => t.trim()).includes(activeCategory))).map((v) => (
+          {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}
@@ -203,18 +203,26 @@ export const ExplorePage: React.FC = () => {
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-1 rounded-md font-mono font-bold tracking-wide backdrop-blur-md">
                     {v.duration}
                   </div>
-                  <div className="absolute top-2 left-2 flex gap-2">
-                    {v.tag && v.tag.split(',').map((t, idx) => t.trim().toUpperCase()).slice(0, 2).map((t, idx) => (
-                      <div key={idx} className="bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
-                        {t}
-                      </div>
-                    ))}
-                    {v.isVipOnly && (
-                      <div className="bg-[#E1B12C]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md flex items-center gap-1">
-                        <Lock className="w-3 h-3" /> VIP
-                      </div>
-                    )}
-                  </div>
+                  {/* VIP Tag / Free Tag - Top Left */}
+                  {v.isVipOnly ? (
+                    <div className="absolute top-2 left-2 bg-[#E1B12C]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> VIP
+                    </div>
+                  ) : (
+                    <div className="absolute top-2 left-2 bg-[#22c55e]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
+                      免费
+                    </div>
+                  )}
+                  {/* Original Tags - Top Right */}
+                  {v.tag && (
+                    <div className="absolute top-2 right-2 flex gap-2 flex-wrap justify-end">
+                      {v.tag.split(',').map((t, idx) => t.trim().toUpperCase()).slice(0, 2).map((t, idx) => (
+                        <div key={idx} className="bg-white/90 text-[#4A4A40] text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-1">

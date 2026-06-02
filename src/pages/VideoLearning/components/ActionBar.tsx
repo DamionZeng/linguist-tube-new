@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, ChevronUp, SkipBack, Play, Pause, SkipForward, EyeOff, Eye } from 'lucide-react';
+import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, ChevronUp, SkipBack, Play, Pause, SkipForward, EyeOff, Eye, Heart } from 'lucide-react';
 import { LangMode } from '../index';
 import { useTranslation } from 'react-i18next';
+
+export type DisplayMode = 'normal' | 'hidden';
 
 interface ActionBarProps {
   isPlaying: boolean;
@@ -18,15 +20,16 @@ interface ActionBarProps {
   setIsLooping: (v: boolean) => void;
   langMode: LangMode;
   cycleLangMode: () => void;
-  showHighlights: boolean;
-  toggleHighlights: () => void;
-  isMaskActive: boolean;
-  toggleMask: () => void;
   buffered?: number;
+  videoDisplayMode?: DisplayMode;
+  onCycleDisplayMode?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  onPractice?: () => void;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, isMaskActive, toggleMask, buffered = 0
+  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, buffered = 0, videoDisplayMode = 'normal', onCycleDisplayMode, isFavorite, onToggleFavorite, onPractice
 }) => {
   const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -40,6 +43,14 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedPercentage = duration > 0 ? (buffered / duration) * 100 : 0;
   
+  const getDisplayModeIcon = () => {
+    return videoDisplayMode === 'hidden' ? <Eye className="w-[22px] h-[22px]" /> : <EyeOff className="w-[22px] h-[22px]" />;
+  };
+
+  const getDisplayModeLabel = () => {
+    return videoDisplayMode === 'hidden' ? (i18n.language.startsWith('zh') ? '显示' : 'Show') : (i18n.language.startsWith('zh') ? '隐藏' : 'Hide');
+  };
+
   const getLangLabel = () => {
     switch(langMode) {
       case 'bilingual': return i18n.language.startsWith('zh') ? '双语' : 'Bilingual';
@@ -71,12 +82,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               active={isLooping} 
            />
            <ToolButton 
-              icon={<BookOpen className={`w-[22px] h-[22px] ${showHighlights ? 'text-[#D48166]' : ''}`} />} 
-              label={i18n.language.startsWith('zh') ? "查词" : "Vocab"} 
-              onClick={toggleHighlights}
-              active={showHighlights}
+              icon={getDisplayModeIcon()} 
+              label={getDisplayModeLabel()} 
+              onClick={onCycleDisplayMode}
+              active={videoDisplayMode === 'hidden'}
            />
-           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} />
+           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} onClick={onPractice} />
          </div>
        )}
 
@@ -99,10 +110,10 @@ export const ActionBar: React.FC<ActionBarProps> = ({
        </div>
 
        {/* Bottom Row: Play Controls */}
-       <div className="flex items-center justify-between px-6 py-1.5">
+       <div className="grid grid-cols-3 items-center px-6 py-1.5">
          <button 
            onClick={() => setIsExpanded(!isExpanded)} 
-           className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -ml-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors"
+           className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -ml-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors justify-self-start"
          >
             {isExpanded ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
          </button>
@@ -111,7 +122,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             <button onClick={() => stepTranscript(-1)} className="text-[#4A4A40] dark:text-[#CBD5E1] hover:text-[#D48166] dark:hover:text-[#D48166] transition-colors active:scale-95 transform">
                <SkipBack className="w-5 h-5 fill-current" />
             </button>
-            <button onClick={togglePlay} className="w-12 h-12 bg-[#5A5A40] dark:bg-[#334155] hover:bg-[#4A4A40] dark:hover:bg-[#1E293B] rounded-full flex items-center justify-center shadow-md text-white transition-all transform hover:scale-105 active:scale-95">
+            <button onClick={togglePlay} className="w-12 h-12 shrink-0 bg-[#5A5A40] dark:bg-[#334155] hover:bg-[#4A4A40] dark:hover:bg-[#1E293B] rounded-full flex items-center justify-center shadow-md text-white transition-all transform hover:scale-105 active:scale-95">
                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 ml-1 fill-current" />}
             </button>
             <button onClick={() => stepTranscript(1)} className="text-[#4A4A40] dark:text-[#CBD5E1] hover:text-[#D48166] dark:hover:text-[#D48166] transition-colors active:scale-95 transform">
@@ -119,8 +130,11 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             </button>
          </div>
 
-         <button onClick={toggleMask} className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -mr-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors">
-            {isMaskActive ? <EyeOff className="w-[22px] h-[22px]" /> : <Eye className="w-[22px] h-[22px]" />}
+         <button 
+            onClick={onToggleFavorite} 
+            className={`p-1.5 -mr-2 rounded-full transition-colors justify-self-end ${isFavorite ? 'text-[#D48166] bg-[#FCF5F3]' : 'text-[#8A8A7A] dark:text-[#64748B] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'}`}
+         >
+            <Heart className={`w-[22px] h-[22px] ${isFavorite ? 'fill-current' : ''}`} />
          </button>
        </div>
     </div>

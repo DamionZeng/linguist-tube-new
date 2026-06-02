@@ -12,6 +12,10 @@ interface PlaybackSettingsModalProps {
   subtitleSize: 'small' | 'standard' | 'medium' | 'large';
   onChangeSubtitleSize: (size: 'small' | 'standard' | 'medium' | 'large') => void;
   onDownloadSubtitles: () => void;
+  isMaskActive: boolean;
+  onToggleMask: () => void;
+  showVideoCaptions: boolean;
+  onToggleVideoCaptions: () => void;
 }
 
 export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ 
@@ -23,7 +27,11 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
   onHighlightColorChange,
   subtitleSize,
   onChangeSubtitleSize,
-  onDownloadSubtitles
+  onDownloadSubtitles,
+  isMaskActive,
+  onToggleMask,
+  showVideoCaptions,
+  onToggleVideoCaptions
 }) => {
   const { t } = useTranslation();
 
@@ -72,6 +80,26 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
                  onClick={onToggleHighlights}
                >
                   <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${showHighlights ? 'translate-x-5' : 'translate-x-0'}`} />
+               </div>
+            </div>
+
+            <div className="flex items-center justify-between py-1.5">
+               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.hideMask', '遮罩板')}</span>
+               <div 
+                 className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out cursor-pointer ${isMaskActive ? 'bg-[#94A684]' : 'bg-[#E0E0D5] dark:bg-[#334155]'}`}
+                 onClick={onToggleMask}
+               >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${isMaskActive ? 'translate-x-5' : 'translate-x-0'}`} />
+               </div>
+            </div>
+
+            <div className="flex items-center justify-between py-1.5">
+               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.videoCaptions', '视频字幕')}</span>
+               <div 
+                 className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out cursor-pointer ${showVideoCaptions ? 'bg-[#94A684]' : 'bg-[#E0E0D5] dark:bg-[#334155]'}`}
+                 onClick={onToggleVideoCaptions}
+               >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${showVideoCaptions ? 'translate-x-5' : 'translate-x-0'}`} />
                </div>
             </div>
 

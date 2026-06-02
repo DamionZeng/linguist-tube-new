@@ -11,7 +11,12 @@ const resources = {
         vocab: "Vocab Book",
         history: "History",
         library: "My Library",
-        search: "Search lessons..."
+        search: "Search lessons...",
+        fullscreen: "Enter Fullscreen",
+        exitFullscreen: "Exit Fullscreen",
+        pullToRefresh: "Pull to Refresh",
+        releaseToRefresh: "Release to Refresh",
+        refreshing: "Refreshing..."
       },
       explore: {
         recommended: "Recommended for You",
@@ -69,7 +74,10 @@ const resources = {
         vipContent: "VIP Content",
         vipDesc: "This video is exclusively available for VIP members. Please login with a VIP account to continue learning.",
         loginNow: "Login Now",
-        goBack: "Go Back"
+        goBack: "Go Back",
+        checkInSuccess: "Checked In!",
+        checkInSuccessDesc: "Awesome! You've made great progress today. Keep up the learning momentum!",
+        continue: "Continue Learning"
       },
       settings: {
         playbackSettings: "Playback Settings",
@@ -83,7 +91,10 @@ const resources = {
         sizeSmall: "Small",
         sizeStandard: "Standard",
         sizeMedium: "Medium",
-        sizeLarge: "Large"
+        sizeLarge: "Large",
+        hideMask: "Mask Overlay",
+        videoCaptions: "Video Captions",
+        vocabHighlight: "Vocab Highlight"
       },
       library: {
         vip: "VIP Member",
@@ -99,6 +110,11 @@ const resources = {
         chinese: "中文",
         lightMode: "Light Mode",
         darkMode: "Dark Mode"
+      },
+      checkin: {
+        title: "Check-in Records",
+        noVideos: "No check-in records for this day",
+        checkedIn: "Checked In"
       }
     }
   },
@@ -110,7 +126,12 @@ const resources = {
         vocab: "生词本",
         history: "历史记录",
         library: "我的",
-        search: "搜索课程..."
+        search: "搜索课程...",
+        fullscreen: "进入全屏",
+        exitFullscreen: "退出全屏",
+        pullToRefresh: "下拉刷新",
+        releaseToRefresh: "松开刷新",
+        refreshing: "刷新中..."
       },
       explore: {
         recommended: "推荐",
@@ -163,12 +184,15 @@ const resources = {
         processing: "处理中...",
         favorited: "已收藏",
         favorite: "收藏",
-        saved: "已加入",
+        saved: "已加入生词本",
         saveToVocab: "生词本",
         vipContent: "VIP 专属内容",
         vipDesc: "此视频仅限 VIP 会员观看。请使用 VIP 账号登录以继续学习。",
         loginNow: "立即登录",
-        goBack: "返回"
+        goBack: "返回",
+        checkInSuccess: "打卡成功！",
+        checkInSuccessDesc: "太棒了！你今天又进步了一点，继续保持学习的热情吧！",
+        continue: "继续学习"
       },
       settings: {
         playbackSettings: "播放设置",
@@ -182,7 +206,10 @@ const resources = {
         sizeSmall: "小号",
         sizeStandard: "标准",
         sizeMedium: "中号",
-        sizeLarge: "大号"
+        sizeLarge: "大号",
+        hideMask: "遮罩板",
+        videoCaptions: "视频字幕",
+        vocabHighlight: "生词标注"
       },
       library: {
         vip: "VIP会员",
@@ -192,23 +219,36 @@ const resources = {
         vocabBuilt: "已记单词",
         perfectDays: "完美打卡",
         signOut: "退出登录",
-        language: "语言要求",
+        language: "语言",
         settings: "设置",
         english: "English",
         chinese: "中文",
         lightMode: "浅色模式",
         darkMode: "深色模式"
+      },
+      checkin: {
+        title: "打卡记录",
+        noVideos: "当天没有打卡记录",
+        checkedIn: "已打卡"
       }
     }
   }
 };
 
+// 自定义语言检测器，确保设置被持久化
+const languageDetector = new LanguageDetector(null, {
+  order: ['localStorage', 'navigator'],
+  caches: ['localStorage'],
+  lookupLocalStorage: 'linguist-tube-language'
+});
+
 i18n
-  .use(LanguageDetector)
+  .use(languageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: 'en',
+    supportedLngs: ['en', 'zh'],
     interpolation: {
       escapeValue: false, 
     }

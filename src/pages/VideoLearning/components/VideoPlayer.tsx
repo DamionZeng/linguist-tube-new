@@ -26,6 +26,12 @@ interface VideoPlayerProps {
   activeIndex?: number;
   totalTranscripts?: number;
   onPlayerReady?: (player: any) => void;
+  showVideoCaptions?: boolean;
+  langMode?: 'bilingual' | 'en' | 'zh';
+  activeTranscriptEn?: string;
+  activeTranscriptZh?: string;
+  isLooping?: boolean;
+  onVideoEnded?: () => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -49,7 +55,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   setIsBuffering,
   activeIndex = 0,
   totalTranscripts = 0,
-  onPlayerReady
+  onPlayerReady,
+  showVideoCaptions = false,
+  langMode = 'bilingual',
+  activeTranscriptEn = '',
+  activeTranscriptZh = '',
+  isLooping = true,
+  onVideoEnded
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
   const [showControls, setShowControls] = useState(false);
@@ -84,7 +96,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (togglePlay) {
       togglePlay();
       const nextPlayingState = !isPlaying;
-      setCenterIcon(nextPlayingState ? 'pause' : 'play');
+      setCenterIcon(nextPlayingState ? 'play' : 'pause');
       setTimeout(() => {
         setCenterIcon(null);
       }, 500); // hide icon after 500ms
@@ -132,7 +144,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <div 
-      className="relative w-full aspect-video bg-[#2A2A25] lg:rounded-[32px] overflow-hidden shadow-xl shrink-0" 
+      className="relative w-full aspect-video rounded-2xl lg:rounded-[32px] overflow-hidden shadow-xl shrink-0" 
       id="video-container"
       onMouseMove={activeControls}
       onPointerDown={handlePointerDown}
@@ -175,8 +187,21 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                }
              }
            }}
+           onPause={() => setIsPlaying?.(false)}
+           onPlay={() => {
+             setIsPlaying?.(true);
+             setIsBuffering?.(false);
+           }}
            onError={(e) => console.error("ReactPlayer Error:", e)}
-           onEnded={() => setIsPlaying?.(false)}
+           onEnded={() => {
+             if (isLooping && playerRef?.current) {
+               playerRef.current.seekTo(0, 'seconds');
+               setIsPlaying?.(true);
+             } else {
+               setIsPlaying?.(false);
+               onVideoEnded?.();
+             }
+           }}
            playsinline={true}
            controls={false}  // Hide native controls to use our custom ActionBar
            config={{
@@ -205,6 +230,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onDoubleClick={handleOverlayDoubleClick}
       />
 
+      {/* Video Captions Overlay */}
+      {showVideoCaptions && (activeTranscriptEn || activeTranscriptZh) && (
+        <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
+          <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center">
+            {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
+              <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">{activeTranscriptEn}</p>
+            )}
+            {(langMode === 'bilingual' || langMode === 'zh') && activeTranscriptZh && (
+              <p className="text-white/75 text-[10px] leading-snug mt-0.5 drop-shadow-md">{activeTranscriptZh}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Center Action Icon Animation */}
       <AnimatePresence>
         {centerIcon && (
@@ -213,7 +252,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.5 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+            className="absolute inset-0 z-35 flex items-center justify-center pointer-events-none"
           >
             <div className="bg-black/40 backdrop-blur-sm rounded-full p-6 text-white">
               {centerIcon === 'play' ? (
@@ -228,7 +267,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* Buffering Indicator */}
       {isBuffering && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 z-35 flex items-center justify-center pointer-events-none">
           <div className="bg-black/50 rounded-full p-3">
             <Loader2 className="w-8 h-8 text-white animate-spin" />
           </div>
@@ -237,8 +276,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* Top right gradient and Index (controlled by showControls) */}
       <div className={`transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-20" />
-        <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-20">
+        <div className="absolute top-0 right-0 left-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-40" />
+        <div className="absolute top-4 right-4 text-white font-medium drop-shadow-md text-sm md:text-base tracking-wider pointer-events-none z-40">
           {activeIndex !== -1 ? activeIndex + 1 : 0} <span className="opacity-70 mx-0.5">/</span> {totalTranscripts}
         </div>
       </div>
@@ -269,7 +308,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* Custom Bottom Controls Overlay */}
       <div 
-        className={`absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 z-20 flex flex-col gap-2 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 z-40 flex flex-col gap-2 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         {/* Progress Bar */}
         <div 

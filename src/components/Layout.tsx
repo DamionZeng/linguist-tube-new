@@ -1,18 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Compass, BookText, Search, History, Heart, User } from "lucide-react";
+import { Compass, BookText, Search, History, Heart, User, Maximize, Minimize } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { GlobalSearch } from "./GlobalSearch";
+import { PullToRefresh } from "./PullToRefresh";
 
 export const Layout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+    const onFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#F5F5F0] font-sans text-[#4A4A40] overflow-hidden max-w-[1920px] mx-auto">
+    <div className="flex flex-col w-full bg-[#F5F5F0] font-sans text-[#4A4A40] overflow-hidden max-w-[1920px] mx-auto" style={{ height: '100dvh' }}>
+      <PullToRefresh active={isFullscreen} onRefresh={handleRefresh} />
+
       {/* Top Nav (Desktop) */}
       <nav className="hidden md:flex h-16 px-8 items-center justify-between bg-white/50 border-b border-[#E0E0D5] backdrop-blur-sm shrink-0 shadow-sm z-40">
         <div className="flex items-center gap-8">
@@ -72,6 +98,13 @@ export const Layout: React.FC = () => {
             </span>
             <Search className="w-4 h-4 text-[#4A4A40]" />
           </div>
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-full text-[#6A6A5A] hover:bg-[#EAEAE0] hover:text-[#D48166] transition-colors cursor-pointer"
+            title={isFullscreen ? t('nav.exitFullscreen') : t('nav.fullscreen')}
+          >
+            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+          </button>
           {user ? (
             <div onClick={() => navigate('/library')} className="w-10 h-10 rounded-full bg-[#D48166] text-white flex items-center justify-center font-bold font-serif shadow-md cursor-pointer hover:scale-105 transition-transform uppercase">
               {user.username.charAt(0)}
@@ -89,20 +122,31 @@ export const Layout: React.FC = () => {
         <h1 className="text-xl font-serif italic font-bold text-[#5A5A40]">
           LinguistTube
         </h1>
-        <button onClick={() => setIsSearchOpen(true)} className="p-2 text-[#4A4A40]">
-          <Search className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-full text-[#4A4A40] hover:bg-[#EAEAE0] active:bg-[#EAEAE0] transition-colors"
+            title={isFullscreen ? t('nav.exitFullscreen') : t('nav.fullscreen')}
+          >
+            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+          </button>
+          <button onClick={() => setIsSearchOpen(true)} className="p-2 text-[#4A4A40]">
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative z-0">
-        <Outlet />
+        <React.Fragment key={refreshKey}>
+          <Outlet />
+        </React.Fragment>
       </main>
 
       {/* Bottom Nav (Mobile) */}
-      <nav className="md:hidden flex items-center justify-around h-[68px] bg-white border-t border-[#E0E0D5] pb-safe shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.03)] z-50">
+      <nav className="md:hidden flex items-center justify-around h-[68px] bg-white border-t border-[#E0E0D5] shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.03)] z-50" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <NavLink
           to="/explore"
           className={({ isActive }) =>

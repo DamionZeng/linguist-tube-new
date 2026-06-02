@@ -18,7 +18,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [isLooping, setIsLooping] = useState(false);
+  const [isLooping, setIsLooping] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [buffered, setBuffered] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -26,6 +26,36 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   // Keep track of the current active transcript index
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const activeIndexRef = useRef<number>(-1);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
+  // Use a more frequent interval to get the current time when playing
+  useEffect(() => {
+    if (isPlaying && playerRef.current) {
+      lastTimeRef.current = 0;
+      // Update current time every 150ms when playing
+      intervalRef.current = setInterval(() => {
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+          const time = playerRef.current.getCurrentTime();
+          if (!isNaN(time)) {
+            setCurrentTime(time);
+            lastTimeRef.current = time;
+          }
+        }
+      }, 150);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPlaying]);
 
   useEffect(() => {
     // Find active transcript index based on time
@@ -49,18 +79,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
       }
     }
 
-    // Handle AB repeat loop
-    if (isLooping && newIndex !== -1 && isPlaying) {
-      const end = parseTime(transcripts[newIndex].endTime);
-      // Give a tiny buffer (0.1s) to prevent jumping over
-      if (currentTime >= end - 0.1) {
-        const start = parseTime(transcripts[newIndex].startTime);
-        if (playerRef.current) {
-          playerRef.current.seekTo(start, 'seconds');
-        }
-      }
-    }
-  }, [currentTime, transcripts, isLooping, isPlaying]);
+  }, [currentTime, transcripts]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
@@ -139,7 +158,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   }, [transcripts]);
 
   const cyclePlaybackRate = useCallback(() => {
-    setPlaybackRate(prev => prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : prev === 1.5 ? 2 : 1);
+    setPlaybackRate(prev => prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : prev === 1.5 ? 2 : prev === 2 ? 0.9 : 1);
   }, []);
 
   const repeatTranscript = useCallback(() => {

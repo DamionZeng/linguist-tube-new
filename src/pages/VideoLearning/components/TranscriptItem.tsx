@@ -13,13 +13,12 @@ interface TranscriptItemProps {
   forwardRef: React.Ref<HTMLDivElement>;
   langMode: LangMode;
   showHighlights: boolean;
-  isMaskActive?: boolean;
   savedWords?: string[];
   highlightColor?: string;
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, isMaskActive, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const getEnSizeClass = () => {
      switch (subtitleSize) {
         case 'small': return 'text-[13px]';
@@ -44,12 +43,12 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
     <div 
       ref={forwardRef}
       onClick={onSeek}
-      className={`p-4 mb-3 transition-all duration-300 cursor-pointer group border rounded-xl ${
+      className={`p-4 mb-2 transition-all duration-300 cursor-pointer group border rounded-xl ${
       isActive 
         ? 'bg-[#E0E0D5] border-[#D48166] dark:bg-[#1E293B] dark:border-[#D48166]' 
         : 'bg-white border-[#E0E0D5] hover:border-[#D48166]/30 hover:bg-[#F9F9F7] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B] dark:hover:bg-[#1C222C]'
     }`}>
-      <div className="flex justify-between items-center mb-2.5">
+      <div className="flex justify-between items-center mb-1.5">
         <span className={`text-[11px] font-mono font-bold tracking-wider ${isActive ? 'text-[#D48166]' : 'text-[#D0D0CE] dark:text-[#475569]'}`}>
           {transcript.startTime}
         </span>
@@ -61,7 +60,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         </button>
       </div>
       
-      <div className={`flex flex-col gap-2 transition-all duration-300 ${isMaskActive ? 'blur-md opacity-30 select-none pointer-events-none' : ''}`}>
+      <div className="flex flex-col gap-2 transition-all duration-300">
         {(langMode === 'bilingual' || langMode === 'en') && (
           <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
             {renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)}

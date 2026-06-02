@@ -52,12 +52,29 @@ export const getLocalDayStr = (date = new Date()): string => {
     String(date.getDate()).padStart(2, '0');
 };
 
-// ------ cache layer: sync reads from cache, async writes to server ------
+export interface CheckInItem {
+  date: string;
+  videoId: string | null;
+}
 
-let _checkinsCache: string[] = (() => {
+interface CheckInVideoItem {
+  id: string;
+  title: string;
+  duration: string | null;
+  level: string | null;
+  thumb: string | null;
+  tag: string | null;
+}
+
+let _checkinsCache: CheckInItem[] = (() => {
   try {
     const raw = localStorage.getItem('checkins');
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (parsed.length > 0 && typeof parsed[0] === 'string') {
+      return (parsed as string[]).map(d => ({ date: d, videoId: '' }));
+    }
+    return parsed;
   } catch {
     return [];
   }
@@ -98,7 +115,7 @@ export async function initStorageFromServer(): Promise<void> {
   if (!token) return;
 
   try {
-    const checkins = await apiGet<string[]>('/api/checkin');
+    const checkins = await apiGet<CheckInItem[]>('/api/checkin');
     _checkinsCache = checkins;
     persistCheckinsCache();
   } catch { /* keep cache */ }
@@ -117,18 +134,61 @@ export async function initStorageFromServer(): Promise<void> {
 }
 
 export const getCheckIns = (): string[] => {
+  const dates = new Set<string>();
+  for (const item of _checkinsCache) {
+    dates.add(item.date);
+  }
+  return Array.from(dates);
+};
+
+export const getCheckInDetails = (): CheckInItem[] => {
   return _checkinsCache;
 };
 
-export const addCheckIn = (): void => {
+export const isVideoCheckedIn = (videoId: string): boolean => {
   const today = getLocalDayStr();
-  if (_checkinsCache.includes(today)) return;
+  return _checkinsCache.some(item => item.date === today && item.videoId === videoId);
+};
 
-  _checkinsCache.push(today);
+export const addCheckIn = (videoId: string): void => {
+  const today = getLocalDayStr();
+  if (_checkinsCache.some(item => item.date === today && item.videoId === videoId)) return;
+
+  _checkinsCache.push({ date: today, videoId });
   persistCheckinsCache();
   window.dispatchEvent(new Event('checkins-updated'));
 
-  apiPost('/api/checkin').catch(() => {});
+  const token = getStoredToken();
+  if (token) {
+    apiPost('/api/checkin', { videoId }).catch((err) => {
+      console.error('Check-in API failed:', err);
+    });
+  }
+};
+
+export const getCheckInVideosByDate = async (date: string): Promise<CheckInVideoItem[]> => {
+  const token = getStoredToken();
+  if (token) {
+    try {
+      return await apiGet<CheckInVideoItem[]>(`/api/checkin/${date}`);
+    } catch {
+      return [];
+    }
+  }
+  const videoIds = _checkinsCache
+    .filter(item => item.date === date && item.videoId)
+    .map(item => item.videoId);
+  return videoIds.map(vid => {
+    const hist = _videoHistoryCache.find(v => v.id === vid);
+    return {
+      id: vid,
+      title: hist?.title || '',
+      duration: hist?.duration || null,
+      level: hist?.level || null,
+      thumb: hist?.thumb || null,
+      tag: hist?.tag || null,
+    };
+  });
 };
 
 export const getFavoriteVideos = (): any[] => {
@@ -145,7 +205,10 @@ export const toggleFavoriteVideoStorage = (video: any): void => {
   persistFavVideosCache();
   window.dispatchEvent(new Event('favorites-updated'));
 
-  apiPost(`/api/favorites/videos/${video.id}/toggle`).catch(() => {});
+  const token = getStoredToken();
+  if (token) {
+    apiPost(`/api/favorites/videos/${video.id}/toggle`).catch(() => {});
+  }
 };
 
 export const isVideoFavorite = (id: string): boolean => {
@@ -178,7 +241,10 @@ export const saveVideoHistory = (videoInfo: any, currentTime: number, duration: 
   persistVideoHistoryCache();
   window.dispatchEvent(new Event('history-updated'));
 
-  apiPost('/api/history', { videoId: videoInfo.id, progress, lastWatched }).catch(() => {});
+  const token = getStoredToken();
+  if (token) {
+    apiPost('/api/history', { videoId: videoInfo.id, progress, lastWatched }).catch(() => {});
+  }
 };
 
 export const getVideoTimeFromHistory = (id: string): number => {

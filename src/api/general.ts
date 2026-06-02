@@ -1,6 +1,6 @@
 import { getStoredToken } from './auth';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 interface ApiResponse<T> {
   code: number;
@@ -55,6 +55,7 @@ export const fetchExploreData = async (): Promise<{
     level: string | null;
     thumb: string | null;
     tag: string | null;
+    category: string | null;
     isVipOnly: boolean;
   }>;
   carousel: Array<{
@@ -124,6 +125,10 @@ export const fetchVocabularyData = async (): Promise<
     exampleTrans: string | null;
   }>
 > => {
+  const token = getStoredToken();
+  if (!token) {
+    return [];
+  }
   return apiGet('/api/vocabulary');
 };
 
