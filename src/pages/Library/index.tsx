@@ -33,7 +33,7 @@ export const LibraryPage: React.FC = () => {
   }, [user]);
 
   if (!user) {
-    return <LoginPrompt message="Please login to view your personal library and statistics." />;
+    return <LoginPrompt message={t('messages.loginLibrary')} />;
   }
 
   if (loading) {
@@ -79,11 +79,11 @@ export const LibraryPage: React.FC = () => {
             )}
           </div>
           <p className="text-[#8A8A7A] dark:text-[#64748B] text-sm mb-3 max-w-lg">
-            {i18n.language.startsWith('zh') ? "热爱学习语言，探索世界文化。每天进步一点点。" : "Passionate about language learning and exploring world cultures. Improving bit by bit every day."}
+            {t('library.bio')}
           </p>
           <div className="flex items-center gap-4 text-xs font-bold text-[#6A6A5A] dark:text-[#94A3B8]">
             <span>
-              {i18n.language.startsWith('zh') ? "加入于" : "Joined"} 2026-01-12
+              {t('library.joined')} 2026-01-12
             </span>
           </div>
         </div>

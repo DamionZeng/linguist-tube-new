@@ -21,7 +21,8 @@ const resources = {
       explore: {
         recommended: "Recommended for You",
         youtubeNews: "YouTube News",
-        startLearning: "Start Learning"
+        startLearning: "Start Learning",
+        free: "Free"
       },
       auth: {
         authentication: "Authentication",
@@ -37,6 +38,7 @@ const resources = {
         loginHistory: "Please login to view your watch history.",
         loginFavorites: "Please login to view your favorites.",
         loginVocab: "Please login to access the Vocabulary Book.",
+        loginLibrary: "Please login to view your personal library and statistics.",
         vipVocab: "Vocabulary Book is exclusively available for VIP members.",
         membersOnly: "Members Only"
       },
@@ -77,7 +79,16 @@ const resources = {
         goBack: "Go Back",
         checkInSuccess: "Checked In!",
         checkInSuccessDesc: "Awesome! You've made great progress today. Keep up the learning momentum!",
-        continue: "Continue Learning"
+        continue: "Continue Learning",
+        close: "Close",
+        show: "Show",
+        hide: "Hide",
+        bilingual: "Bilingual",
+        english: "English",
+        chinese: "Chinese",
+        repeat: "Repeat",
+        loop: "Loop",
+        practice: "Practice"
       },
       settings: {
         playbackSettings: "Playback Settings",
@@ -109,12 +120,34 @@ const resources = {
         english: "English",
         chinese: "中文",
         lightMode: "Light Mode",
-        darkMode: "Dark Mode"
+        darkMode: "Dark Mode",
+        bio: "Passionate about language learning and exploring world cultures. Improving bit by bit every day.",
+        joined: "Joined"
       },
       checkin: {
         title: "Check-in Records",
         noVideos: "No check-in records for this day",
         checkedIn: "Checked In"
+      },
+      practice: {
+        title: "Select Practice Mode",
+        sentenceTitle: "Sentence Practice",
+        sentenceDesc: "Refine every pronunciation. Step-by-step shadowing for each sentence.",
+        fullTitle: "Full Challenge",
+        fullDesc: "Fluency shadowing test. Uninterrupted reading with comprehensive report analysis.",
+        startReading: "Start Reading",
+        hideTranslation: "Click to Hide",
+        showTranslation: "Click to Show Translation",
+        rerecord: "Re-record",
+        tapToRecord: "Tap to record",
+        tapToStop: "Tap to stop",
+        finish: "Finish",
+        fullMode: "Full Challenge",
+        reportTitle: "Challenge Report",
+        performance: "Pronunciation Performance",
+        weaknessAnalysis: "Weakness Analysis",
+        refine: "Refine",
+        retry: "Retry Challenge"
       }
     }
   },
@@ -136,7 +169,8 @@ const resources = {
       explore: {
         recommended: "推荐",
         youtubeNews: "YouTube 新闻",
-        startLearning: "开始学习"
+        startLearning: "开始学习",
+        free: "免费"
       },
       auth: {
         authentication: "身份认证",
@@ -152,6 +186,7 @@ const resources = {
         loginHistory: "请登录以查看您的历史记录。",
         loginFavorites: "请登录以查看您的收藏。",
         loginVocab: "请登录以访问生词本。",
+        loginLibrary: "请登录以查看您的专属页面与学习统计。",
         vipVocab: "生词本为 VIP 会员专享记录，请开通会员或登录会员账号使用。",
         membersOnly: "会员专属"
       },
@@ -191,8 +226,17 @@ const resources = {
         loginNow: "立即登录",
         goBack: "返回",
         checkInSuccess: "打卡成功！",
-        checkInSuccessDesc: "太棒了！你今天又进步了一点，继续保持学习的热情吧！",
-        continue: "继续学习"
+        checkInSuccessDesc: "太棒了！今日的学习目标已经达成，继续保持学习的热情吧！",
+        continue: "继续学习",
+        close: "关闭",
+        show: "显示",
+        hide: "隐藏",
+        bilingual: "双语",
+        english: "英语",
+        chinese: "中文",
+        repeat: "复读",
+        loop: "循环",
+        practice: "练习"
       },
       settings: {
         playbackSettings: "播放设置",
@@ -224,12 +268,34 @@ const resources = {
         english: "English",
         chinese: "中文",
         lightMode: "浅色模式",
-        darkMode: "深色模式"
+        darkMode: "深色模式",
+        bio: "热爱学习语言，探索世界文化。每天进步一点点。",
+        joined: "加入于"
       },
       checkin: {
         title: "打卡记录",
         noVideos: "当天没有打卡记录",
         checkedIn: "已打卡"
+      },
+      practice: {
+        title: "选择练习模式",
+        sentenceTitle: "逐句精听",
+        sentenceDesc: "精准打磨每个发音。通过听、读、评的单句闭环，不断提升发音细节。",
+        fullTitle: "全文挑战",
+        fullDesc: "流利度影子跟读测试。不间断跟读原音，最终生成全面的发音报告分析。",
+        startReading: "开始朗读",
+        hideTranslation: "点击隐藏",
+        showTranslation: "点击显示中文",
+        rerecord: "重新录音",
+        tapToRecord: "点击录音",
+        tapToStop: "点击结束录音",
+        finish: "完成",
+        fullMode: "全文挑战",
+        reportTitle: "挑战报告",
+        performance: "发音多维表现",
+        weaknessAnalysis: "发音攻坚（最低评分）",
+        refine: "去精修",
+        retry: "重新挑战"
       }
     }
   }

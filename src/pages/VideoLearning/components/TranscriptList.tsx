@@ -41,6 +41,7 @@ export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, cur
             key={t.id} 
             transcript={t} 
             isActive={isActive}
+            currentTime={currentTime}
             onSeek={() => onSeek(parseTime(t.startTime))}
             onToggleFavorite={() => onToggleFavorite(t.id)}
             onWordClick={onWordClick}

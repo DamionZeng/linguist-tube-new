@@ -464,14 +464,14 @@ def download_video(url: str, output_dir: Path, quality: Optional[str]) -> Option
     formats_to_try = []
     if h:
         formats_to_try.append(
-            f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
-        )
-        formats_to_try.append(
             f"best[ext=mp4][height<={h}]/best[ext=mp4]/best[height<={h}]/best"
         )
+        formats_to_try.append(
+            f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+        )
     else:
-        formats_to_try.append("bestvideo+bestaudio/best")
         formats_to_try.append("best[ext=mp4]/best")
+        formats_to_try.append("bestvideo+bestaudio/best")
 
     for i, fmt in enumerate(formats_to_try):
         need_merge = "+" in fmt
@@ -622,6 +622,9 @@ async def do_import(
 
     print(f"执行入库: v{video_id} - {title}")
     try:
+        from core.database import init_db, dispose_engine
+        await init_db()
+        await dispose_engine()
         success = await import_video(
             video_path=str(video_path),
             srt_path=str(srt_path),

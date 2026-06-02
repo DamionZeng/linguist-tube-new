@@ -28,12 +28,10 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const activeIndexRef = useRef<number>(-1);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTimeRef = useRef<number>(0);
-  const stallCountRef = useRef<number>(0);
 
   // Use a more frequent interval to get the current time when playing
   useEffect(() => {
     if (isPlaying && playerRef.current) {
-      stallCountRef.current = 0;
       lastTimeRef.current = 0;
       // Update current time every 150ms when playing
       intervalRef.current = setInterval(() => {
@@ -41,15 +39,6 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
           const time = playerRef.current.getCurrentTime();
           if (!isNaN(time)) {
             setCurrentTime(time);
-            if (Math.abs(time - lastTimeRef.current) < 0.05) {
-              stallCountRef.current++;
-              if (stallCountRef.current > 20) {
-                stallCountRef.current = 0;
-                setIsPlaying(false);
-              }
-            } else {
-              stallCountRef.current = 0;
-            }
             lastTimeRef.current = time;
           }
         }

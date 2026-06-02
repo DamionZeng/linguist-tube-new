@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, Heart, ChevronDown, ChevronUp, BookOpen, GitBranch, ScrollText, Lightbulb, Loader2 } from 'lucide-react';
+import { Volume2, Heart, ChevronDown, ChevronUp, BookOpen, GitBranch, ScrollText, Lightbulb, Loader2, Maximize } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { addVocabularyWord, fetchWordLookup, addFavoriteSentence } from '@api/general';
@@ -145,11 +145,31 @@ export const WordDetailsPage: React.FC = () => {
     }
   };
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const totalSentences = details?.sentences?.length || 0;
 
   return (
     <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
-      <Header title={word || t('vocab.title')} />
+      <Header 
+        title={word || t('vocab.title')} 
+        rightNode={
+          <button 
+            onClick={toggleFullScreen} 
+            className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+          >
+            <Maximize className="w-[22px] h-[22px]" />
+          </button>
+        }
+      />
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto p-4 md:p-6 lg:p-8">

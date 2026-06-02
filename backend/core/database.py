@@ -90,41 +90,56 @@ async def _auto_migrate(conn):
         if table_name not in tables_in_db:
             continue
 
-        cols_in_db = set()
+        cols_in_db = {}
         result = await conn.execute(text(
-            "SELECT column_name FROM information_schema.columns "
+            "SELECT column_name, data_type, character_maximum_length "
+            "FROM information_schema.columns "
             "WHERE table_schema = 'public' AND table_name = :table"
         ), {"table": table_name})
         for row in result:
-            cols_in_db.add(row[0])
+            cols_in_db[row[0]] = {
+                "data_type": row[1],
+                "max_length": row[2],
+            }
 
         for col_name, col_obj in table_obj.columns.items():
-            if col_name in cols_in_db:
+            if col_name not in cols_in_db:
+                sql_type = _column_to_sql_type(col_obj)
+                parts = [f"ALTER TABLE {table_name} ADD COLUMN {col_name} {sql_type}"]
+
+                if col_obj.nullable or col_obj.default is not None:
+                    pass
+                else:
+                    if not col_obj.primary_key:
+                        parts[0] += " NOT NULL"
+
+                if col_obj.server_default is not None:
+                    parts[0] += f" DEFAULT {col_obj.server_default.arg}"
+                elif col_obj.default is not None and hasattr(col_obj.default, "arg"):
+                    default_val = col_obj.default.arg
+                    if isinstance(default_val, bool):
+                        parts[0] += f" DEFAULT {'true' if default_val else 'false'}"
+                    elif isinstance(default_val, (int, float)):
+                        parts[0] += f" DEFAULT {default_val}"
+                    elif isinstance(default_val, str):
+                        parts[0] += f" DEFAULT '{default_val}'"
+
+                stmt = parts[0]
+                print(f"  [Auto-Migrate] {stmt}")
+                await conn.execute(text(stmt))
                 continue
 
-            sql_type = _column_to_sql_type(col_obj)
-            parts = [f"ALTER TABLE {table_name} ADD COLUMN {col_name} {sql_type}"]
+            model_sql_type = _column_to_sql_type(col_obj)
+            db_info = cols_in_db[col_name]
+            db_type = (db_info["data_type"] or "").upper()
+            db_max_len = db_info["max_length"]
 
-            if col_obj.nullable or col_obj.default is not None:
-                pass
-            else:
-                if not col_obj.primary_key:
-                    parts[0] += " NOT NULL"
-
-            if col_obj.server_default is not None:
-                parts[0] += f" DEFAULT {col_obj.server_default.arg}"
-            elif col_obj.default is not None and hasattr(col_obj.default, "arg"):
-                default_val = col_obj.default.arg
-                if isinstance(default_val, bool):
-                    parts[0] += f" DEFAULT {'true' if default_val else 'false'}"
-                elif isinstance(default_val, (int, float)):
-                    parts[0] += f" DEFAULT {default_val}"
-                elif isinstance(default_val, str):
-                    parts[0] += f" DEFAULT '{default_val}'"
-
-            stmt = parts[0]
-            print(f"  [Auto-Migrate] {stmt}")
-            await conn.execute(text(stmt))
+            if col_obj.type.__class__.__name__ == "String" and db_type == "CHARACTER VARYING":
+                model_len = col_obj.type.length
+                if db_max_len is not None and model_len is not None and model_len > db_max_len:
+                    stmt = f"ALTER TABLE {table_name} ALTER COLUMN {col_name} TYPE VARCHAR({model_len})"
+                    print(f"  [Auto-Migrate] {stmt} (was VARCHAR({db_max_len}))")
+                    await conn.execute(text(stmt))
 
 
 async def dispose_engine():

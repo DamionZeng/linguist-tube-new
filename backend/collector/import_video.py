@@ -85,8 +85,12 @@ def _find_timestamp_reset(entries: list[dict]) -> int:
     return -1
 
 
-def _time_to_seconds(t: str) -> int:
-    parts = t.split(":")
+def _time_to_seconds(t: str) -> float:
+    parts = t.replace(".", ":").split(":")
+    if len(parts) == 4:
+        return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2]) + int(parts[3]) / 1000.0
+    if len(parts) == 3:
+        return int(parts[0]) * 60 + int(parts[1]) + int(parts[2]) / 1000.0
     return int(parts[0]) * 60 + int(parts[1])
 
 
@@ -121,10 +125,10 @@ def _normalize_time(raw: str) -> str:
     hours = int(parts[0])
     minutes = int(parts[1])
     seconds = int(parts[2])
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    mm = total_seconds // 60
-    ss = total_seconds % 60
-    return f"{mm:02d}:{ss:02d}"
+    millis = int(parts[3]) if len(parts) >= 4 else 0
+    if hours > 0:
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{millis:03d}"
+    return f"{minutes:02d}:{seconds:02d}.{millis:03d}"
 
 
 async def _upsert_video_record(
@@ -137,13 +141,28 @@ async def _upsert_video_record(
 
     session_factory = _get_async_session()
     async with session_factory() as session:
-        existing = await session.execute(select(Video).where(Video.id == video_id))
+        for attempt in range(2):
+            try:
+                existing = await session.execute(select(Video).where(Video.id == video_id))
+                break
+            except Exception:
+                if attempt == 1:
+                    raise
+                await session.rollback()
+
         if existing.scalar_one_or_none():
             print(f"  Video record 已存在: {video_id}，跳过创建")
             return
 
         if sort_order is None:
-            max_order = await session.execute(select(func.max(Video.sort_order)))
+            for attempt in range(2):
+                try:
+                    max_order = await session.execute(select(func.max(Video.sort_order)))
+                    break
+                except Exception:
+                    if attempt == 1:
+                        raise
+                    await session.rollback()
             max_val = max_order.scalar() or 0
             sort_order = max_val + 1
 
@@ -173,9 +192,17 @@ async def _upsert_transcripts(video_id: str, entries: list[dict]):
 
     session_factory = _get_async_session()
     async with session_factory() as session:
-        existing_count = await session.execute(
-            select(func.count()).where(Transcript.video_id == video_id)
-        )
+        for attempt in range(2):
+            try:
+                existing_count = await session.execute(
+                    select(func.count()).where(Transcript.video_id == video_id)
+                )
+                break
+            except Exception:
+                if attempt == 1:
+                    raise
+                await session.rollback()
+
         if existing_count.scalar() > 0:
             print(f"  Transcript entries 已存在: {video_id}，跳过创建")
             return
@@ -214,10 +241,9 @@ def fmt_duration(entries: list[dict]) -> str:
     if not entries:
         return "00:00"
     last_end = entries[-1]["end"]
-    parts = last_end.split(":")
-    total = int(parts[0]) * 60 + int(parts[1])
-    mm = total // 60
-    ss = total % 60
+    total = _time_to_seconds(last_end)
+    mm = int(total) // 60
+    ss = int(total) % 60
     return f"{mm:02d}:{ss:02d}"
 
 

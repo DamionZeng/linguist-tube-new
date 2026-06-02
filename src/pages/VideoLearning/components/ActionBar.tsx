@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, ChevronUp, SkipBack, Play, Pause, SkipForward, EyeOff, Eye } from 'lucide-react';
+import { Languages, Repeat, RefreshCcw, BookOpen, Mic, ChevronDown, ChevronUp, SkipBack, Play, Pause, SkipForward, EyeOff, Eye, Heart } from 'lucide-react';
 import { LangMode } from '../index';
 import { useTranslation } from 'react-i18next';
 
@@ -20,15 +20,16 @@ interface ActionBarProps {
   setIsLooping: (v: boolean) => void;
   langMode: LangMode;
   cycleLangMode: () => void;
-  showHighlights: boolean;
-  toggleHighlights: () => void;
   buffered?: number;
   videoDisplayMode?: DisplayMode;
   onCycleDisplayMode?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  onPractice?: () => void;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, showHighlights, toggleHighlights, buffered = 0, videoDisplayMode = 'normal', onCycleDisplayMode
+  isPlaying, togglePlay, step, stepTranscript, repeatTranscript, seek, currentTime, duration, playbackRate, cyclePlaybackRate, isLooping, setIsLooping, langMode, cycleLangMode, buffered = 0, videoDisplayMode = 'normal', onCycleDisplayMode, isFavorite, onToggleFavorite, onPractice
 }) => {
   const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -47,14 +48,14 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   };
 
   const getDisplayModeLabel = () => {
-    return videoDisplayMode === 'hidden' ? (i18n.language.startsWith('zh') ? '显示视频' : 'Show') : (i18n.language.startsWith('zh') ? '隐藏视频' : 'Hide');
+    return videoDisplayMode === 'hidden' ? t('video.show') : t('video.hide');
   };
 
   const getLangLabel = () => {
     switch(langMode) {
-      case 'bilingual': return i18n.language.startsWith('zh') ? '双语' : 'Bilingual';
-      case 'en': return i18n.language.startsWith('zh') ? '英语' : 'English';
-      case 'zh': return i18n.language.startsWith('zh') ? '中文' : 'Chinese';
+      case 'bilingual': return t('video.bilingual');
+      case 'en': return t('video.english');
+      case 'zh': return t('video.chinese');
     }
   };
 
@@ -66,27 +67,27 @@ export const ActionBar: React.FC<ActionBarProps> = ({
            <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
            <ToolButton 
               icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
-              label={i18n.language.startsWith('zh') ? "倍速" : "Speed"} 
+              label={t('video.speed')} 
               onClick={cyclePlaybackRate} 
            />
            <ToolButton 
               icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
-              label={i18n.language.startsWith('zh') ? "复读" : "Repeat"} 
+              label={t('video.repeat')} 
               onClick={repeatTranscript}
            />
            <ToolButton 
               icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
-              label={i18n.language.startsWith('zh') ? "循环" : "Loop"} 
+              label={t('video.loop')} 
               onClick={() => setIsLooping(!isLooping)} 
               active={isLooping} 
            />
            <ToolButton 
-              icon={<BookOpen className={`w-[22px] h-[22px] ${showHighlights ? 'text-[#D48166]' : ''}`} />} 
-              label={i18n.language.startsWith('zh') ? "查词" : "Vocab"} 
-              onClick={toggleHighlights}
-              active={showHighlights}
+              icon={getDisplayModeIcon()} 
+              label={getDisplayModeLabel()} 
+              onClick={onCycleDisplayMode}
+              active={videoDisplayMode === 'hidden'}
            />
-           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} />
+           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={t('video.practice')} onClick={onPractice} />
          </div>
        )}
 
@@ -129,8 +130,11 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             </button>
          </div>
 
-         <button onClick={onCycleDisplayMode} className="text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] p-1.5 -mr-2 rounded-full hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] transition-colors justify-self-end" title={getDisplayModeLabel()}>
-            {getDisplayModeIcon()}
+         <button 
+            onClick={onToggleFavorite} 
+            className={`p-1.5 -mr-2 rounded-full transition-colors justify-self-end ${isFavorite ? 'text-[#D48166] bg-[#FCF5F3]' : 'text-[#8A8A7A] dark:text-[#64748B] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'}`}
+         >
+            <Heart className={`w-[22px] h-[22px] ${isFavorite ? 'fill-current' : ''}`} />
          </button>
        </div>
     </div>

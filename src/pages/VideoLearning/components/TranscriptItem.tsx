@@ -1,12 +1,13 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { Transcript } from '../../../types';
-import { renderHighlightedText } from '../../../utils/highlight';
+import { renderHighlightedText, renderTimedWords } from '../../../utils/highlight';
 import { LangMode } from '../index';
 
 interface TranscriptItemProps {
   transcript: Transcript;
   isActive: boolean;
+  currentTime: number;
   onSeek: () => void;
   onToggleFavorite: () => void;
   onWordClick: (word: string) => void;
@@ -18,7 +19,7 @@ interface TranscriptItemProps {
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const getEnSizeClass = () => {
      switch (subtitleSize) {
         case 'small': return 'text-[13px]';
@@ -63,7 +64,10 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
       <div className="flex flex-col gap-2 transition-all duration-300">
         {(langMode === 'bilingual' || langMode === 'en') && (
           <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
-            {renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)}
+            {isActive && transcript.words?.en && transcript.words.en.length > 0
+              ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true)
+              : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)
+            }
           </p>
         )}
         {(langMode === 'bilingual' || langMode === 'zh') && (
