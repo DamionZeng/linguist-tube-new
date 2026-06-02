@@ -10,7 +10,7 @@ export interface Transcript {
   en: string;
   zh: string;
   highlights: Highlight[];
-  words: {
+  words?: {
     en?: Array<{ text: string; start: number; end: number }>;
     zh?: Array<{ text: string; start: number; end: number }>;
   };

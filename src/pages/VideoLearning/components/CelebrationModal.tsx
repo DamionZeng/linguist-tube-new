@@ -1,182 +1,94 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, PartyPopper } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  alpha: number;
-  color: string;
-  size: number;
-  gravity: number;
-  decay: number;
-}
+import confetti from 'canvas-confetti';
 
 interface CelebrationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const COLORS = ['#FF6B6B', '#FFE66D', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE'];
-
 export const CelebrationModal: React.FC<CelebrationModalProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const animFrameRef = useRef<number>(0);
-
-  const createBurst = useCallback((cx: number, cy: number) => {
-    const count = 30;
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-      const speed = 2 + Math.random() * 4;
-      particlesRef.current.push({
-        x: cx,
-        y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1,
-        alpha: 1,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        size: 3 + Math.random() * 4,
-        gravity: 0.04,
-        decay: 0.012 + Math.random() * 0.01,
-      });
-    }
-  }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      const duration = 2.5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 25, spread: 360, ticks: 60, zIndex: 100 };
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
 
-    // Launch multiple bursts
-    const burstInterval = setInterval(() => {
-      const x = canvas.width * (0.15 + Math.random() * 0.7);
-      const y = canvas.height * (0.15 + Math.random() * 0.35);
-      createBurst(x, y);
-    }, 800);
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
 
-    // Initial bursts
-    setTimeout(() => createBurst(canvas.width * 0.25, canvas.height * 0.3), 100);
-    setTimeout(() => createBurst(canvas.width * 0.75, canvas.height * 0.2), 300);
-    setTimeout(() => createBurst(canvas.width * 0.5, canvas.height * 0.15), 500);
+        const particleCount = 40 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
 
-    let running = true;
-    const animate = () => {
-      if (!running) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particlesRef.current = particlesRef.current.filter((p) => p.alpha > 0.02);
-
-      for (const p of particlesRef.current) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += p.gravity;
-        p.alpha -= p.decay;
-        p.vx *= 0.99;
-
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      running = false;
-      window.removeEventListener('resize', resize);
-      clearInterval(burstInterval);
-      cancelAnimationFrame(animFrameRef.current);
-      particlesRef.current = [];
-    };
-  }, [isOpen, createBurst]);
+      return () => clearInterval(interval);
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <canvas
-            ref={canvasRef}
-            className="fixed inset-0 z-[70] pointer-events-none"
-          />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+            initial={{ opacity: 0, y: 15, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.4, ease: [0.2, 0.9, 0.3, 1] }}
             className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none"
           >
-            <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-[#E0E0D5] max-w-sm w-full text-center pointer-events-auto">
+            <div className="bg-white dark:bg-[#151B25] rounded-[24px] p-8 shadow-2xl border border-[#E0E0D5] dark:border-[#1E293B] max-w-[360px] w-full text-center pointer-events-auto relative">
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-1.5 bg-[#F9F9F7] text-[#8A8A7A] hover:bg-[#EAEAE0] hover:text-[#4A4A40] rounded-full transition-colors"
+                className="absolute top-4 right-4 p-1.5 text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] hover:bg-[#F9F9F7] dark:hover:bg-[#1E293B] rounded-full transition-colors"
+                aria-label={t('video.close') || '关闭'}
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.3, 1] }}
-                transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
-                className="w-20 h-20 bg-gradient-to-br from-[#FFEAA7] to-[#FDCB6E] rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg"
-              >
-                <PartyPopper className="w-10 h-10 text-[#E17055]" />
-              </motion.div>
+              <div className="mx-auto w-16 h-16 bg-[#F4F6F1] dark:bg-[#1E293B] text-[#94A684] rounded-full flex items-center justify-center mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5, ease: "backOut" }}
+                >
+                  <Check className="w-8 h-8" strokeWidth={3} />
+                </motion.div>
+              </div>
 
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-2xl font-serif font-bold text-[#5A5A40] mb-2"
-              >
-                {t('video.checkInSuccess') || '打卡成功！'}
-              </motion.h2>
+              <h2 className="text-xl font-serif font-bold text-[#5A5A40] dark:text-[#F8FAFC] mb-3 tracking-tight">
+                {t('video.checkInSuccess') || '打卡成功'}
+              </h2>
 
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55 }}
-                className="text-[#848464] text-sm mb-6 leading-relaxed"
-              >
-                {t('video.checkInSuccessDesc') || '太棒了！你今天又进步了一点，继续保持学习的热情吧！'}
-              </motion.p>
+              <p className="text-[#848464] dark:text-[#94A3B8] text-sm mb-8 leading-relaxed">
+                {t('video.checkInSuccessDesc') || '太棒了！今日的学习目标已经达成，继续保持。'}
+              </p>
 
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
+              <button
                 onClick={onClose}
-                className="bg-[#D48166] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#C27055] transition-colors shadow-md"
+                className="w-full bg-[#D48166] text-white rounded-xl py-3.5 font-bold hover:bg-[#C27055] transition-colors active:scale-[0.98]"
               >
                 {t('video.continue') || '继续学习'}
-              </motion.button>
+              </button>
             </div>
           </motion.div>
         </>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CalendarCheck, Play, TrendingUp } from 'lucide-react';
+import { CalendarCheck, Play, TrendingUp, Maximize } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { getCheckInVideosByDate } from '@api/storage';
 import { useAuth } from '../../context/AuthContext';
@@ -27,6 +27,16 @@ export const CheckInVideosPage: React.FC = () => {
     });
   }, [date]);
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   if (!user) {
     return <LoginPrompt message={t('messages.loginHistory')} />;
   }
@@ -38,7 +48,17 @@ export const CheckInVideosPage: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
-      <Header title={formattedDate ? `${t('checkin.title')} · ${formattedDate}` : t('checkin.title')} />
+      <Header 
+        title={formattedDate ? `${t('checkin.title')} · ${formattedDate}` : t('checkin.title')} 
+        rightNode={
+          <button 
+            onClick={toggleFullScreen} 
+            className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+          >
+            <Maximize className="w-[22px] h-[22px]" />
+          </button>
+        }
+      />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-4xl w-full mx-auto">
         {loading ? (

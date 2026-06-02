@@ -11,9 +11,10 @@ import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
 import { CelebrationModal } from './components/CelebrationModal';
+import { PracticeModeModal } from './components/PracticeModeModal';
 import { DisplayMode } from './components/ActionBar';
 import { addCheckIn, toggleFavoriteVideoStorage, isVideoFavorite, isVideoCheckedIn, saveVideoHistory, getVideoTimeFromHistory } from '@api/storage';
-import { CalendarCheck, Heart, SlidersHorizontal, Lock } from 'lucide-react';
+import { CalendarCheck, Heart, SlidersHorizontal, Lock, Maximize } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +36,7 @@ export const VideoLearningPage: React.FC = () => {
   const [highlightColor, setHighlightColor] = useState('#D48166');
   const [subtitleSize, setSubtitleSize] = useState<'small' | 'standard' | 'medium' | 'large'>('standard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPracticeModalOpen, setIsPracticeModalOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isMaskActive, setIsMaskActive] = useState(false);
@@ -196,6 +198,16 @@ export const VideoLearningPage: React.FC = () => {
     }
   };
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
@@ -254,10 +266,10 @@ export const VideoLearningPage: React.FC = () => {
               <CalendarCheck className="w-[22px] h-[22px]" />
             </button>
             <button 
-              onClick={handleToggleVideoFavorite} 
-              className={`p-1.5 rounded-full transition-colors cursor-pointer ${isFavorite ? 'text-[#D48166] bg-[#FCF5F3]' : 'hover:bg-[#EAEAE0] hover:text-[#5A5A40]'}`}
+              onClick={toggleFullScreen} 
+              className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
             >
-              <Heart className={`w-[22px] h-[22px] ${isFavorite ? 'fill-current' : ''}`} />
+              <Maximize className="w-[22px] h-[22px]" />
             </button>
             <button 
               onClick={() => setIsSettingsOpen(true)}
@@ -295,7 +307,7 @@ export const VideoLearningPage: React.FC = () => {
             {/* Desktop Action Bar */}
             {videoDisplayMode === 'normal' && (
             <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] shadow-sm bg-white shrink-0">
-              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} />
+              <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} isFavorite={isFavorite} onToggleFavorite={handleToggleVideoFavorite} onPractice={() => setIsPracticeModalOpen(true)} />
             </div>
             )}
          </div>
@@ -322,7 +334,7 @@ export const VideoLearningPage: React.FC = () => {
 
       {/* Mobile Action Bar Fixed Bottom */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white" style={{ bottom: 0, paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
-         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} showHighlights={showHighlights} toggleHighlights={toggleHighlights} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} />
+         <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} isFavorite={isFavorite} onToggleFavorite={handleToggleVideoFavorite} onPractice={() => setIsPracticeModalOpen(true)} />
       </div>
 
       <WordModal 
@@ -353,7 +365,14 @@ export const VideoLearningPage: React.FC = () => {
         isOpen={showCelebration}
         onClose={() => setShowCelebration(false)}
       />
+
+      <PracticeModeModal
+        isOpen={isPracticeModalOpen}
+        onClose={() => setIsPracticeModalOpen(false)}
+        videoId={id!}
+      />
     </div>
   );
 };
+
 

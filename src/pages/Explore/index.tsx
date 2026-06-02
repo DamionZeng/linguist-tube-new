@@ -210,7 +210,7 @@ export const ExplorePage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="absolute top-2 left-2 bg-[#22c55e]/90 text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg font-bold shadow-sm backdrop-blur-md">
-                      免费
+                      {t('explore.free')}
                     </div>
                   )}
                   {/* Original Tags - Top Right */}

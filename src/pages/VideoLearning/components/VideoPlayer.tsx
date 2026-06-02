@@ -96,7 +96,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (togglePlay) {
       togglePlay();
       const nextPlayingState = !isPlaying;
-      setCenterIcon(nextPlayingState ? 'pause' : 'play');
+      setCenterIcon(nextPlayingState ? 'play' : 'pause');
       setTimeout(() => {
         setCenterIcon(null);
       }, 500); // hide icon after 500ms
