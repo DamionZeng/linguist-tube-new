@@ -121,7 +121,7 @@ export const SentenceMode: React.FC = () => {
                   onClick={(e) => toggleTranslation(idx, e)}
                   className={`mt-4 text-base md:text-lg text-[#666] dark:text-[#94A3B8] transition-all duration-300 cursor-pointer rounded-lg p-2 -mx-2
                     ${state.showTranslation ? 'filter-none bg-[#F5F8FA] dark:bg-[#1C222C]' : 'blur-sm select-none hover:bg-[#F5F8FA]/50 dark:hover:bg-[#1C222C]/50'}`}
-                  title={state.showTranslation ? "点击隐藏" : "点击显示中文"}
+                  title={state.showTranslation ? t('practice.hideTranslation') : t('practice.showTranslation')}
                 >
                   {sentence.zh}
                 </div>
@@ -158,7 +158,7 @@ export const SentenceMode: React.FC = () => {
                           )}
                         </div>
                         <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-                          {state.status === 'done' ? '重新录音' : '点击录音'}
+                          {state.status === 'done' ? t('practice.rerecord') : t('practice.tapToRecord')}
                         </span>
                       </div>
                     ) : (
@@ -177,7 +177,7 @@ export const SentenceMode: React.FC = () => {
                            ))}
                         </div>
                         <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-                          点击结束录音
+                          {t('practice.tapToStop')}
                         </span>
                       </div>
                     )}
@@ -202,7 +202,7 @@ export const SentenceMode: React.FC = () => {
           onClick={() => navigate(`/practice/result/${id!}`)}
           className="w-[200px] h-14 rounded-full bg-[#D48166] text-white font-bold text-lg shadow-[0_4px_14px_rgba(212,129,102,0.4)] hover:bg-[#C27055] transition-colors active:scale-95"
         >
-          完成
+          {t('practice.finish')}
         </button>
       </div>
     </div>

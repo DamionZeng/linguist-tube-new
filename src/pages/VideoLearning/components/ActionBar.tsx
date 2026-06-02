@@ -48,14 +48,14 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   };
 
   const getDisplayModeLabel = () => {
-    return videoDisplayMode === 'hidden' ? (i18n.language.startsWith('zh') ? '显示' : 'Show') : (i18n.language.startsWith('zh') ? '隐藏' : 'Hide');
+    return videoDisplayMode === 'hidden' ? t('video.show') : t('video.hide');
   };
 
   const getLangLabel = () => {
     switch(langMode) {
-      case 'bilingual': return i18n.language.startsWith('zh') ? '双语' : 'Bilingual';
-      case 'en': return i18n.language.startsWith('zh') ? '英语' : 'English';
-      case 'zh': return i18n.language.startsWith('zh') ? '中文' : 'Chinese';
+      case 'bilingual': return t('video.bilingual');
+      case 'en': return t('video.english');
+      case 'zh': return t('video.chinese');
     }
   };
 
@@ -67,17 +67,17 @@ export const ActionBar: React.FC<ActionBarProps> = ({
            <ToolButton icon={<Languages className="w-[22px] h-[22px]" />} label={getLangLabel()} onClick={cycleLangMode} />
            <ToolButton 
               icon={<span className="font-bold text-[15px]">{playbackRate}x</span>} 
-              label={i18n.language.startsWith('zh') ? "倍速" : "Speed"} 
+              label={t('video.speed')} 
               onClick={cyclePlaybackRate} 
            />
            <ToolButton 
               icon={<span className="font-bold text-[14px] tracking-tight border-2 border-current rounded px-0.5 pb-[1px]">AB</span>} 
-              label={i18n.language.startsWith('zh') ? "复读" : "Repeat"} 
+              label={t('video.repeat')} 
               onClick={repeatTranscript}
            />
            <ToolButton 
               icon={<RefreshCcw className={`w-[20px] h-[20px] ${isLooping ? 'text-[#D48166]' : ''}`} />} 
-              label={i18n.language.startsWith('zh') ? "循环" : "Loop"} 
+              label={t('video.loop')} 
               onClick={() => setIsLooping(!isLooping)} 
               active={isLooping} 
            />
@@ -87,7 +87,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               onClick={onCycleDisplayMode}
               active={videoDisplayMode === 'hidden'}
            />
-           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={i18n.language.startsWith('zh') ? "练习" : "Practice"} onClick={onPractice} />
+           <ToolButton icon={<Mic className="w-[22px] h-[22px]" />} label={t('video.practice')} onClick={onPractice} />
          </div>
        )}
 
