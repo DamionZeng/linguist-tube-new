@@ -38,6 +38,7 @@ const resources = {
         loginHistory: "Please login to view your watch history.",
         loginFavorites: "Please login to view your favorites.",
         loginVocab: "Please login to access the Vocabulary Book.",
+        loginLibrary: "Please login to view your personal library and statistics.",
         vipVocab: "Vocabulary Book is exclusively available for VIP members.",
         membersOnly: "Members Only"
       },
@@ -185,6 +186,7 @@ const resources = {
         loginHistory: "请登录以查看您的历史记录。",
         loginFavorites: "请登录以查看您的收藏。",
         loginVocab: "请登录以访问生词本。",
+        loginLibrary: "请登录以查看您的专属页面与学习统计。",
         vipVocab: "生词本为 VIP 会员专享记录，请开通会员或登录会员账号使用。",
         membersOnly: "会员专属"
       },

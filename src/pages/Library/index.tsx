@@ -33,7 +33,7 @@ export const LibraryPage: React.FC = () => {
   }, [user]);
 
   if (!user) {
-    return <LoginPrompt message="Please login to view your personal library and statistics." />;
+    return <LoginPrompt message={t('messages.loginLibrary')} />;
   }
 
   if (loading) {
