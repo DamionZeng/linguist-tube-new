@@ -131,7 +131,7 @@ export const VideoLearningPage: React.FC = () => {
     if (videoInfo && videoContext.currentTime > 0) {
       saveVideoHistory(videoInfo, videoContext.currentTime, videoContext.duration);
     }
-  }, [videoInfo, Math.floor(videoContext.currentTime / 5), videoContext.duration]); // save every 5 seconds rough
+  }, [videoInfo, Math.floor(videoContext.currentTime / 10), videoContext.duration]); // save every 10 seconds rough
 
   useEffect(() => {
     if (videoInfo && videoInfo.id) {

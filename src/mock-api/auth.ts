@@ -9,3 +9,20 @@ export const loginApi = async (username: string, password: string) => {
     }, 500);
   });
 };
+
+export const registerApi = async (username: string, password: string, invite_key: string) => {
+  return new Promise<any>((resolve, reject) => {
+    setTimeout(() => {
+      if (!username || !password || !invite_key) {
+        reject(new Error('Please fill in all fields'));
+        return;
+      }
+      if (password.length < 6) {
+        reject(new Error('Password must be at least 6 characters'));
+        return;
+      }
+      // Mock: 总是注册成功
+      resolve({ username, role: 'vip', token: 'mock-token-' + Date.now() });
+    }, 500);
+  });
+};

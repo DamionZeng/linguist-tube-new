@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { clearStorageCache } from '@api/storage';
 
 export type UserRole = 'user' | 'vip';
 
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setUser(null);
     localStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');
+    clearStorageCache();
   };
 
   useEffect(() => {

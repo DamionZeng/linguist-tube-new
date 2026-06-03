@@ -8,8 +8,8 @@ class HighlightItem(BaseModel):
 
 class TimedWordItem(BaseModel):
     text: str
-    start: float
-    end: float
+    start: str
+    end: str
 
 
 class WordsData(BaseModel):
