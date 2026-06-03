@@ -27,8 +27,7 @@ interface VideoPlayerProps {
   activeIndex?: number;
   totalTranscripts?: number;
   onPlayerReady?: (player: any) => void;
-  showVideoCaptions?: boolean;
-  langMode?: 'bilingual' | 'en' | 'zh';
+  langMode?: 'bilingual' | 'en' | 'zh' | 'none';
   activeTranscriptEn?: string;
   activeTranscriptZh?: string;
   activeTranscriptWords?: { en?: TimedWord[]; zh?: TimedWord[] };
@@ -58,7 +57,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   activeIndex = 0,
   totalTranscripts = 0,
   onPlayerReady,
-  showVideoCaptions = false,
   langMode = 'bilingual',
   activeTranscriptEn = '',
   activeTranscriptZh = '',
@@ -280,7 +278,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       />
 
       {/* Video Captions Overlay */}
-      {showVideoCaptions && (activeTranscriptEn || activeTranscriptZh) && (
+      {langMode !== 'none' && (activeTranscriptEn || activeTranscriptZh) && (
         <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center">
             {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (

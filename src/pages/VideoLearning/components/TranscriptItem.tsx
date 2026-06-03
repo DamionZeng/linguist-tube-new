@@ -62,7 +62,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
       </div>
       
       <div className="flex flex-col gap-2 transition-all duration-300">
-        {(langMode === 'bilingual' || langMode === 'en') && (
+        {langMode !== 'none' && (langMode === 'bilingual' || langMode === 'en') && (
           <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
             {isActive && transcript.words?.en && transcript.words.en.length > 0
               ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true)
@@ -70,7 +70,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
             }
           </p>
         )}
-        {(langMode === 'bilingual' || langMode === 'zh') && (
+        {langMode !== 'none' && (langMode === 'bilingual' || langMode === 'zh') && (
           <p className={`${getZhSizeClass()} leading-snug ${isActive ? 'text-[#6A6A5A] dark:text-[#CBD5E1]' : 'text-[#8A8A7A] dark:text-[#64748B]'}`}>
             {renderHighlightedText(transcript.zh, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)}
           </p>

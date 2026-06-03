@@ -97,6 +97,7 @@ const resources = {
         bilingual: "Bilingual",
         english: "English",
         chinese: "Chinese",
+        noSubtitle: "None",
         repeat: "Repeat",
         loop: "Loop",
         practice: "Practice"
@@ -256,6 +257,7 @@ const resources = {
         bilingual: "双语",
         english: "英语",
         chinese: "中文",
+        noSubtitle: "无字幕",
         repeat: "复读",
         loop: "循环",
         practice: "练习"

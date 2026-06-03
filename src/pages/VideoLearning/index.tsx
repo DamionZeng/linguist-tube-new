@@ -19,7 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
 
-export type LangMode = 'bilingual' | 'en' | 'zh';
+export type LangMode = 'bilingual' | 'en' | 'zh' | 'none';
 
 export const VideoLearningPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +40,6 @@ export const VideoLearningPage: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isMaskActive, setIsMaskActive] = useState(false);
-  const [showVideoCaptions, setShowVideoCaptions] = useState(false);
   const [videoDisplayMode, setVideoDisplayMode] = useState<DisplayMode>('normal');
   const [savedWords, setSavedWords] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -50,7 +49,7 @@ export const VideoLearningPage: React.FC = () => {
   };
 
   const cycleLangMode = () => {
-    setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : 'bilingual');
+    setLangMode(prev => prev === 'bilingual' ? 'en' : prev === 'en' ? 'zh' : prev === 'zh' ? 'none' : 'bilingual');
   };
 
   const toggleHighlights = () => {
@@ -308,7 +307,6 @@ export const VideoLearningPage: React.FC = () => {
                 isMaskActive={isMaskActive} 
                 totalTranscripts={transcripts.length} 
                 onPlayerReady={handlePlayerReady}
-                showVideoCaptions={showVideoCaptions}
                 langMode={langMode}
                 activeTranscriptEn={activeTranscript.en}
                 activeTranscriptZh={activeTranscript.zh}
@@ -370,8 +368,6 @@ export const VideoLearningPage: React.FC = () => {
         onDownloadSubtitles={handleDownloadSubtitles}
         isMaskActive={isMaskActive}
         onToggleMask={() => setIsMaskActive(!isMaskActive)}
-        showVideoCaptions={showVideoCaptions}
-        onToggleVideoCaptions={() => setShowVideoCaptions(!showVideoCaptions)}
       />
 
       <CelebrationModal 
