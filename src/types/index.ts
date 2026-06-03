@@ -28,4 +28,5 @@ export interface VideoInfo {
   index: number;
   total: number;
   isVipOnly?: boolean;
+  nextVideoId?: string | null;
 }

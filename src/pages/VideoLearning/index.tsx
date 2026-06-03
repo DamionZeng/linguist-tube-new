@@ -95,7 +95,11 @@ export const VideoLearningPage: React.FC = () => {
   }, [videoContext.activeIndex, transcripts]);
 
   const handleVideoEnded = () => {
-    navigate('/library');
+    if (videoInfo?.nextVideoId) {
+      navigate(`/video/${videoInfo.nextVideoId}`, { replace: true });
+    } else {
+      navigate('/explore');
+    }
   };
 
   // Load start time
@@ -104,7 +108,8 @@ export const VideoLearningPage: React.FC = () => {
   const handlePlayerReady = (player: any) => {
     if (hasSeekedRef.current) return;
     
-    if (videoInfo && videoInfo.id) {
+    // Only seek if videoInfo matches current route id (avoid stale closure after navigation)
+    if (videoInfo && videoInfo.id && videoInfo.id === id) {
       const jumpTimeStr = localStorage.getItem(`jump_time_${videoInfo.id}`);
       let savedTime = 0;
       
@@ -169,7 +174,14 @@ export const VideoLearningPage: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [id]);
+
+  // Reset player state when video changes
+  useEffect(() => {
+    hasSeekedRef.current = false;
+    videoContext.setIsPlaying?.(false);
+    videoContext.seek?.(0);
+  }, [id]);
 
   const handleToggleFavorite = async (id: string) => {
     setTranscripts(prev => prev.map(t => 

@@ -37,6 +37,7 @@ class VideoInfoData(BaseModel):
     index: int = 1
     total: int = 1
     isVipOnly: bool = False
+    nextVideoId: str | None = None
 
 
 class VideoInfoResponse(BaseModel):

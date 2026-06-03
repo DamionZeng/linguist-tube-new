@@ -43,12 +43,16 @@ async def get_video_info(video_id: str) -> dict | None:
         total = len(total_result.scalars().all())
 
         vid_index = 1
+        next_video_id = None
         all_videos = (
             await session.execute(select(Video).order_by(Video.sort_order, Video.id))
         ).scalars().all()
         for i, v in enumerate(all_videos, 1):
             if v.id == video_id:
                 vid_index = i
+                # Get next video in order
+                if i < len(all_videos):
+                    next_video_id = all_videos[i].id
                 break
 
         return {
@@ -60,6 +64,7 @@ async def get_video_info(video_id: str) -> dict | None:
             "index": vid_index,
             "total": total,
             "isVipOnly": video.is_vip_only,
+            "nextVideoId": next_video_id,
         }
 
 
