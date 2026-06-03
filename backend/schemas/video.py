@@ -8,8 +8,8 @@ class HighlightItem(BaseModel):
 
 class TimedWordItem(BaseModel):
     text: str
-    start: float
-    end: float
+    start: str
+    end: str
 
 
 class WordsData(BaseModel):
@@ -37,6 +37,7 @@ class VideoInfoData(BaseModel):
     index: int = 1
     total: int = 1
     isVipOnly: bool = False
+    nextVideoId: str | None = None
 
 
 class VideoInfoResponse(BaseModel):

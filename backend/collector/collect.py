@@ -239,10 +239,25 @@ def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
 # ═══════════════════════════  Phase 3: 词级字幕  ═══════════════════════════
 
 
-def fetch_word_level_transcript(video_id: str, lang: str) -> Optional[list[dict]]:
-    import yt_dlp
+def fetch_word_level_transcript(video_id: str, lang: str, method: str = "ytdlp") -> Optional[list[dict]]:
+    """
+    获取词级字幕。
+
+    method 参数:
+      - "whisperx": 使用 WhisperX 本地转写（仅支持 en，高精度）
+      - "ytdlp":    使用 yt-dlp 下载 YouTube JSON3/VTT（原有方式）
+    """
     import tempfile
 
+    if method == "whisperx" and lang == "en":
+        with tempfile.TemporaryDirectory() as tmpdir:
+            return _transcribe_with_whisperx(video_id, tmpdir)
+
+    if method == "whisperx" and lang != "en":
+        print(f"  ERROR: WhisperX 方式仅支持英文，当前语种: {lang}")
+        return None
+
+    # ytdlp 方式
     with tempfile.TemporaryDirectory() as tmpdir:
         result = _fetch_json3_via_ytdlp(video_id, lang, tmpdir)
         if result:
@@ -256,6 +271,233 @@ def fetch_word_level_transcript(video_id: str, lang: str) -> Optional[list[dict]
                 return _estimate_word_level_from_segments(segments)
 
     return None
+
+
+# ═══════════════════════════  WhisperX 本地转写  ═══════════════════════════
+
+def _locate_ffmpeg() -> Optional[str]:
+    """动态查找 ffmpeg 可执行文件，不依赖启动时的 PATH"""
+    import subprocess as _sp
+    import shutil as _shutil
+
+    # 1) 先尝试 PATH（适用于已正确配置的环境）
+    ffmpeg_path = _shutil.which("ffmpeg")
+    if ffmpeg_path:
+        return ffmpeg_path
+
+    # 2) Windows: 搜索常见安装位置
+    if sys.platform == "win32":
+        search_dirs = [
+            os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Packages"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Links"),
+            os.path.expandvars(r"%ProgramFiles%\ffmpeg"),
+            os.path.expandvars(r"%ProgramFiles(x86)%\ffmpeg"),
+            r"C:\ffmpeg",
+        ]
+        for base in search_dirs:
+            try:
+                for root, dirs, files in os.walk(base):
+                    for f in files:
+                        if f.lower() in ("ffmpeg.exe", "ffprobe.exe"):
+                            return os.path.join(root, f)
+                    if len(list(os.walk(base))) > 50:  # 避免无限搜索
+                        break
+            except (PermissionError, OSError):
+                continue
+
+    return None
+
+
+def _validate_ffmpeg() -> Optional[str]:
+    """检查 ffmpeg 是否可用，返回所在目录路径，供 yt-dlp ffmpeg_location 使用"""
+    import subprocess as _sp
+
+    ffmpeg_path = _locate_ffmpeg()
+    if not ffmpeg_path:
+        return None
+    try:
+        _sp.run([ffmpeg_path, "-version"], capture_output=True, timeout=5, check=True)
+        return os.path.dirname(ffmpeg_path)
+    except Exception:
+        return None
+
+def _transcribe_with_whisperx(video_id: str, tmpdir: str) -> Optional[list[dict]]:
+    """
+    使用 WhisperX 进行高精度词级转写：
+      1. yt-dlp 下载最佳音质音频 → 转 WAV 无损格式
+      2. WhisperX 双阶段处理：ASR 转录 → Wav2Vec2 强制对齐
+      3. 输出格式与 en.words.json 一致
+    """
+    try:
+        import whisperx
+        import torch
+        import gc
+    except ImportError:
+        print("  WhisperX: 未安装 whisperx，请执行 pip install whisperx")
+        return None
+
+    # --- ffmpeg 检查（whisperx.load_audio / yt-dlp 音频转换 都依赖 ffmpeg）---
+    ffmpeg_dir = _validate_ffmpeg()
+    if not ffmpeg_dir:
+        print("  WhisperX: 错误 - 未检测到 ffmpeg，WhisperX 依赖 ffmpeg 解码音频")
+        print("  安装方法: https://ffmpeg.org/download.html")
+        print("  Windows: winget install ffmpeg")
+        return None
+    # 确保 whisperx.load_audio() 内部能找到 ffmpeg
+    os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+
+    audio_path = _download_audio_wav(video_id, tmpdir, ffmpeg_dir)
+    if not audio_path:
+        print("  WhisperX: 音频下载失败")
+        return None
+
+    # --- 硬件检测 ---
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        compute_type = "float16"
+        batch_size = 16
+        print(f"  WhisperX: 检测到 GPU，使用 CUDA + float16")
+    else:
+        compute_type = "int8"
+        batch_size = 4
+        print(f"  WhisperX: CPU 模式，使用 int8 量化加速")
+
+    try:
+        # --- Stage 1: 加载音频 ---
+        print(f"  WhisperX: 加载音频 {Path(audio_path).name} ...")
+        audio = whisperx.load_audio(audio_path)
+
+        # --- Stage 2: ASR 转录 ---
+        print(f"  WhisperX: 加载 ASR 模型 (small) ...")
+        asr_model = whisperx.load_model(
+            "base", device, compute_type=compute_type, language="en"
+        )
+        print(f"  WhisperX: 开始转录 ...")
+        result = asr_model.transcribe(audio, batch_size=batch_size)
+        detected_lang = result.get("language", "en")
+        print(f"  WhisperX: 转录完成，检测语种: {detected_lang}，{len(result.get('segments', []))} 个片段")
+
+        # --- Stage 3: 强制对齐 (Wav2Vec2) ---
+        print(f"  WhisperX: 加载对齐模型 (语种: {detected_lang}) ...")
+        align_model, align_metadata = whisperx.load_align_model(
+            language_code=detected_lang, device=device
+        )
+        result_aligned = whisperx.align(
+            result["segments"], align_model, align_metadata,
+            audio, device, return_char_alignments=False,
+        )
+        print(f"  WhisperX: 对齐完成")
+
+        # --- 清理 GPU 内存 ---
+        del asr_model
+        del align_model
+        gc.collect()
+        if device == "cuda":
+            torch.cuda.empty_cache()
+
+        # --- 转换为 en.words.json 格式 ---
+        segments = _whisperx_to_word_segments(result_aligned)
+        print(f"  WhisperX: 生成 {len(segments)} 个词级片段")
+        return segments
+
+    except Exception as e:
+        print(f"  WhisperX: 转写异常: {e}")
+        return None
+    finally:
+        # 清理临时音频文件
+        try:
+            os.unlink(audio_path)
+        except Exception:
+            pass
+
+
+def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional[str]:
+    """用 yt-dlp 下载最高音质音频并转为 WAV"""
+    import yt_dlp
+
+    output_template = str(Path(tmpdir) / "audio")
+    opts = {
+        "format": "bestaudio/best",
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "wav",
+            "preferredquality": "0",
+        }],
+        "ffmpeg_location": ffmpeg_dir,
+        "outtmpl": output_template,
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": False,
+        "retries": 5,
+        "fragment_retries": 5,
+        "socket_timeout": 30,
+    }
+
+    for attempt in range(3):
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+            break
+        except Exception as e:
+            if attempt < 2:
+                wait = (attempt + 1) * 3
+                print(f"  WhisperX: 下载失败 (尝试 {attempt+1}/3): {e}")
+                print(f"  WhisperX: {wait}s 后重试...")
+                import time as _time
+                _time.sleep(wait)
+                for p in Path(tmpdir).glob("audio*"):
+                    try:
+                        p.unlink()
+                    except Exception:
+                        pass
+            else:
+                print(f"  WhisperX: yt-dlp 音频下载失败: {e}")
+                return None
+
+    for f in Path(tmpdir).glob("audio.*"):
+        return str(f)
+    for f in Path(tmpdir).glob("audio*"):
+        return str(f)
+    return None
+
+
+def _whisperx_to_word_segments(aligned_result: dict) -> list[dict]:
+    """
+    将 WhisperX 对齐结果转换为 en.words.json 格式:
+      [
+        {"start": seg_start, "end": seg_end, "words": [
+          {"text": "word", "start": w_start, "end": w_end}, ...
+        ]},
+        ...
+      ]
+    """
+    segments = []
+    for seg in aligned_result.get("segments", []):
+        words = seg.get("words", [])
+        if not words:
+            continue
+        word_list = []
+        for w in words:
+            w_text = w.get("word", "").strip()
+            if not w_text:
+                continue
+            w_start = w.get("start")
+            w_end = w.get("end")
+            if w_start is None or w_end is None:
+                continue
+            word_list.append({
+                "text": w_text,
+                "start": round(w_start, 3),
+                "end": round(w_end, 3),
+            })
+        if not word_list:
+            continue
+        segments.append({
+            "start": round(word_list[0]["start"], 3),
+            "end": round(word_list[-1]["end"], 3),
+            "words": word_list,
+        })
+    return segments
 
 
 def _fetch_json3_via_ytdlp(video_id: str, lang: str, tmpdir: str) -> Optional[list[dict]]:
@@ -675,7 +917,8 @@ async def run(args):
         print(f"  已有 en.srt，跳过英文字幕获取")
         en_segments = _parse_srt_segments(en_srt_path)
     else:
-        en_words_segments = fetch_word_level_transcript(video_id, "en")
+        en_method = getattr(args, "en_sub_method", "ytdlp")
+        en_words_segments = fetch_word_level_transcript(video_id, "en", method=en_method)
         if not en_words_segments:
             print("ERROR: 该视频没有英文词级字幕，无法继续。")
             sys.exit(1)
@@ -684,20 +927,14 @@ async def run(args):
         print(f"  合成 EN segments: {len(en_segments)} 条")
 
     print(f"\n{'='*60}")
-    print("Phase 2/5: 中文字幕...")
+    print("Phase 2/5: 中文字幕 (EN→ZH 翻译)...")
     zh_segments = None
     if _load_cached_srt(zh_srt_path):
-        print(f"  已有 zh.srt，跳过中文字幕获取")
+        print(f"  已有 zh.srt，跳过")
         zh_segments = _parse_srt_segments(zh_srt_path)
     else:
-        zh_words_segments = fetch_word_level_transcript(video_id, "zh-Hans")
-        if zh_words_segments:
-            print(f"  ZH 词级字幕: {len(zh_words_segments)} 段")
-            zh_segments = synthesize_segments_from_word_level(zh_words_segments, "zh-Hans")
-            print(f"  合成 ZH segments: {len(zh_segments)} 条")
-        else:
-            print("  无中文词级字幕，启动 EN→ZH 翻译...")
-            zh_segments = translate_en_to_zh(en_segments)
+        zh_segments = translate_en_to_zh(en_segments)
+        print(f"  翻译完成: {len(zh_segments)} 条")
 
     print(f"\n{'='*60}")
     print("Phase 3/5: 获取元信息 & 媒体...")
@@ -846,6 +1083,12 @@ def main():
     parser.add_argument("--category", default="", help="视频分类 (e.g. Daily Life, Business)")
     parser.add_argument("--dry-run", action="store_true", help="预览模式，不实际入库")
     parser.add_argument("--id-override", type=int, help="手动指定 ID 数字（跳过自增）")
+    parser.add_argument(
+        "--en-sub-method",
+        default="ytdlp",
+        choices=["whisperx", "ytdlp"],
+        help="英文字幕采集方式: whisperx (本地高精度转写) | ytdlp (YouTube ASR, 默认)",
+    )
     args = parser.parse_args()
 
     if args.id_override is not None:

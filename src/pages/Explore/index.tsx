@@ -91,7 +91,7 @@ export const ExplorePage: React.FC = () => {
                   ({item.subtitle})
                 </span>
               </h3>
-              <p className="text-white/80 text-xs md:text-sm mb-4 md:mb-5 max-w-md font-medium leading-relaxed drop-shadow line-clamp-2 md:line-clamp-none">
+              <p className="text-white/80 text-xs md:text-sm mb-4 md:mb-5 max-w-md font-medium leading-relaxed drop-shadow line-clamp-3">
                 {item.desc}
               </p>
               <button

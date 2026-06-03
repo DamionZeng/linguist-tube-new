@@ -28,50 +28,70 @@ class CollectorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("LinguistTube - YouTube 视频采集工具")
-        self.root.geometry("720x640")
+        self.root.geometry("740x680")
         self.root.resizable(True, True)
-        self.root.minsize(600, 500)
+        self.root.minsize(640, 540)
 
         self._running = False
         self._build_ui()
         self._load_defaults()
 
     def _build_ui(self):
-        main = ttk.Frame(self.root, padding=12)
-        main.pack(fill=tk.BOTH, expand=True)
+        # 标签页容器
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 0))
+
+        # ---- Tab 1: 视频采集 ----
+        self._build_collect_tab()
+
+        # ---- Tab 2: 视频管理 ----
+        self._build_manage_tab()
+
+        # ---- 共享日志区域 ----
+        log_frame = ttk.LabelFrame(self.root, text="日志输出", padding=4)
+        log_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        self.log_text = scrolledtext.ScrolledText(log_frame, height=12, wrap=tk.WORD, font=("Consolas", 9))
+        self.log_text.pack(fill=tk.BOTH, expand=True)
+        btn_row = ttk.Frame(log_frame)
+        btn_row.pack(fill=tk.X, pady=(4, 0))
+        ttk.Button(btn_row, text="清空日志", command=self._clear_log).pack(side=tk.RIGHT)
+
+    def _build_collect_tab(self):
+        tab = ttk.Frame(self.notebook, padding=12)
+        self.notebook.add(tab, text="视频采集")
 
         row = 0
 
-        ttk.Label(main, text="YouTube URL:").grid(row=row, column=0, sticky=tk.W, pady=4)
+        ttk.Label(tab, text="YouTube URL:").grid(row=row, column=0, sticky=tk.W, pady=4)
         self.url_var = tk.StringVar()
-        url_entry = ttk.Entry(main, textvariable=self.url_var, width=70)
+        url_entry = ttk.Entry(tab, textvariable=self.url_var, width=60)
         url_entry.grid(row=row, column=1, sticky=tk.EW, pady=4, padx=(8, 0))
-        main.columnconfigure(1, weight=1)
+        tab.columnconfigure(1, weight=1)
 
         row += 1
-        ttk.Label(main, text="分类 (Category):").grid(row=row, column=0, sticky=tk.W, pady=4)
+        ttk.Label(tab, text="分类 (Category):").grid(row=row, column=0, sticky=tk.W, pady=4)
         self.category_var = tk.StringVar()
         category_combo = ttk.Combobox(
-            main, textvariable=self.category_var, width=30,
+            tab, textvariable=self.category_var, width=30,
             values=["News", "Vlog", "Travel", "Education", "Technology", "Psychology", "TED"],
         )
         category_combo.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
         row += 1
-        ttk.Label(main, text="难度等级 (Level):").grid(row=row, column=0, sticky=tk.W, pady=4)
+        ttk.Label(tab, text="难度等级 (Level):").grid(row=row, column=0, sticky=tk.W, pady=4)
         self.level_var = tk.StringVar(value="Intermediate")
         level_combo = ttk.Combobox(
-            main, textvariable=self.level_var, width=20,
+            tab, textvariable=self.level_var, width=20,
             values=["Beginner", "Intermediate", "Advanced"],
             state="readonly",
         )
         level_combo.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
         row += 1
-        ttk.Label(main, text="视频画质:").grid(row=row, column=0, sticky=tk.W, pady=4)
+        ttk.Label(tab, text="视频画质:").grid(row=row, column=0, sticky=tk.W, pady=4)
         self.quality_var = tk.StringVar(value="720p")
         quality_combo = ttk.Combobox(
-            main, textvariable=self.quality_var, width=20,
+            tab, textvariable=self.quality_var, width=20,
             values=["best", "1080p", "720p", "480p", "360p"],
             state="readonly",
         )
@@ -79,20 +99,30 @@ class CollectorApp:
 
         row += 1
         self.vip_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(main, text="VIP 视频", variable=self.vip_var).grid(
+        ttk.Checkbutton(tab, text="VIP 视频", variable=self.vip_var).grid(
             row=row, column=0, sticky=tk.W, pady=4)
 
         self.no_video_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(main, text="跳过视频下载", variable=self.no_video_var).grid(
+        ttk.Checkbutton(tab, text="跳过视频下载", variable=self.no_video_var).grid(
             row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
         row += 1
         self.dry_run_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(main, text="预览模式 (Dry Run)", variable=self.dry_run_var).grid(
+        ttk.Checkbutton(tab, text="预览模式 (Dry Run)", variable=self.dry_run_var).grid(
             row=row, column=0, columnspan=2, sticky=tk.W, pady=4)
 
         row += 1
-        id_frame = ttk.Frame(main)
+        ttk.Label(tab, text="英文字幕采集方式:").grid(row=row, column=0, sticky=tk.W, pady=4)
+        en_frame = ttk.Frame(tab)
+        en_frame.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
+        self.en_method_var = tk.StringVar(value="whisperx")
+        ttk.Radiobutton(en_frame, text="WhisperX (本地高精度转写)", variable=self.en_method_var,
+                        value="whisperx").pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Radiobutton(en_frame, text="YouTube ASR (yt-dlp, 快速)", variable=self.en_method_var,
+                        value="ytdlp").pack(side=tk.LEFT)
+
+        row += 1
+        id_frame = ttk.Frame(tab)
         id_frame.grid(row=row, column=0, columnspan=2, sticky=tk.EW, pady=4)
         self.id_label = ttk.Label(id_frame, text="下一个 ID: v?")
         self.id_label.pack(side=tk.LEFT)
@@ -100,21 +130,65 @@ class CollectorApp:
         ttk.Button(id_frame, text="重置 ID", command=self._reset_id).pack(side=tk.LEFT)
 
         row += 1
-        btn_frame = ttk.Frame(main)
-        btn_frame.grid(row=row, column=0, columnspan=2, sticky=tk.EW, pady=8)
+        btn_frame = ttk.Frame(tab)
+        btn_frame.grid(row=row, column=0, columnspan=2, sticky=tk.EW, pady=12)
         self.start_btn = ttk.Button(btn_frame, text="🚀 开始采集", command=self._start_collect)
         self.start_btn.pack(side=tk.LEFT, padx=(0, 8))
         self.stop_btn = ttk.Button(btn_frame, text="⏹ 停止", command=self._stop_collect, state=tk.DISABLED)
         self.stop_btn.pack(side=tk.LEFT)
-        ttk.Button(btn_frame, text="清空日志", command=self._clear_log).pack(side=tk.RIGHT)
 
-        row += 1
-        ttk.Label(main, text="日志输出:").grid(row=row, column=0, sticky=tk.W, pady=(8, 0))
+    def _build_manage_tab(self):
+        tab = ttk.Frame(self.notebook, padding=12)
+        self.notebook.add(tab, text="视频管理")
 
-        row += 1
-        self.log_text = scrolledtext.ScrolledText(main, height=18, wrap=tk.WORD, font=("Consolas", 9))
-        self.log_text.grid(row=row, column=0, columnspan=2, sticky=tk.NSEW, pady=4)
-        main.rowconfigure(row, weight=1)
+        # --- 删除视频 ---
+        del_frame = ttk.LabelFrame(tab, text="删除视频（支持批量，每行一个 ID 或用逗号分隔）", padding=8)
+        del_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 12))
+
+        self.delete_ids_text = tk.Text(del_frame, height=6, width=50, font=("Consolas", 10))
+        self.delete_ids_text.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
+
+        del_btn_row = ttk.Frame(del_frame)
+        del_btn_row.pack(fill=tk.X)
+        ttk.Button(del_btn_row, text="删除以上所有视频及关联数据", command=self._delete_video).pack(side=tk.LEFT)
+        ttk.Label(del_frame, text="删除：R2视频/封面 + 数据库字幕/打卡/收藏/历史/轮播图",
+                  foreground="gray").pack(anchor=tk.W, pady=(4, 0))
+
+        # --- 提升轮播图 ---
+        carousel_frame = ttk.LabelFrame(tab, text="提升到轮播图", padding=8)
+        carousel_frame.pack(fill=tk.X)
+
+        row1 = ttk.Frame(carousel_frame)
+        row1.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(row1, text="视频 ID:").pack(side=tk.LEFT)
+        self.carousel_id_var = tk.StringVar()
+        ttk.Entry(row1, textvariable=self.carousel_id_var, width=20).pack(side=tk.LEFT, padx=(8, 8))
+
+        row2 = ttk.Frame(carousel_frame)
+        row2.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(row2, text="副标题:").pack(side=tk.LEFT)
+        self.carousel_subtitle_var = tk.StringVar()
+        ttk.Entry(row2, textvariable=self.carousel_subtitle_var, width=40).pack(side=tk.LEFT, padx=(8, 8))
+
+        row3 = ttk.Frame(carousel_frame)
+        row3.pack(fill=tk.X)
+        ttk.Button(row3, text="添加到轮播图", command=self._promote_carousel).pack(side=tk.LEFT)
+        ttk.Label(carousel_frame, text="自动从视频记录中取标题、封面、标签等信息",
+                  foreground="gray").pack(anchor=tk.W, pady=(4, 0))
+
+        # --- 生成注册卡密 ---
+        key_frame = ttk.LabelFrame(tab, text="生成注册卡密", padding=8)
+        key_frame.pack(fill=tk.X, pady=(12, 0))
+
+        row1 = ttk.Frame(key_frame)
+        row1.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(row1, text="有效期 (天):").pack(side=tk.LEFT)
+        self.key_days_var = tk.StringVar(value="365")
+        ttk.Entry(row1, textvariable=self.key_days_var, width=10).pack(side=tk.LEFT, padx=(8, 0))
+
+        row2 = ttk.Frame(key_frame)
+        row2.pack(fill=tk.X)
+        ttk.Button(row2, text="生成卡密", command=self._generate_key).pack(side=tk.LEFT)
 
     def _load_defaults(self):
         self._refresh_id()
@@ -143,6 +217,158 @@ class CollectorApp:
 
     def _clear_log(self):
         self.log_text.delete("1.0", tk.END)
+
+    def _parse_ids(self, text: str) -> list[str]:
+        """从文本中解析视频 ID 列表。支持每行一个或用逗号/空格分隔。"""
+        ids = []
+        for part in text.replace(",", "\n").replace(" ", "\n").split("\n"):
+            part = part.strip()
+            if part:
+                ids.append(part)
+        return ids
+
+    def _delete_video(self):
+        raw = self.delete_ids_text.get("1.0", tk.END).strip()
+        video_ids = self._parse_ids(raw)
+        if not video_ids:
+            messagebox.showwarning("提示", "请输入要删除的视频 ID")
+            return
+
+        id_list = "\n".join(f"  - {v}" for v in video_ids)
+        msg = (
+            f"确认删除以下 {len(video_ids)} 个视频及其所有关联数据？\n\n"
+            f"{id_list}\n\n"
+            f"将删除：\n"
+            f"  - R2: 视频文件、封面图\n"
+            f"  - 数据库: 字幕、打卡、收藏、观看历史、轮播图等\n\n"
+            f"此操作不可撤销！"
+        )
+        if not messagebox.askyesno("确认批量删除", msg):
+            return
+
+        self._log(f"\n{'='*50}")
+        self._log(f"开始批量删除 {len(video_ids)} 个视频")
+        for v in video_ids:
+            self._log(f"  - {v}")
+
+        thread = threading.Thread(target=self._run_delete_batch, args=(video_ids,), daemon=True)
+        thread.start()
+
+    def _run_delete_batch(self, video_ids: list[str]):
+        result = None
+        try:
+            from services.admin_service import delete_video_batch
+            from core.database import dispose_engine
+
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(delete_video_batch(video_ids))
+            finally:
+                loop.run_until_complete(dispose_engine())
+                loop.close()
+
+            self._log(f"\n  批量删除结果: {result['success']}/{result['total']} 成功, "
+                      f"{result['not_found']} 不存在, {result['failed']} 失败")
+            for r in result["results"]:
+                vid = r["video_id"]
+                if not r.get("found"):
+                    self._log(f"  ✗ {vid}: 未找到或出错")
+                else:
+                    total_db = sum(r.get("db_records", {}).values())
+                    self._log(f"  ✓ {vid}: R2 {len(r.get('r2_files', []))} 个文件, DB {total_db} 条记录")
+            self._log(f"\n  批量删除完成!")
+        except Exception as e:
+            self._log(f"\n  批量删除出错: {e}")
+            import traceback
+            self._log(traceback.format_exc())
+
+    def _promote_carousel(self):
+        video_id = self.carousel_id_var.get().strip()
+        if not video_id:
+            messagebox.showwarning("提示", "请输入视频 ID")
+            return
+
+        subtitle = self.carousel_subtitle_var.get().strip()
+        msg = (
+            f"确认将视频 {video_id} 添加到轮播图？\n\n"
+            f"副标题: {subtitle or '(空)'}\n\n"
+            f"轮播图标题、封面、标签将从视频记录中自动获取。"
+        )
+        if not messagebox.askyesno("确认添加轮播图", msg):
+            return
+
+        self._log(f"\n{'='*50}")
+        self._log(f"添加轮播图: {video_id}")
+
+        thread = threading.Thread(target=self._run_promote_carousel, args=(video_id, subtitle), daemon=True)
+        thread.start()
+
+    def _run_promote_carousel(self, video_id: str, subtitle: str):
+        result = None
+        try:
+            from services.admin_service import promote_to_carousel
+            from core.database import dispose_engine
+
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(promote_to_carousel(video_id, subtitle or None))
+            finally:
+                loop.run_until_complete(dispose_engine())
+                loop.close()
+
+            if not result.get("found"):
+                self._log(f"  视频 {video_id} 不存在")
+                return
+
+            action = result.get("action", "")
+            if action == "skip":
+                self._log(f"  视频 {video_id} 已在轮播图中，跳过")
+            else:
+                self._log(f"  视频 {video_id} 已添加到轮播图")
+        except Exception as e:
+            self._log(f"\n  添加轮播图出错: {e}")
+            import traceback
+            self._log(traceback.format_exc())
+
+    def _generate_key(self):
+        days_text = self.key_days_var.get().strip()
+        try:
+            days = int(days_text) if days_text else 365
+        except ValueError:
+            messagebox.showwarning("提示", "请输入有效的天数")
+            return
+
+        if days < 1:
+            messagebox.showwarning("提示", "天数必须大于 0")
+            return
+
+        self._log(f"\n{'='*50}")
+        self._log(f"生成注册卡密 (有效期 {days} 天)...")
+
+        thread = threading.Thread(target=self._run_generate_key, args=(days,), daemon=True)
+        thread.start()
+
+    def _run_generate_key(self, days: int):
+        import asyncio
+        try:
+            from services.admin_service import generate_registration_key
+            from core.database import dispose_engine
+
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(generate_registration_key(days))
+            finally:
+                loop.run_until_complete(dispose_engine())
+                loop.close()
+
+            self._log(f"  卡密: {result['key']}")
+            self._log(f"  过期时间: {result['expires_at']}")
+            self._log(f"  有效期: {result['days_valid']} 天")
+            self._log(f"\n  生成完成!")
+        except Exception as e:
+            self._log(f"\n  生成卡密出错: {e}")
+            import traceback
+            self._log(traceback.format_exc())
 
     def _start_collect(self):
         url = self.url_var.get().strip()
@@ -215,7 +441,7 @@ class CollectorApp:
                 self._log("  已有 en.srt，跳过英文字幕获取")
                 en_segments = _parse_srt_segments(en_srt_path)
             else:
-                en_words_segments = fetch_word_level_transcript(video_id, "en")
+                en_words_segments = fetch_word_level_transcript(video_id, "en", method=self.en_method_var.get())
                 if not en_words_segments:
                     self._log("ERROR: 该视频没有英文词级字幕，无法继续。")
                     return

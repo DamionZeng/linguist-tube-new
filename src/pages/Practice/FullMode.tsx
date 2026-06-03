@@ -353,17 +353,17 @@ export const FullMode: React.FC = () => {
         )}
 
         <div className="max-w-3xl mx-auto bg-white dark:bg-[#151B25] rounded-3xl p-6 md:p-10 shadow-sm border border-[#E0E0E0] dark:border-[#1E293B]">
-          <div ref={textContainerRef} className="flex flex-col gap-8 text-xl md:text-2xl font-serif text-[#333] dark:text-[#E2E8F0]">
+          <div ref={textContainerRef} className="text-base md:text-lg font-serif text-[#333] dark:text-[#E2E8F0] leading-relaxed">
             {transcripts.map((sentence, idx) => {
               const isPlayingCurrent = playingSegmentIndex === idx;
               const sentenceScore = scores[idx];
 
               return (
-                <div key={sentence.id} className="flex flex-col gap-2">
-                  <p
-                    className={`leading-relaxed transition-all duration-300 rounded-lg px-3 py-1 -mx-3
+                <span key={sentence.id} className="inline">
+                  <span
+                    className={`transition-all duration-300 rounded px-0.5
                       ${isPlayingCurrent
-                        ? 'bg-[#D48166]/10 text-[#D48166] font-bold border-l-3 border-[#D48166] highlight-playing rounded-l-none'
+                        ? 'bg-[#D48166]/10 text-[#D48166] font-bold border-l-2 border-[#D48166] highlight-playing'
                         : ''
                       }`}
                   >
@@ -403,7 +403,7 @@ export const FullMode: React.FC = () => {
                         : sentence.en
                     }
                     {sentenceScore && (
-                      <span className={`inline-flex items-center justify-center ml-3 w-10 h-7 rounded-full text-xs font-bold align-middle ${
+                      <span className={`inline-flex items-center justify-center ml-1.5 w-7 h-5 rounded-full text-[10px] font-bold align-middle ${
                         sentenceScore.score >= 80
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           : sentenceScore.score >= 50
@@ -413,8 +413,8 @@ export const FullMode: React.FC = () => {
                         {sentenceScore.score}
                       </span>
                     )}
-                  </p>
-                </div>
+                  </span>{' '}
+                </span>
               );
             })}
           </div>

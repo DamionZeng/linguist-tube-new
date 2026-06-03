@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import text
 from passlib.context import CryptContext
@@ -13,6 +14,7 @@ from models.carousel import CarouselItem
 from models.watch_history import WatchHistory
 from models.vocabulary import Vocabulary
 from models.favorite_sentence import FavoriteSentence
+from models.registration_key import RegistrationKey
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -33,7 +35,27 @@ async def seed_data():
                 User(id=2, username="root", password_hash=pwd_context.hash("123456"), role="vip"),
             ]
             session.add_all(users)
+            await session.flush()
+            # 显式指定了 id，需要重置序列避免后续注册冲突
+            await session.execute(text("SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 1) FROM users))"))
             print("  users seeded")
+
+        # ========= registration_keys =========
+        existing = await session.execute(text("SELECT COUNT(*) FROM registration_keys"))
+        if existing.scalar() == 0:
+            import secrets
+            import string as _string
+            alphabet = _string.ascii_uppercase + _string.digits
+            keys = []
+            for _ in range(3):
+                random_part = "".join(secrets.choice(alphabet) for _ in range(12))
+                keys.append(RegistrationKey(
+                    key=f"VIP-{random_part}",
+                    expires_at=datetime(2026, 12, 31, tzinfo=timezone.utc),
+                    is_used=False,
+                ))
+            session.add_all(keys)
+            print("  registration_keys seeded")
 
         # ========= categories =========
         existing = await session.execute(text("SELECT COUNT(*) FROM categories"))

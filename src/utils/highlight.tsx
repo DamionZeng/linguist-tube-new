@@ -3,9 +3,20 @@ import { Highlight } from '../types';
 
 export interface TimedWord {
   text: string;
-  start: number;
-  end: number;
+  start: string;
+  end: string;
 }
+
+/** 将 "MM:SS.sss" 格式的时间戳转为秒数 */
+const parseTimestamp = (ts: string): number => {
+  const parts = ts.split(':');
+  if (parts.length === 2) {
+    return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+  } else if (parts.length === 3) {
+    return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
+  }
+  return parseFloat(ts) || 0;
+};
 
 export const renderTimedWords = (
   words: TimedWord[],
@@ -17,7 +28,9 @@ export const renderTimedWords = (
 ) => {
   let activeWordIndex = -1;
   for (let i = 0; i < words.length; i++) {
-    if (currentTime >= words[i].start && currentTime < words[i].end) {
+    const wordStart = parseTimestamp(words[i].start);
+    const wordEnd = parseTimestamp(words[i].end);
+    if (currentTime >= wordStart && currentTime < wordEnd) {
       activeWordIndex = i;
       break;
     }
@@ -68,7 +81,9 @@ export const renderTimedWordsUnderline = (
 ) => {
   let activeWordIndex = -1;
   for (let i = 0; i < words.length; i++) {
-    if (currentTime >= words[i].start && currentTime < words[i].end) {
+    const wordStart = parseTimestamp(words[i].start);
+    const wordEnd = parseTimestamp(words[i].end);
+    if (currentTime >= wordStart && currentTime < wordEnd) {
       activeWordIndex = i;
       break;
     }

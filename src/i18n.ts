@@ -32,7 +32,18 @@ const resources = {
         enterPassword: "Enter password",
         login: "Login",
         loggingIn: "Logging in...",
-        loginFailed: "Login failed"
+        loginFailed: "Login failed",
+        register: "Register",
+        registering: "Registering...",
+        registerFailed: "Registration failed",
+        inviteKey: "Invite Key",
+        enterInviteKey: "Enter invitation key",
+        noAccount: "Don't have an account?",
+        hasAccount: "Already have an account?",
+        registerHere: "Register here",
+        loginHere: "Login here",
+        switchToRegister: "Register",
+        switchToLogin: "Back to Login"
       },
       messages: {
         loginHistory: "Please login to view your watch history.",
@@ -86,6 +97,7 @@ const resources = {
         bilingual: "Bilingual",
         english: "English",
         chinese: "Chinese",
+        noSubtitle: "None",
         repeat: "Repeat",
         loop: "Loop",
         practice: "Practice"
@@ -180,7 +192,18 @@ const resources = {
         enterPassword: "请输入密码",
         login: "登录",
         loggingIn: "正在登录...",
-        loginFailed: "登录失败"
+        loginFailed: "登录失败",
+        register: "注册",
+        registering: "正在注册...",
+        registerFailed: "注册失败",
+        inviteKey: "邀请卡密",
+        enterInviteKey: "请输入邀请卡密",
+        noAccount: "还没有账号？",
+        hasAccount: "已有账号？",
+        registerHere: "点此注册",
+        loginHere: "点此登录",
+        switchToRegister: "注册",
+        switchToLogin: "返回登录"
       },
       messages: {
         loginHistory: "请登录以查看您的历史记录。",
@@ -234,6 +257,7 @@ const resources = {
         bilingual: "双语",
         english: "英语",
         chinese: "中文",
+        noSubtitle: "无字幕",
         repeat: "复读",
         loop: "循环",
         practice: "练习"
@@ -313,7 +337,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
+    fallbackLng: 'zh',
     supportedLngs: ['en', 'zh'],
     interpolation: {
       escapeValue: false, 

@@ -5,8 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { GlobalSearch } from "./GlobalSearch";
-import { PullToRefresh } from "./PullToRefresh";
-
 export const Layout: React.FC = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -14,7 +12,6 @@ export const Layout: React.FC = () => {
   const { t } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setIsFullscreen(!!document.fullscreenElement);
@@ -33,14 +30,8 @@ export const Layout: React.FC = () => {
     }
   }, []);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshKey(k => k + 1);
-  }, []);
-
   return (
     <div className="flex flex-col w-full bg-[#F5F5F0] dark:bg-[#0B0E14] font-sans text-[#4A4A40] dark:text-[#F8FAFC] overflow-hidden max-w-[1920px] mx-auto" style={{ height: '100dvh' }}>
-      <PullToRefresh active={isFullscreen} onRefresh={handleRefresh} />
-
       {/* Top Nav (Desktop) */}
       <nav className="hidden md:flex h-16 px-8 items-center justify-between bg-white/50 dark:bg-[#151B25] border-b border-[#E0E0D5] dark:border-[#1E293B] backdrop-blur-sm shrink-0 shadow-sm z-40">
         <div className="flex items-center gap-8">
@@ -172,9 +163,7 @@ export const Layout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative z-0">
-        <React.Fragment key={refreshKey}>
-          <Outlet />
-        </React.Fragment>
+        <Outlet />
       </main>
 
       {/* Bottom Nav (Mobile) */}
