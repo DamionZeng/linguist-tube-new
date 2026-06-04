@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Volume2, Mic, Play, Check, Loader2 } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,16 @@ import { Transcript, VideoInfo } from '../../types';
 import { useOriginalAudio } from '../../hooks/useOriginalAudio';
 import { renderTimedWordsUnderline, TimedWord } from '../../utils/highlight';
 import { compareSentence, SentenceScore } from '../../utils/scoring';
+
+const parseTime = (timeStr: string) => {
+  const parts = timeStr.split(':');
+  if (parts.length === 2) {
+    return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+  } else if (parts.length === 3) {
+    return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
+  }
+  return 0;
+};
 
 interface CardState {
   status: 'idle' | 'recording' | 'scoring' | 'done';
@@ -22,6 +32,8 @@ interface RecordingData {
 export const SentenceMode: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialTime = location.state?.initialTime || 0;
   const { t } = useTranslation();
 
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -58,7 +70,7 @@ export const SentenceMode: React.FC = () => {
     isPlaying: isOriginalPlaying,
     playingSegmentIndex,
     currentTime: audioCurrentTime,
-  } = useOriginalAudio({ videoUrl, segments });
+  } = useOriginalAudio({ videoUrl, segments, initialTime });
 
   useEffect(() => {
     const loadData = async () => {
@@ -72,10 +84,15 @@ export const SentenceMode: React.FC = () => {
         setVideoInfo(videoData);
 
         const initialStates: Record<number, CardState> = {};
-        transcriptsData.forEach((_, idx) => {
+        let foundIndex = 0;
+        transcriptsData.forEach((t, idx) => {
           initialStates[idx] = { status: 'idle', showTranslation: false };
+          if (initialTime >= parseTime(t.startTime) && initialTime <= parseTime(t.endTime)) {
+            foundIndex = idx;
+          }
         });
         setCardStates(initialStates);
+        if (foundIndex > 0) setActiveIndex(foundIndex);
       } catch (err) {
         setError('Failed to load learning materials.');
       } finally {
