@@ -12,8 +12,9 @@ type SortOrder = 'asc' | 'desc';
 function useVocabSettings() {
   const [hideMeaning, setHideMeaning] = useState(() => {
     try {
-      return localStorage.getItem('vocab_hide_meaning') === 'true';
-    } catch { return false; }
+      const saved = localStorage.getItem('vocab_hide_meaning');
+      return saved ? saved === 'true' : true; // Default to true
+    } catch { return true; }
   });
 
   const toggleHideMeaning = useCallback(() => {
@@ -34,6 +35,30 @@ function truncateMean(mean: string, maxParts: number = 2): string {
   return selected.join('；') + (parts.length > maxParts ? '…' : '');
 }
 
+const BrushMask = () => (
+  <svg 
+    className="absolute inset-[0%] w-[105%] h-[120%] -left-[2.5%] -top-[10%] text-[#A8CDAE]" 
+    preserveAspectRatio="none" 
+    viewBox="0 0 100 30"
+  >
+    <path 
+      fill="currentColor" 
+      d="M2,15 Q20,5 50,15 T98,15 Q80,25 50,20 T2,15 Z" 
+      opacity="0.9"
+    />
+    <path 
+      fill="currentColor" 
+      d="M0,18 Q30,8 60,22 T100,12 Q70,28 40,20 T0,18 Z" 
+      opacity="0.7"
+    />
+    <path 
+      fill="currentColor" 
+      d="M5,10 Q40,20 70,5 T95,18 Q70,25 30,12 T5,10 Z" 
+      opacity="0.6"
+    />
+  </svg>
+);
+
 export const VocabularyPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -44,8 +69,7 @@ export const VocabularyPage: React.FC = () => {
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
-  // Search & Filter
-  const [searchQuery, setSearchQuery] = useState('');
+  // Filter
   const [filterPos, setFilterPos] = useState<string>('');
   const [sortKey, setSortKey] = useState<SortKey>('added');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -81,15 +105,6 @@ export const VocabularyPage: React.FC = () => {
   const filteredVocab = useMemo(() => {
     let list = [...vocab];
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter(v =>
-        v.word?.toLowerCase().includes(q) ||
-        v.trans?.toLowerCase().includes(q) ||
-        v.mean?.toLowerCase().includes(q)
-      );
-    }
-
     if (filterPos) {
       list = list.filter(v => v.pos === filterPos);
     }
@@ -109,7 +124,7 @@ export const VocabularyPage: React.FC = () => {
     });
 
     return list;
-  }, [vocab, searchQuery, filterPos, sortKey, sortOrder]);
+  }, [vocab, filterPos, sortKey, sortOrder]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedWords);
@@ -210,10 +225,10 @@ export const VocabularyPage: React.FC = () => {
          <div className="flex gap-2">
             <button
               onClick={toggleHideMeaning}
-              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${hideMeaning ? 'bg-[#D48166] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+              className="p-1.5 rounded-lg active:scale-95 transition-all text-[#6A6A5A] hover:bg-[#EAEAE0]"
               title={hideMeaning ? t('vocab.showMeaning', '显示释义') : t('vocab.hideMeaning', '隐藏释义')}
             >
-              {hideMeaning ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {hideMeaning ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
             <button 
               onClick={() => setShowFilters(!showFilters)}
@@ -229,28 +244,6 @@ export const VocabularyPage: React.FC = () => {
             </button>
          </div>
       </header>
-
-      {/* Search Bar */}
-      <div className="px-4 pb-3 shrink-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8A7A]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={t('vocab.searchPlaceholder', '搜索单词或释义...')}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0D5] rounded-xl text-sm text-[#4A4A40] placeholder-[#B0B0A5] focus:outline-none focus:border-[#D48166]/50 focus:ring-1 focus:ring-[#D48166]/20 transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A7A] hover:text-[#4A4A40] text-xs"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Filter & Sort Bar */}
       {showFilters && (
@@ -357,13 +350,13 @@ export const VocabularyPage: React.FC = () => {
                  className={`flex-1 bg-white rounded-2xl border border-[#E0E0D5] shadow-sm px-4 py-3 transition-all ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
                  onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}`)}
                >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-4 md:gap-8">
                      {/* Left: word + phonetic + audio */}
-                     <div className="flex items-center gap-2 min-w-0 shrink-0">
-                       <span className="font-bold text-lg text-[#4A4A40]">{item.word}</span>
+                     <div className="flex items-center gap-2 min-w-[120px] md:min-w-[150px] shrink-0">
+                       <span className="font-bold text-lg text-[#4A4A40] truncate max-w-[120px]">{item.word}</span>
                        <button
                          onClick={e => playAudio(e, item.word)}
-                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all"
+                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all shrink-0"
                        >
                          <Volume2 className="w-3.5 h-3.5" />
                        </button>
@@ -371,43 +364,28 @@ export const VocabularyPage: React.FC = () => {
                      </div>
 
                      {/* Right: pos + meaning + arrow */}
-                     <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                     <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
                        {shouldMask ? (
                          <button
                            onClick={e => toggleReveal(e, item.id)}
                            className="relative flex items-center gap-1.5 group/mask active:scale-95 transition-transform"
                          >
                            {/* Brush-stroke mask effect */}
-                           <span className="relative inline-flex items-center">
+                           <span className="relative flex items-center gap-1 px-1">
+                             <BrushMask />
                              {item.pos && (
                                <span
-                                 className="text-[10px] font-serif px-1.5 py-0.5 rounded-sm relative overflow-hidden"
+                                 className="text-[10px] font-serif px-1 rounded-sm relative"
                                  style={{ color: 'transparent' }}
                                >
                                  {item.pos}
-                                 <span
-                                   className="absolute inset-0 rounded-sm"
-                                   style={{
-                                     background: 'linear-gradient(135deg, #C4B5A0 0%, #A89880 25%, #BFB09A 50%, #9E8E76 75%, #C4B5A0 100%)',
-                                     backgroundSize: '200% 200%',
-                                     animation: 'brushShimmer 3s ease-in-out infinite',
-                                   }}
-                                 />
                                </span>
                              )}
                              <span
-                               className="text-sm font-medium px-2 py-0.5 rounded-md relative overflow-hidden"
+                               className="text-sm font-medium px-1 relative truncate max-w-[200px]"
                                style={{ color: 'transparent' }}
                              >
                                {displayMean}
-                               <span
-                                 className="absolute inset-0 rounded-md"
-                                 style={{
-                                   background: 'linear-gradient(135deg, #C4B5A0 0%, #A89880 25%, #BFB09A 50%, #9E8E76 75%, #C4B5A0 100%)',
-                                   backgroundSize: '200% 200%',
-                                   animation: 'brushShimmer 3s ease-in-out infinite',
-                                 }}
-                               />
                              </span>
                            </span>
                            <Eye className="w-3.5 h-3.5 text-[#8A8A7A] opacity-0 group-hover/mask:opacity-100 transition-opacity" />
@@ -421,7 +399,9 @@ export const VocabularyPage: React.FC = () => {
                          </>
                        )}
                        {!isEditing && (
-                         <ChevronRight className="w-4 h-4 text-[#C0C0B5] shrink-0 group-hover:text-[#D48166] transition-colors" />
+                         <div className="ml-auto flex items-center pr-2">
+                           <ChevronRight className="w-4 h-4 text-[#C0C0B5] shrink-0 group-hover:text-[#D48166] transition-colors" />
+                         </div>
                        )}
                      </div>
                   </div>
