@@ -164,9 +164,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
            muted={isMuted}
            playbackRate={playbackRate}
            onProgress={(state: any) => {
-             if (setCurrentTime && !isNaN(state.playedSeconds)) {
-               setCurrentTime(state.playedSeconds);
-             }
              if (setBuffered && !isNaN(state.loadedSeconds)) {
                setBuffered(state.loadedSeconds);
              }

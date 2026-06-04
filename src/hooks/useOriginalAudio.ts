@@ -9,6 +9,7 @@ interface Segment {
 interface UseOriginalAudioOptions {
   videoUrl: string;
   segments: Segment[];
+  initialTime?: number;
 }
 
 interface UseOriginalAudioReturn {
@@ -32,11 +33,12 @@ function findSegmentIndex(segments: Segment[], currentSeconds: number): number {
   return -1;
 }
 
-export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions): UseOriginalAudioReturn {
+export function useOriginalAudio({ videoUrl, segments, initialTime = 0 }: UseOriginalAudioOptions): UseOriginalAudioReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playingSegmentIndex, setPlayingSegmentIndex] = useState(-1);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(initialTime);
+  const initialSeekDoneRef = useRef(false);
   const timeUpdateRef = useRef<number | null>(null);
   const playSegmentIndexRef = useRef<number>(-1);
   const endSecRef = useRef<number>(-1);
@@ -338,7 +340,7 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
       cleanup();
       played = true;
       setIsPlaying(true);
-      setCurrentTime(0);
+      setCurrentTime(audio.currentTime);
       playSegmentIndexRef.current = -2;
       endSecRef.current = -1;
       audio.play().catch(() => setIsPlaying(false));
@@ -348,13 +350,15 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
     const onCanPlayRetry = () => {
       if (played) return;
       readyRef.current = true;
-      audio.currentTime = 0;
-      if (audio.currentTime < 0.1) {
+      // Seek to current time (which might be initialTime) if it's not already there
+      const targetTime = audio.currentTime;
+      audio.currentTime = targetTime;
+      if (Math.abs(audio.currentTime - targetTime) < 0.1) {
         audio.removeEventListener('seeked', onSeeked);
         cleanup();
         played = true;
         setIsPlaying(true);
-        setCurrentTime(0);
+        setCurrentTime(audio.currentTime);
         playSegmentIndexRef.current = -2;
         endSecRef.current = -1;
         audio.play().catch(() => setIsPlaying(false));
@@ -380,9 +384,10 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
       audio.addEventListener('canplay', onCanPlayRetry);
     }
 
-    audio.currentTime = 0;
+    const startTarget = audio.currentTime > 0 ? audio.currentTime : currentTime;
+    audio.currentTime = startTarget;
 
-    if (audio.currentTime < 0.1) {
+    if (Math.abs(audio.currentTime - startTarget) < 0.1) {
       audio.removeEventListener('seeked', onSeeked);
       if (!readyRef.current) {
         audio.removeEventListener('canplay', onCanPlayRetry);
@@ -390,7 +395,7 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
       cleanup();
       played = true;
       setIsPlaying(true);
-      setCurrentTime(0);
+      setCurrentTime(audio.currentTime);
       playSegmentIndexRef.current = -2;
       endSecRef.current = -1;
       audio.play().catch(() => setIsPlaying(false));

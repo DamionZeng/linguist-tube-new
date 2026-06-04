@@ -379,6 +379,7 @@ export const VideoLearningPage: React.FC = () => {
         isOpen={isPracticeModalOpen}
         onClose={() => setIsPracticeModalOpen(false)}
         videoId={id!}
+        currentTime={videoContext?.currentTime || 0}
       />
     </div>
   );
