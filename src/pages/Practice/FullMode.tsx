@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Volume2, Mic, Play, Loader2 } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +41,8 @@ function alignRecognizedToSentences(fullRecognized: string, sentences: Transcrip
 export const FullMode: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialTime = location.state?.initialTime || 0;
   const { t } = useTranslation();
 
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -79,7 +81,7 @@ export const FullMode: React.FC = () => {
     isPlaying: isOriginalPlaying,
     playingSegmentIndex,
     currentTime: audioCurrentTime,
-  } = useOriginalAudio({ videoUrl, segments });
+  } = useOriginalAudio({ videoUrl, segments, initialTime });
 
   useEffect(() => {
     const loadData = async () => {

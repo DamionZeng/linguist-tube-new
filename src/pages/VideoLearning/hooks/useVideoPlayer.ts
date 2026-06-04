@@ -29,20 +29,26 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTimeRef = useRef<number>(0);
 
-  // Use a more frequent interval to get the current time when playing
+  // Use requestAnimationFrame for smoother progress updates across devices
   useEffect(() => {
-    if (isPlaying && playerRef.current) {
-      lastTimeRef.current = 0;
-      // Update current time every 50ms when playing — 150ms would miss short words
-      intervalRef.current = setInterval(() => {
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-          const time = playerRef.current.getCurrentTime();
-          if (!isNaN(time)) {
-            setCurrentTime(time);
-            lastTimeRef.current = time;
-          }
+    let animationFrameId: number;
+
+    const updateTime = () => {
+      if (isPlaying && playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+        const time = playerRef.current.getCurrentTime();
+        if (!isNaN(time) && Math.abs(time - lastTimeRef.current) > 0.001) {
+          setCurrentTime(time);
+          lastTimeRef.current = time;
         }
-      }, 50);
+      }
+      if (isPlaying) {
+        animationFrameId = requestAnimationFrame(updateTime);
+      }
+    };
+
+    if (isPlaying) {
+      lastTimeRef.current = 0;
+      animationFrameId = requestAnimationFrame(updateTime);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -51,6 +57,9 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
     }
 
     return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -86,8 +95,14 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   }, []);
 
   const seek = useCallback((time: number) => {
-    if (playerRef.current) playerRef.current.seekTo(time, 'seconds');
-  }, []);
+    if (playerRef.current) {
+      playerRef.current.seekTo(time, 'seconds');
+      if (!isPlaying) {
+        setCurrentTime(time);
+        lastTimeRef.current = time;
+      }
+    }
+  }, [isPlaying]);
 
   const stepTranscript = useCallback((direction: 1 | -1) => {
     if (playerRef.current && transcripts.length > 0) {
@@ -133,17 +148,25 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
       if (transcripts[targetIndex]) {
         const targetTime = parseTime(transcripts[targetIndex].startTime);
         playerRef.current.seekTo(targetTime, 'seconds');
-        // Restart play if paused if desired, but user probably wants whatever state it was in
+        if (!isPlaying) {
+          setCurrentTime(targetTime);
+          lastTimeRef.current = targetTime;
+        }
       }
     }
-  }, [transcripts]);
+  }, [transcripts, isPlaying]);
 
   const step = useCallback((amount: number) => {
     if (playerRef.current) {
       const ct = playerRef.current.getCurrentTime();
-      playerRef.current.seekTo(ct + amount, 'seconds');
+      const targetTime = ct + amount;
+      playerRef.current.seekTo(targetTime, 'seconds');
+      if (!isPlaying) {
+         setCurrentTime(targetTime);
+         lastTimeRef.current = targetTime;
+      }
     }
-  }, []);
+  }, [isPlaying]);
 
   // When enabling repeat, jump to the start of current transcript immediately
   const toggleLooping = useCallback(() => {
@@ -152,10 +175,14 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
       if (nextLooping && activeIndexRef.current !== -1 && playerRef.current) {
          const start = parseTime(transcripts[activeIndexRef.current].startTime);
          playerRef.current.seekTo(start, 'seconds');
+         if (!isPlaying) {
+           setCurrentTime(start);
+           lastTimeRef.current = start;
+         }
       }
       return nextLooping;
     });
-  }, [transcripts]);
+  }, [transcripts, isPlaying]);
 
   const cyclePlaybackRate = useCallback(() => {
     setPlaybackRate(prev => prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : prev === 1.5 ? 2 : prev === 2 ? 0.9 : 1);
@@ -165,8 +192,15 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
     if (playerRef.current && activeIndexRef.current !== -1 && transcripts[activeIndexRef.current]) {
       const start = parseTime(transcripts[activeIndexRef.current].startTime);
       playerRef.current.seekTo(start, 'seconds');
+      if (!isPlaying) {
+         setCurrentTime(start);
+         lastTimeRef.current = start;
+         setIsPlaying(true);
+      } else {
+         if (!isPlaying) setIsPlaying(true);
+      }
     }
-  }, [transcripts]);
+  }, [transcripts, isPlaying]);
 
   const toggleMute = useCallback(() => {
     setIsMuted(prev => !prev);

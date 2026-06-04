@@ -8,9 +8,10 @@ interface PracticeModeModalProps {
   isOpen: boolean;
   onClose: () => void;
   videoId: string;
+  currentTime?: number;
 }
 
-export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, onClose, videoId }) => {
+export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, onClose, videoId, currentTime = 0 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -50,7 +51,7 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
                 <button 
                   onClick={() => {
                     onClose();
-                    navigate(`/practice/sentence/${videoId}`);
+                    navigate(`/practice/sentence/${videoId}`, { state: { initialTime: currentTime } });
                   }}
                   className="w-full bg-[#F5F8FA] dark:bg-[#151B25] border border-[#E0E0D5] dark:border-[#1E293B] rounded-[20px] p-5 text-left flex items-start gap-4 hover:border-[#D48166]/50 transition-all group"
                 >
@@ -68,7 +69,7 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
                 <button 
                   onClick={() => {
                     onClose();
-                    navigate(`/practice/full/${videoId}`);
+                    navigate(`/practice/full/${videoId}`, { state: { initialTime: currentTime } });
                   }}
                   className="w-full bg-[#F5F8FA] dark:bg-[#151B25] border border-[#E0E0D5] dark:border-[#1E293B] rounded-[20px] p-5 text-left flex items-start gap-4 hover:border-[#D48166]/50 transition-all group"
                 >
