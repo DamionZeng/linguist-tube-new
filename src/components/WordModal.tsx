@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, X, Heart, ChevronDown, ChevronUp, BookOpen, ScrollText } from 'lucide-react';
 import { addVocabularyWord, fetchWordLookup, addFavoriteSentence } from '@api/general';
 import { useTranslation } from 'react-i18next';
+import { getBaseWord } from '../utils/lemmatize';
 
 interface PhraseItem {
   p_cn: string;
@@ -69,6 +70,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
   const [showSynonyms, setShowSynonyms] = useState(false);
   const [showRelWords, setShowRelWords] = useState(false);
   const [sentenceIndex, setSentenceIndex] = useState(0);
+  const [actualWord, setActualWord] = useState('');
 
   useEffect(() => {
     if (isOpen && word) {
@@ -77,9 +79,12 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, onW
       setShowSynonyms(false);
       setShowRelWords(false);
       setSentenceIndex(0);
-      setIsWordSaved(savedWords.includes(word.toLowerCase()));
+      
+      const baseWord = getBaseWord(word);
+      setActualWord(baseWord);
+      setIsWordSaved(savedWords.includes(baseWord.toLowerCase()));
 
-      fetchWordLookup(word)
+      fetchWordLookup(baseWord)
         .then(data => {
           setDetails(data);
           setLoading(false);
