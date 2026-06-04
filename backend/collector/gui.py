@@ -73,7 +73,7 @@ class CollectorApp:
         self.category_var = tk.StringVar()
         category_combo = ttk.Combobox(
             tab, textvariable=self.category_var, width=30,
-            values=["News", "Vlog", "Travel", "Education", "Technology", "Psychology", "TED"],
+            values=["News", "Vlog", "Travel", "TED", "Movie", "Education"],
         )
         category_combo.grid(row=row, column=1, sticky=tk.W, pady=4, padx=(8, 0))
 
