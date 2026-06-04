@@ -136,7 +136,7 @@ export const SentenceMode: React.FC = () => {
 
   const startRecording = useCallback(async (idx: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    stopOriginal();
+
     setScores((prev) => {
       const next = { ...prev };
       delete next[idx];
@@ -144,7 +144,13 @@ export const SentenceMode: React.FC = () => {
     });
 
     try {
+      // Request microphone FIRST (before stopOriginal) to stay within
+      // the user-gesture context. Mobile browsers require getUserMedia
+      // to be called synchronously from a user click handler.
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Now safe to stop any playing audio
+      stopOriginal();
       // Determine best supported MIME type for MediaRecorder
       let mimeType = '';
       const mimeOptions = [
