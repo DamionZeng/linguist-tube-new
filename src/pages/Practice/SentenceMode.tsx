@@ -54,6 +54,7 @@ export const SentenceMode: React.FC = () => {
   const {
     playSegment,
     stop: stopOriginal,
+    pause: pauseOriginal,
     isPlaying: isOriginalPlaying,
     playingSegmentIndex,
     currentTime: audioCurrentTime,
@@ -255,9 +256,13 @@ export const SentenceMode: React.FC = () => {
     e.stopPropagation();
     if (idx < transcripts.length) {
       setActiveIndex(idx);
-      playSegment(idx);
+      if (isOriginalPlaying && playingSegmentIndex === idx) {
+        pauseOriginal();
+      } else {
+        playSegment(idx);
+      }
     }
-  }, [playSegment, transcripts.length]);
+  }, [playSegment, pauseOriginal, transcripts.length, isOriginalPlaying, playingSegmentIndex]);
 
   const playRecording = useCallback((idx: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -347,6 +352,21 @@ export const SentenceMode: React.FC = () => {
               animation: highlightPulse 1.5s ease-in-out infinite;
               border: 2px solid rgba(212,129,102,0.5);
             }
+            @keyframes iconPulse {
+              0%, 100% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.15); opacity: 0.8; }
+            }
+            .icon-pulse {
+              animation: iconPulse 1s ease-in-out infinite;
+            }
+            @keyframes miniWave {
+              0%, 100% { height: 6px; }
+              50% { height: 18px; }
+            }
+            .mini-wave-bar {
+              animation: miniWave 1s ease-in-out infinite;
+              transform-origin: center;
+            }
           `}</style>
           {transcripts.map((sentence, idx) => {
             const isActive = idx === activeIndex;
@@ -365,10 +385,13 @@ export const SentenceMode: React.FC = () => {
                   ${isPlayingOriginal ? 'highlight-playing' : ''}`}
               >
                 <div className="text-xl md:text-2xl font-serif leading-relaxed mb-6">
-                  {isPlayingOriginal && sentence.words?.en && sentence.words.en.length > 0
-                    ? renderTimedWordsUnderline(sentence.words.en as TimedWord[], audioCurrentTime)
-                    : sentenceScore
-                      ? (() => {
+                  <span 
+                    className={`inline transition-all duration-300 ${isPlayingOriginal ? 'box-decoration-clone bg-[linear-gradient(transparent_65%,rgba(33,130,193,0.4)_65%)] bg-[length:100%_100%] bg-no-repeat' : ''}`}
+                  >
+                    {isPlayingOriginal && sentence.words?.en && sentence.words.en.length > 0
+                        ? renderTimedWordsUnderline(sentence.words.en as TimedWord[], audioCurrentTime)
+                        : sentenceScore
+                          ? (() => {
                           if (sentenceScore.words.length === 0) return sentence.en;
                           const rawTokens = sentence.en.split(/\s+/);
                           let scoreIdx = 0;
@@ -402,6 +425,7 @@ export const SentenceMode: React.FC = () => {
                         })()
                       : sentence.en
                   }
+                  </span>
                   {sentenceScore && (
                     <span className={`inline-flex items-center justify-center ml-3 w-10 h-7 rounded-full text-xs font-bold align-middle ${
                       sentenceScore.score >= 80
@@ -438,14 +462,14 @@ export const SentenceMode: React.FC = () => {
                         <div className="flex items-center gap-6">
                           <button
                             onClick={(e) => playOriginal(idx, e)}
-                            disabled={!videoUrl || isOriginalPlaying}
+                            disabled={!videoUrl}
                             className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 ${
                               isPlayingOriginal
                                 ? 'bg-[#D48166] text-white shadow-md'
                                 : 'bg-[#E5E7EB] dark:bg-[#334155] text-[#9CA3AF] dark:text-[#CBD5E1]'
                             }`}
                           >
-                            <Volume2 className="w-6 h-6" />
+                            <Volume2 className={`w-6 h-6 ${isPlayingOriginal ? 'icon-pulse' : ''}`} />
                           </button>
 
                           <button
@@ -465,7 +489,15 @@ export const SentenceMode: React.FC = () => {
                                   : 'bg-[#E5E7EB] dark:bg-[#334155] text-[#9CA3AF] dark:text-[#CBD5E1]'
                               }`}
                             >
-                              <Play className="w-6 h-6 ml-1" />
+                              {isPlayingRecording ? (
+                                <div className="flex items-center justify-center gap-1 w-full h-full">
+                                  <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0s' }} />
+                                  <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0.2s' }} />
+                                  <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0.4s' }} />
+                                </div>
+                              ) : (
+                                <Play className="w-6 h-6 ml-1" />
+                              )}
                             </button>
                           ) : (
                             <div className="w-12 h-12" />

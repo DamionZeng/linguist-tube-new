@@ -16,6 +16,8 @@ export const ExplorePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [visibleCount, setVisibleCount] = useState(20);
+  const observerTarget = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchExploreData()
@@ -29,6 +31,32 @@ export const ExplorePage: React.FC = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [activeCategory]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + 5);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }); // Run without dependency array to re-attach if observerTarget.current becomes available
 
   useEffect(() => {
     if (data.carousel.length === 0) return;
@@ -187,7 +215,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).map((v) => (
+          {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).slice(0, visibleCount).map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}
@@ -239,6 +267,13 @@ export const ExplorePage: React.FC = () => {
             </div>
           ))}
         </div>
+        
+        {/* Intersection Observer Target */}
+        {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).length > visibleCount && (
+          <div ref={observerTarget} className="w-full h-10 mt-6 flex flex-col items-center justify-center">
+            <div className="w-6 h-6 border-2 border-[#D48166] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
       </section>
     </div>
   );

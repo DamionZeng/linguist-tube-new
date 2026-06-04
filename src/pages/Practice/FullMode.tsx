@@ -4,10 +4,12 @@ import { Volume2, Mic, Play, Loader2 } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useTranslation } from 'react-i18next';
 import { fetchTranscripts, fetchVideoInfo, transcribeAudio } from '@api/index';
+import { fetchVocabularyData } from '@api/general';
 import { Transcript, VideoInfo } from '../../types';
 import { useOriginalAudio } from '../../hooks/useOriginalAudio';
-import { renderTimedWordsUnderline, TimedWord } from '../../utils/highlight';
+import { renderTimedWords, renderHighlightedText, TimedWord } from '../../utils/highlight';
 import { compareSentence, SentenceScore } from '../../utils/scoring';
+import { WordModal } from '../../components/WordModal';
 
 function alignRecognizedToSentences(fullRecognized: string, sentences: Transcript[]): string[] {
   const recWords = fullRecognized
@@ -54,6 +56,9 @@ export const FullMode: React.FC = () => {
   const [scores, setScores] = useState<Record<number, SentenceScore>>({});
   const [overallScore, setOverallScore] = useState(0);
 
+  const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
@@ -70,6 +75,7 @@ export const FullMode: React.FC = () => {
   const {
     playFull,
     stop: stopOriginal,
+    pause: pauseOriginal,
     isPlaying: isOriginalPlaying,
     playingSegmentIndex,
     currentTime: audioCurrentTime,
@@ -79,12 +85,14 @@ export const FullMode: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [transcriptsData, videoData] = await Promise.all([
+        const [transcriptsData, videoData, vocabData] = await Promise.all([
           fetchTranscripts(id),
           fetchVideoInfo(id),
+          fetchVocabularyData()
         ]);
         setTranscripts(transcriptsData);
         setVideoInfo(videoData);
+        setSavedWords(vocabData.map(v => v.word));
       } catch (err) {
         setError('Failed to load learning materials.');
       } finally {
@@ -94,6 +102,10 @@ export const FullMode: React.FC = () => {
 
     loadData();
   }, [id]);
+
+  const handleWordClick = useCallback((word: string) => {
+    setSelectedWord(word);
+  }, []);
 
   useEffect(() => {
     if (playingSegmentIndex >= 0 && textContainerRef.current) {
@@ -256,9 +268,14 @@ export const FullMode: React.FC = () => {
     stopRecognition();
   }, [stopRecognition]);
 
-  const playOriginal = useCallback(() => {
-    playFull();
-  }, [playFull]);
+  const playOriginal = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (isOriginalPlaying) {
+      pauseOriginal();
+    } else {
+      playFull();
+    }
+  }, [playFull, isOriginalPlaying, pauseOriginal]);
 
   const playRecording = useCallback(() => {
     if (!recordingUrl) return;
@@ -324,7 +341,7 @@ export const FullMode: React.FC = () => {
     <div className="w-full h-screen bg-[#F5F8FA] dark:bg-[#0B0E14] text-[#333] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
       <Header title={t('practice.fullMode') || '全文挑战'} onBack={() => navigate(`/video/${id}`)} />
 
-      <main className="flex-1 overflow-y-auto pb-56 pt-6 px-4 md:px-8 custom-scrollbar">
+      <main className="flex-1 overflow-y-auto py-6 px-4 md:px-8 custom-scrollbar">
         <style>{`
           @keyframes soundWave {
             0%, 100% { height: 8px; opacity: 0.6; }
@@ -340,6 +357,21 @@ export const FullMode: React.FC = () => {
           }
           .highlight-playing {
             animation: highlightPulse 1.5s ease-in-out infinite;
+          }
+          @keyframes iconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+          }
+          .icon-pulse {
+            animation: iconPulse 1s ease-in-out infinite;
+          }
+          @keyframes miniWave {
+            0%, 100% { height: 6px; }
+            50% { height: 18px; }
+          }
+          .mini-wave-bar {
+            animation: miniWave 1s ease-in-out infinite;
+            transform-origin: center;
           }
         `}</style>
 
@@ -359,16 +391,12 @@ export const FullMode: React.FC = () => {
               const sentenceScore = scores[idx];
 
               return (
-                <span key={sentence.id} className="inline">
-                  <span
-                    className={`transition-all duration-300 rounded px-0.5
-                      ${isPlayingCurrent
-                        ? 'bg-[#D48166]/10 text-[#D48166] font-bold border-l-2 border-[#D48166] highlight-playing'
-                        : ''
-                      }`}
+                <span key={sentence.id} className="inline mr-1 transition-all duration-300">
+                  <span 
+                    className={isPlayingCurrent ? 'box-decoration-clone bg-[linear-gradient(transparent_65%,rgba(33,130,193,0.4)_65%)] bg-[length:100%_100%] bg-no-repeat' : ''}
                   >
                     {isOriginalPlaying && isPlayingCurrent && sentence.words?.en && sentence.words.en.length > 0
-                      ? renderTimedWordsUnderline(sentence.words.en as TimedWord[], audioCurrentTime)
+                      ? renderTimedWords(sentence.words.en as TimedWord[], audioCurrentTime, handleWordClick, savedWords, '#D48166', true)
                       : sentenceScore
                         ? (() => {
                             if (sentenceScore.words.length === 0) return sentence.en;
@@ -383,7 +411,12 @@ export const FullMode: React.FC = () => {
                               <React.Fragment key={ti}>
                                 {ti > 0 ? ' ' : ''}
                                 <span
-                                  className={`transition-colors duration-300 ${
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const cleaned = token.replace(/[^a-zA-Z']/g, '');
+                                    if (cleaned) handleWordClick(cleaned);
+                                  }}
+                                  className={`cursor-pointer hover:bg-black/5 rounded-sm transition-colors duration-200 ${
                                     (() => {
                                       const wi = tokenMapping[ti];
                                       if (wi === -1) return '';
@@ -400,20 +433,20 @@ export const FullMode: React.FC = () => {
                               </React.Fragment>
                             ));
                           })()
-                        : sentence.en
-                    }
-                    {sentenceScore && (
-                      <span className={`inline-flex items-center justify-center ml-1.5 w-7 h-5 rounded-full text-[10px] font-bold align-middle ${
-                        sentenceScore.score >= 80
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : sentenceScore.score >= 50
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {sentenceScore.score}
-                      </span>
-                    )}
-                  </span>{' '}
+                        : renderHighlightedText(sentence.en, [], handleWordClick, true, savedWords, '#2182c1')}
+                  </span>
+                  {sentenceScore && (
+                    <span className={`inline-flex items-center justify-center ml-1 w-7 h-5 rounded-full text-[10px] font-bold align-middle ${
+                      sentenceScore.score >= 80
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : sentenceScore.score >= 50
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {sentenceScore.score}
+                    </span>
+                  )}
+                  <span className="ml-[1px]"></span>
                 </span>
               );
             })}
@@ -421,7 +454,7 @@ export const FullMode: React.FC = () => {
         </div>
       </main>
 
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F5F8FA] via-[#F5F8FA] dark:from-[#0B0E14] dark:via-[#0B0E14] to-transparent shrink-0 flex flex-col items-center justify-center pb-safe">
+      <div className="shrink-0 p-6 bg-white dark:bg-[#151B25] border-t border-[#E0E0E0] dark:border-[#1E293B] flex flex-col items-center justify-center pb-safe z-20">
         {status === 'done' && overallScore > 0 && (
           <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#151B25] rounded-full shadow-sm border border-[#E0E0E0] dark:border-[#1E293B]">
             <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">{t('practice.performance') || '综合评分'}:</span>
@@ -443,14 +476,14 @@ export const FullMode: React.FC = () => {
               <div className="flex items-center gap-6">
                 <button
                   onClick={playOriginal}
-                  disabled={!videoUrl || isOriginalPlaying}
+                  disabled={!videoUrl}
                   className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 ${
                     isOriginalPlaying
                       ? 'bg-[#D48166] text-white shadow-md'
                       : 'bg-[#E5E7EB] dark:bg-[#334155] text-[#9CA3AF] dark:text-[#CBD5E1]'
                   }`}
                 >
-                  <Volume2 className="w-6 h-6" />
+                  <Volume2 className={`w-6 h-6 ${isOriginalPlaying ? 'icon-pulse' : ''}`} />
                 </button>
 
                 <button
@@ -470,7 +503,15 @@ export const FullMode: React.FC = () => {
                         : 'bg-[#E5E7EB] dark:bg-[#334155] text-[#9CA3AF] dark:text-[#CBD5E1]'
                     }`}
                   >
-                    <Play className="w-6 h-6 ml-1" />
+                    {isPlayingRecording ? (
+                      <div className="flex items-center justify-center gap-1 w-full h-full">
+                        <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0s' }} />
+                        <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0.2s' }} />
+                        <div className="w-1 bg-white rounded-full mini-wave-bar" style={{ animationDelay: '0.4s' }} />
+                      </div>
+                    ) : (
+                      <Play className="w-6 h-6 ml-1" />
+                    )}
                   </button>
                 ) : (
                   <div className="w-12 h-12" />
@@ -522,6 +563,16 @@ export const FullMode: React.FC = () => {
           {t('practice.finish') || '完成'}
         </button>
       </div>
+
+      <WordModal 
+        isOpen={!!selectedWord} 
+        onClose={() => setSelectedWord(null)} 
+        word={selectedWord || ''}
+        savedWords={savedWords}
+        onWordSaved={() => {
+           fetchVocabularyData().then(vocab => setSavedWords(vocab.map(v => v.word)));
+        }}
+      />
     </div>
   );
 };

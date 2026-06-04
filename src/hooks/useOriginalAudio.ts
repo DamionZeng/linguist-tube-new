@@ -15,6 +15,7 @@ interface UseOriginalAudioReturn {
   playSegment: (index: number) => void;
   playFull: () => void;
   stop: () => void;
+  pause: () => void;
   isPlaying: boolean;
   playingSegmentIndex: number;
   currentTime: number;
@@ -129,6 +130,19 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
     endSecRef.current = -1;
   }, []);
 
+  const pause = useCallback(() => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+      } catch {}
+    }
+    setIsPlaying(false);
+    if (timeUpdateRef.current) {
+      cancelAnimationFrame(timeUpdateRef.current);
+      timeUpdateRef.current = null;
+    }
+  }, []);
+
   const startTimeUpdateLoop = useCallback(() => {
     const loop = () => {
       const audio = audioRef.current;
@@ -165,6 +179,17 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
   const playSegment = useCallback(
     (index: number) => {
       if (index < 0 || index >= segments.length) return;
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      // Resume if we are already playing or paused on this segment
+      if (playSegmentIndexRef.current === index && audio.paused) {
+        setIsPlaying(true);
+        audio.play().catch(() => setIsPlaying(false));
+        startTimeUpdateLoop();
+        return;
+      }
+
       stop();
 
       const seg = segments[index];
@@ -174,7 +199,6 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
 
       if (duration <= 0) return;
 
-      const audio = audioRef.current;
       if (!audio) {
         setIsPlaying(false);
         return;
@@ -282,10 +306,17 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
   );
 
   const playFull = useCallback(() => {
-    stop();
-
     const audio = audioRef.current;
     if (!audio) return;
+
+    if (playSegmentIndexRef.current === -2 && audio.paused) {
+      setIsPlaying(true);
+      audio.play().catch(() => setIsPlaying(false));
+      startTimeUpdateLoop();
+      return;
+    }
+
+    stop();
 
     let played = false;
 
@@ -308,6 +339,8 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
       played = true;
       setIsPlaying(true);
       setCurrentTime(0);
+      playSegmentIndexRef.current = -2;
+      endSecRef.current = -1;
       audio.play().catch(() => setIsPlaying(false));
       startTimeUpdateLoop();
     };
@@ -322,6 +355,8 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
         played = true;
         setIsPlaying(true);
         setCurrentTime(0);
+        playSegmentIndexRef.current = -2;
+        endSecRef.current = -1;
         audio.play().catch(() => setIsPlaying(false));
         startTimeUpdateLoop();
       }
@@ -356,6 +391,8 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
       played = true;
       setIsPlaying(true);
       setCurrentTime(0);
+      playSegmentIndexRef.current = -2;
+      endSecRef.current = -1;
       audio.play().catch(() => setIsPlaying(false));
       startTimeUpdateLoop();
     }
@@ -365,6 +402,7 @@ export function useOriginalAudio({ videoUrl, segments }: UseOriginalAudioOptions
     playSegment,
     playFull,
     stop,
+    pause,
     isPlaying,
     playingSegmentIndex,
     currentTime,
