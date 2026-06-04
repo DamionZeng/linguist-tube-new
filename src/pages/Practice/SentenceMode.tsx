@@ -136,7 +136,7 @@ export const SentenceMode: React.FC = () => {
 
   const startRecording = useCallback(async (idx: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    stopOriginal();
+
     setScores((prev) => {
       const next = { ...prev };
       delete next[idx];
@@ -144,12 +144,31 @@ export const SentenceMode: React.FC = () => {
     });
 
     try {
+      // Request microphone FIRST (before stopOriginal) to stay within
+      // the user-gesture context. Mobile browsers require getUserMedia
+      // to be called synchronously from a user click handler.
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-          ? 'audio/webm;codecs=opus'
-          : 'audio/webm',
-      });
+
+      // Now safe to stop any playing audio
+      stopOriginal();
+      // Determine best supported MIME type for MediaRecorder
+      let mimeType = '';
+      const mimeOptions = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+      ];
+      for (const mime of mimeOptions) {
+        if (MediaRecorder.isTypeSupported(mime)) {
+          mimeType = mime;
+          break;
+        }
+      }
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -162,7 +181,7 @@ export const SentenceMode: React.FC = () => {
       };
 
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' });
         const url = URL.createObjectURL(blob);
 
         recordingUrlsRef.current.push(url);
