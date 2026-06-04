@@ -18,7 +18,6 @@ import { YoutubeNewsPage } from './pages/YoutubeNews';
 import { CheckInVideosPage } from './pages/CheckInVideos';
 import { SentenceMode } from './pages/Practice/SentenceMode';
 import { FullMode } from './pages/Practice/FullMode';
-import { ResultMode } from './pages/Practice/ResultMode';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -76,7 +75,6 @@ export default function App() {
             {/* Practice Module Routes */}
             <Route path="/practice/sentence/:id" element={<SentenceMode />} />
             <Route path="/practice/full/:id" element={<FullMode />} />
-            <Route path="/practice/result/:id" element={<ResultMode />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

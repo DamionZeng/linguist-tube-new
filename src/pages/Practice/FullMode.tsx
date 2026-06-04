@@ -301,20 +301,6 @@ export const FullMode: React.FC = () => {
     audio.play().catch(() => setIsPlayingRecording(false));
   }, [recordingUrl]);
 
-  const handleFinish = useCallback(() => {
-    if (Object.keys(scores).length > 0) {
-      navigate(`/practice/result/${id!}`, {
-        state: {
-          scores,
-          overallScore,
-          transcripts,
-        },
-      });
-    } else {
-      navigate(`/practice/result/${id!}`);
-    }
-  }, [scores, overallScore, transcripts, id, navigate]);
-
   if (loading) {
     return (
       <div className="w-full h-screen bg-[#F5F8FA] dark:bg-[#0B0E14] flex items-center justify-center">
@@ -555,13 +541,6 @@ export const FullMode: React.FC = () => {
             </div>
           )}
         </div>
-
-        <button
-          onClick={handleFinish}
-          className="w-[200px] h-14 rounded-full bg-[#D48166] text-white font-bold text-lg shadow-[0_4px_14px_rgba(212,129,102,0.4)] hover:bg-[#C27055] transition-colors active:scale-95 mt-4"
-        >
-          {t('practice.finish') || '完成'}
-        </button>
       </div>
 
       <WordModal 
