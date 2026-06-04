@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Home, RefreshCw, Minimize, Search, Circle } from 'lucide-react';
+import { Home, RefreshCw, Minimize, Maximize, Search, Circle } from 'lucide-react';
 
 interface FullscreenToolbarProps {
   active: boolean;
+  isFullscreen?: boolean;
   onNavigate: (path: string) => void;
   onToggleFullscreen: () => void;
   onOpenSearch: () => void;
@@ -14,6 +15,7 @@ const PEEK_SIZE = 20; // visible portion when semi-hidden
 
 export const FullscreenToolbar: React.FC<FullscreenToolbarProps> = ({
   active,
+  isFullscreen = false,
   onNavigate,
   onToggleFullscreen,
   onOpenSearch,
@@ -102,7 +104,7 @@ export const FullscreenToolbar: React.FC<FullscreenToolbarProps> = ({
     { icon: <Home className="w-[18px] h-[18px]" />, action: () => onNavigate('/explore') },
     { icon: <RefreshCw className="w-[18px] h-[18px]" />, action: () => window.location.reload() },
     { icon: <Search className="w-[18px] h-[18px]" />, action: onOpenSearch },
-    { icon: <Minimize className="w-[18px] h-[18px]" />, action: onToggleFullscreen },
+    { icon: isFullscreen ? <Minimize className="w-[18px] h-[18px]" /> : <Maximize className="w-[18px] h-[18px]" />, action: onToggleFullscreen },
   ];
 
   // Arc params: items fan out on the LEFT side of the ball

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { FullscreenToolbar } from './components/FullscreenToolbar';
 import { ExplorePage } from './pages/Explore';
@@ -18,12 +18,12 @@ import { YoutubeNewsPage } from './pages/YoutubeNews';
 import { CheckInVideosPage } from './pages/CheckInVideos';
 import { SentenceMode } from './pages/Practice/SentenceMode';
 import { FullMode } from './pages/Practice/FullMode';
-import { ResultMode } from './pages/Practice/ResultMode';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 function GlobalFullscreenToolbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
 
   useEffect(() => {
@@ -43,9 +43,13 @@ function GlobalFullscreenToolbar() {
     }
   }, []);
 
+  const isPracticeMode = location.pathname.startsWith('/practice/sentence/') || 
+                         location.pathname.startsWith('/practice/full/');
+
   return (
     <FullscreenToolbar
-      active={isFullscreen}
+      active={isFullscreen || isPracticeMode}
+      isFullscreen={isFullscreen}
       onNavigate={(path) => navigate(path)}
       onToggleFullscreen={toggleFullscreen}
       onOpenSearch={() => {}}
@@ -76,7 +80,6 @@ export default function App() {
             {/* Practice Module Routes */}
             <Route path="/practice/sentence/:id" element={<SentenceMode />} />
             <Route path="/practice/full/:id" element={<FullMode />} />
-            <Route path="/practice/result/:id" element={<ResultMode />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

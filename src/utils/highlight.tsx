@@ -55,7 +55,7 @@ export const renderTimedWords = (
               }}
               className={`transition-colors duration-150 rounded-sm ${
                 isActive
-                  ? 'font-bold text-[#D48166] dark:text-[#E8A87C]'
+                  ? 'text-[#D48166] dark:text-[#E8A87C]'
                   : isVocabWord
                     ? 'font-semibold cursor-pointer hover:bg-black/5'
                     : /^[a-zA-Z]+(?:'[a-zA-Z]+)?$/.test(w.text)
@@ -98,7 +98,7 @@ export const renderTimedWordsUnderline = (
             <span
               className={`transition-colors duration-150 ${
                 isActive
-                  ? 'font-bold text-[#D48166] dark:text-[#E8A87C]'
+                  ? 'text-[#D48166] dark:text-[#E8A87C]'
                   : ''
               }`}
             >
