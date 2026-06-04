@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.sql import func
+from datetime import datetime, timezone
 
 from core.database import _get_async_session
 from models.user import User
@@ -43,7 +44,7 @@ async def get_library_data(user_id: int) -> dict:
                 "pos": v.pos,
                 "mean": v.mean,
                 "trans": v.trans,
-                "added": v.added_at,
+                "added": v.added_at.isoformat() if isinstance(v.added_at, datetime) else v.added_at,
                 "example": v.example,
                 "exampleTrans": v.example_trans,
             })
@@ -146,7 +147,7 @@ async def get_vocabulary(user_id: int) -> list[dict]:
                 "pos": v.pos,
                 "mean": v.mean,
                 "trans": v.trans,
-                "added": v.added_at,
+                "added": v.added_at.isoformat() if isinstance(v.added_at, datetime) else v.added_at,
                 "example": v.example,
                 "exampleTrans": v.example_trans,
             })
@@ -206,7 +207,7 @@ async def add_vocabulary(user_id: int, word_data: dict) -> bool:
             vocab.trans = word_data.get("trans") or vocab.trans
             vocab.example = word_data.get("example") or vocab.example
             vocab.example_trans = word_data.get("exampleTrans") or vocab.example_trans
-            vocab.added_at = "Just now"
+            vocab.added_at = datetime.now(timezone.utc)
             await session.commit()
             return True
 
@@ -223,9 +224,41 @@ async def add_vocabulary(user_id: int, word_data: dict) -> bool:
             trans=word_data.get("trans"),
             example=word_data.get("example"),
             example_trans=word_data.get("exampleTrans"),
-            added_at="Just now",
+            added_at=datetime.now(timezone.utc),
         )
         session.add(vocab)
+        await session.commit()
+        return True
+
+
+async def delete_vocabulary(user_id: int, vocab_id: str) -> bool:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(Vocabulary).where(
+                Vocabulary.id == vocab_id,
+                Vocabulary.user_id == user_id,
+            )
+        )
+        vocab = result.scalars().first()
+        if vocab is None:
+            return False
+        await session.delete(vocab)
+        await session.commit()
+        return True
+
+
+async def batch_delete_vocabulary(user_id: int, vocab_ids: list[str]) -> bool:
+    session_factory = _get_async_session()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(Vocabulary).where(
+                Vocabulary.id.in_(vocab_ids),
+                Vocabulary.user_id == user_id,
+            )
+        )
+        for vocab in result.scalars().all():
+            await session.delete(vocab)
         await session.commit()
         return True
 

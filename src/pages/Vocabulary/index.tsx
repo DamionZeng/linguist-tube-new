@@ -1,10 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { CheckSquare, Trash2, Edit2, Volume2 } from 'lucide-react';
-import { fetchVocabularyData } from '@api/general';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { CheckSquare, Trash2, Volume2, Search, SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp, BookOpen, EyeOff, Eye } from 'lucide-react';
+import { fetchVocabularyData, batchDeleteVocabularyWords } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
+
+type SortKey = 'added' | 'word' | 'pos';
+type SortOrder = 'asc' | 'desc';
+
+function useVocabSettings() {
+  const [hideMeaning, setHideMeaning] = useState(() => {
+    try {
+      return localStorage.getItem('vocab_hide_meaning') === 'true';
+    } catch { return false; }
+  });
+
+  const toggleHideMeaning = useCallback(() => {
+    setHideMeaning(prev => {
+      const next = !prev;
+      try { localStorage.setItem('vocab_hide_meaning', String(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  return { hideMeaning, toggleHideMeaning };
+}
+
+function truncateMean(mean: string, maxParts: number = 2): string {
+  if (!mean) return '';
+  const parts = mean.split(/[；;、,，]/);
+  const selected = parts.slice(0, maxParts);
+  return selected.join('；') + (parts.length > maxParts ? '…' : '');
+}
 
 export const VocabularyPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,6 +43,17 @@ export const VocabularyPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  // Search & Filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPos, setFilterPos] = useState<string>('');
+  const [sortKey, setSortKey] = useState<SortKey>('added');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Revealed words (when hideMeaning is on, track which are temporarily revealed)
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
+  const { hideMeaning, toggleHideMeaning } = useVocabSettings();
 
   useEffect(() => {
     if (!user || user.role !== 'vip') return;
@@ -31,6 +70,47 @@ export const VocabularyPage: React.FC = () => {
       });
   }, [user]);
 
+  // Derive unique POS values for filter
+  const posOptions = useMemo(() => {
+    const set = new Set<string>();
+    vocab.forEach(v => { if (v.pos) set.add(v.pos); });
+    return Array.from(set).sort();
+  }, [vocab]);
+
+  // Filtered & sorted list
+  const filteredVocab = useMemo(() => {
+    let list = [...vocab];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(v =>
+        v.word?.toLowerCase().includes(q) ||
+        v.trans?.toLowerCase().includes(q) ||
+        v.mean?.toLowerCase().includes(q)
+      );
+    }
+
+    if (filterPos) {
+      list = list.filter(v => v.pos === filterPos);
+    }
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'word') {
+        cmp = (a.word || '').localeCompare(b.word || '');
+      } else if (sortKey === 'pos') {
+        cmp = (a.pos || '').localeCompare(b.pos || '');
+      } else {
+        const aTime = a.added ? new Date(a.added).getTime() : 0;
+        const bTime = b.added ? new Date(b.added).getTime() : 0;
+        cmp = aTime - bTime;
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+
+    return list;
+  }, [vocab, searchQuery, filterPos, sortKey, sortOrder]);
+
   const toggleSelect = (id: string) => {
     const next = new Set(selectedWords);
     if (next.has(id)) next.delete(id);
@@ -39,22 +119,50 @@ export const VocabularyPage: React.FC = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedWords.size === vocab.length) {
+    if (selectedWords.size === filteredVocab.length) {
       setSelectedWords(new Set());
     } else {
-      setSelectedWords(new Set(vocab.map(v => v.id)));
+      setSelectedWords(new Set(filteredVocab.map(v => v.id)));
     }
   };
 
-  const handleWordClick = (word: string) => {
-    if (isEditing) return;
-    navigate(`/vocab/${word}`);
+  const handleDeleteSelected = async () => {
+    if (selectedWords.size === 0) return;
+    try {
+      await batchDeleteVocabularyWords(Array.from(selectedWords));
+      setSelectedWords(new Set());
+      const res = await fetchVocabularyData();
+      setVocab(res);
+    } catch (e) {
+      console.error('Failed to delete words', e);
+    }
   };
 
-  const handleWordSaved = () => {
-    fetchVocabularyData()
-      .then(res => setVocab(res))
-      .catch(() => {});
+  const playAudio = (e: React.MouseEvent, word: string) => {
+    e.stopPropagation();
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  const toggleReveal = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const next = new Set(revealedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setRevealedIds(next);
+  };
+
+  const cycleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder(key === 'added' ? 'desc' : 'asc');
+    }
   };
 
   if (!user) {
@@ -93,12 +201,26 @@ export const VocabularyPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative overflow-y-auto">
-      {/* Custom Header for standard operations */}
+      {/* Header */}
       <header className="flex items-center justify-between px-4 pt-6 pb-4 shrink-0">
          <div className="flex items-center gap-2">
             <h1 className="text-3xl font-serif font-bold text-[#5A5A40] tracking-tight">{t('vocab.title')}</h1>
+            <span className="text-sm text-[#8A8A7A] font-medium mt-1">{vocab.length}</span>
          </div>
          <div className="flex gap-2">
+            <button
+              onClick={toggleHideMeaning}
+              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${hideMeaning ? 'bg-[#D48166] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+              title={hideMeaning ? t('vocab.showMeaning', '显示释义') : t('vocab.hideMeaning', '隐藏释义')}
+            >
+              {hideMeaning ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${showFilters ? 'bg-[#5A5A40] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
             <button 
               onClick={() => setIsEditing(!isEditing)}
               className="text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all text-[#D48166] hover:bg-[#EAEAE0]"
@@ -108,29 +230,123 @@ export const VocabularyPage: React.FC = () => {
          </div>
       </header>
 
+      {/* Search Bar */}
+      <div className="px-4 pb-3 shrink-0">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8A7A]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t('vocab.searchPlaceholder', '搜索单词或释义...')}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0D5] rounded-xl text-sm text-[#4A4A40] placeholder-[#B0B0A5] focus:outline-none focus:border-[#D48166]/50 focus:ring-1 focus:ring-[#D48166]/20 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A7A] hover:text-[#4A4A40] text-xs"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter & Sort Bar */}
+      {showFilters && (
+        <div className="px-4 pb-3 shrink-0 animate-in slide-in-from-top-2">
+          <div className="bg-white border border-[#E0E0D5] rounded-xl p-3 space-y-3">
+            {posOptions.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-[#8A8A7A] uppercase tracking-wider shrink-0">POS</span>
+                <button
+                  onClick={() => setFilterPos('')}
+                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${filterPos === '' ? 'bg-[#5A5A40] text-white' : 'bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+                >
+                  All
+                </button>
+                {posOptions.map(pos => (
+                  <button
+                    key={pos}
+                    onClick={() => setFilterPos(pos === filterPos ? '' : pos)}
+                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${filterPos === pos ? 'bg-[#5A5A40] text-white' : 'bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+                  >
+                    {pos}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-[#8A8A7A] uppercase tracking-wider shrink-0">Sort</span>
+              {([['added', 'Time'], ['word', 'A-Z'], ['pos', 'POS']] as [SortKey, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => cycleSort(key)}
+                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortKey === key ? 'bg-[#D48166] text-white' : 'bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+                >
+                  {label}
+                  {sortKey === key && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Editing Toolbar */}
       {isEditing && (
          <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-[#E0E0D5] text-sm animate-in slide-in-from-top-2 shrink-0">
             <button onClick={handleSelectAll} className="flex items-center gap-1.5 text-[#6A6A5A] hover:text-[#4A4A40]">
-               <CheckSquare className="w-4 h-4" /> {selectedWords.size === vocab.length ? t('vocab.unselectAll') : t('vocab.selectAll')}
+               <CheckSquare className="w-4 h-4" /> {selectedWords.size === filteredVocab.length ? t('vocab.unselectAll') : t('vocab.selectAll')}
             </button>
             <div className="flex gap-4">
-               <button className="flex items-center gap-1.5 text-[#94A684] disabled:opacity-50" disabled={selectedWords.size === 0}>
-                   <Edit2 className="w-4 h-4" /> Move
-               </button>
-               <button className="flex items-center gap-1.5 text-[#D48166] disabled:opacity-50" disabled={selectedWords.size === 0}>
+               <button
+                 onClick={handleDeleteSelected}
+                 className={`flex items-center gap-1.5 ${selectedWords.size > 0 ? 'text-[#D48166]' : 'text-[#D48166] opacity-50 cursor-not-allowed'}`}
+                 disabled={selectedWords.size === 0}
+               >
                    <Trash2 className="w-4 h-4" /> {t('vocab.deleteSelected')}
                </button>
             </div>
          </div>
       )}
 
+      {/* Empty State */}
+      {vocab.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+          <div className="bg-white rounded-3xl p-8 text-center max-w-sm w-full border border-[#E0E0D5] shadow-sm">
+            <BookOpen className="w-12 h-12 text-[#D48166] mx-auto mb-4" />
+            <h2 className="text-xl font-serif font-bold text-[#5A5A40] mb-2">{t('vocab.emptyTitle', '生词本是空的')}</h2>
+            <p className="text-sm text-[#8A8A7A] mb-6 leading-relaxed">{t('vocab.emptyDesc', '在看视频时点击单词即可加入生词本，开始你的词汇积累之旅吧！')}</p>
+            <button
+              onClick={() => navigate('/')}
+              className="bg-[#5A5A40] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#4A4A40] transition-colors active:scale-95"
+            >
+              {t('vocab.goLearn', '去学习')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* No Results */}
+      {vocab.length > 0 && filteredVocab.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+          <Search className="w-10 h-10 text-[#E0E0D5] mb-3" />
+          <p className="text-[#8A8A7A] text-sm">{t('vocab.noResults', '没有找到匹配的单词')}</p>
+        </div>
+      )}
+
       {/* Vocabulary List */}
-      <div className="px-4 py-6 space-y-4">
-         {vocab.map(item => (
-            <div key={item.id} className="flex items-start gap-3 group">
+      <div className="px-4 py-2 space-y-2">
+         {filteredVocab.map(item => {
+           const isRevealed = revealedIds.has(item.id);
+           const shouldMask = hideMeaning && !isRevealed;
+           const displayMean = truncateMean(item.mean || item.trans || '');
+
+           return (
+            <div key={item.id} className="flex items-center gap-3 group">
                {isEditing && (
-                  <button onClick={() => toggleSelect(item.id)} className="mt-4 shrink-0 transition-all">
+                  <button onClick={() => toggleSelect(item.id)} className="shrink-0 transition-all">
                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#C0C0B5]'}`}>
                         {selectedWords.has(item.id) && <CheckSquare className="w-3 h-3 text-white" />}
                      </div>
@@ -138,33 +354,91 @@ export const VocabularyPage: React.FC = () => {
                )}
                
                <div
-                 className={`flex-1 bg-white p-5 rounded-[24px] border border-[#E0E0D5] shadow-sm transition-colors ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40'}`}
-                 onClick={() => handleWordClick(item.word)}
+                 className={`flex-1 bg-white rounded-2xl border border-[#E0E0D5] shadow-sm px-4 py-3 transition-all ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
+                 onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}`)}
                >
-                  <div className="flex justify-between items-start mb-1">
-                     <span className="font-bold text-xl text-[#4A4A40] flex items-center gap-2">
-                         {item.word}
-                         <button className="p-1.5 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all">
-                             <Volume2 className="w-4 h-4" />
+                  <div className="flex items-center justify-between gap-3">
+                     {/* Left: word + phonetic + audio */}
+                     <div className="flex items-center gap-2 min-w-0 shrink-0">
+                       <span className="font-bold text-lg text-[#4A4A40]">{item.word}</span>
+                       <button
+                         onClick={e => playAudio(e, item.word)}
+                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all"
+                       >
+                         <Volume2 className="w-3.5 h-3.5" />
+                       </button>
+                       {item.phonetic && <span className="text-xs font-mono text-[#8A8A7A] truncate hidden sm:inline">{item.phonetic}</span>}
+                     </div>
+
+                     {/* Right: pos + meaning + arrow */}
+                     <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                       {shouldMask ? (
+                         <button
+                           onClick={e => toggleReveal(e, item.id)}
+                           className="relative flex items-center gap-1.5 group/mask active:scale-95 transition-transform"
+                         >
+                           {/* Brush-stroke mask effect */}
+                           <span className="relative inline-flex items-center">
+                             {item.pos && (
+                               <span
+                                 className="text-[10px] font-serif px-1.5 py-0.5 rounded-sm relative overflow-hidden"
+                                 style={{ color: 'transparent' }}
+                               >
+                                 {item.pos}
+                                 <span
+                                   className="absolute inset-0 rounded-sm"
+                                   style={{
+                                     background: 'linear-gradient(135deg, #C4B5A0 0%, #A89880 25%, #BFB09A 50%, #9E8E76 75%, #C4B5A0 100%)',
+                                     backgroundSize: '200% 200%',
+                                     animation: 'brushShimmer 3s ease-in-out infinite',
+                                   }}
+                                 />
+                               </span>
+                             )}
+                             <span
+                               className="text-sm font-medium px-2 py-0.5 rounded-md relative overflow-hidden"
+                               style={{ color: 'transparent' }}
+                             >
+                               {displayMean}
+                               <span
+                                 className="absolute inset-0 rounded-md"
+                                 style={{
+                                   background: 'linear-gradient(135deg, #C4B5A0 0%, #A89880 25%, #BFB09A 50%, #9E8E76 75%, #C4B5A0 100%)',
+                                   backgroundSize: '200% 200%',
+                                   animation: 'brushShimmer 3s ease-in-out infinite',
+                                 }}
+                               />
+                             </span>
+                           </span>
+                           <Eye className="w-3.5 h-3.5 text-[#8A8A7A] opacity-0 group-hover/mask:opacity-100 transition-opacity" />
                          </button>
-                     </span>
-                     <span className="text-[10px] text-[#8A8A7A] uppercase tracking-widest font-bold">Review</span>
-                  </div>
-                  <div className="flex items-center gap-3 mb-3">
-                     <span className="text-sm font-mono text-[#6A6A5A]">{item.phonetic}</span>
-                     <span className="text-xs text-[#94A684] font-serif border border-[#94A684]/30 px-2 rounded-sm bg-[#94A684]/5">{item.pos}</span>
-                  </div>
-                  <p className="text-[15px] font-medium text-[#4A4A40] mb-1">{item.trans}</p>
-                  <p className="text-[13px] text-[#8A8A7A] mb-3">{item.mean}</p>
-                  
-                  <div className="bg-[#F9F9F7] rounded-xl p-3 border-l-2 border-[#D48166]">
-                     <p className="text-sm font-bold text-[#5A5A40] mb-0.5">{item.example}</p>
-                     <p className="text-[12px] text-[#6A6A5A]">{item.exampleTrans}</p>
+                       ) : (
+                         <>
+                           {item.pos && (
+                             <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
+                           )}
+                           <span className="text-sm text-[#4A4A40] font-medium truncate max-w-[240px]">{displayMean}</span>
+                         </>
+                       )}
+                       {!isEditing && (
+                         <ChevronRight className="w-4 h-4 text-[#C0C0B5] shrink-0 group-hover:text-[#D48166] transition-colors" />
+                       )}
+                     </div>
                   </div>
                </div>
             </div>
-         ))}
+           );
+         })}
       </div>
+
+      {/* Brush shimmer animation keyframes */}
+      <style>{`
+        @keyframes brushShimmer {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   );
 };

@@ -82,6 +82,10 @@ class AddVocabRequest(BaseModel):
     exampleTrans: str | None = None
 
 
+class BatchDeleteVocabRequest(BaseModel):
+    ids: list[str]
+
+
 class BoolResponse(BaseModel):
     code: int = 200
     data: bool

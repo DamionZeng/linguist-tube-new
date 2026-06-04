@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Text, ForeignKey
+from sqlalchemy import String, Integer, Text, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
@@ -16,4 +16,4 @@ class Vocabulary(Base):
     trans: Mapped[str] = mapped_column(Text, nullable=True)
     example: Mapped[str] = mapped_column(Text, nullable=True)
     example_trans: Mapped[str] = mapped_column(Text, nullable=True)
-    added_at: Mapped[str] = mapped_column(String(50), nullable=True)
+    added_at = mapped_column(DateTime(timezone=True), nullable=True)

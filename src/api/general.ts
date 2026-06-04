@@ -46,6 +46,23 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return json.data;
 }
 
+async function apiDelete<T>(path: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
+  const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json.data;
+}
+
 export const fetchExploreData = async (): Promise<{
   categories: string[];
   videos: Array<{
@@ -192,22 +209,13 @@ export const addVocabularyWord = async (wordDetails: {
   return apiPost('/api/vocabulary', wordDetails);
 };
 
-async function apiDelete<T>(path: string): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getStoredToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
-  const json: ApiResponse<T> = await res.json();
-  if (res.status === 401) {
-    window.dispatchEvent(new Event('auth:unauthorized'));
-  }
-  if (!res.ok || json.code !== 200) {
-    throw new Error(json.message || `Request failed with status ${res.status}`);
-  }
-  return json.data;
-}
+export const deleteVocabularyWord = async (vocabId: string): Promise<boolean> => {
+  return apiDelete(`/api/vocabulary/${encodeURIComponent(vocabId)}`);
+};
+
+export const batchDeleteVocabularyWords = async (ids: string[]): Promise<boolean> => {
+  return apiPost('/api/vocabulary/batch-delete', { ids });
+};
 
 export const removeFavoriteSentence = async (id: string): Promise<boolean> => {
   return apiDelete(`/api/favorites/sentence/${encodeURIComponent(id)}`);
