@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { addVocabularyWord, fetchWordLookup, addFavoriteSentence } from '@api/general';
 import { useTranslation } from 'react-i18next';
+import { getBaseWord } from '../../utils/lemmatize';
 
 interface PhraseItem {
   p_cn: string;
@@ -66,6 +67,8 @@ export const WordDetailsPage: React.FC = () => {
   const [showRelWords, setShowRelWords] = useState(false);
   const [sentenceIndex, setSentenceIndex] = useState(0);
 
+  const [actualWord, setActualWord] = useState('');
+
   useEffect(() => {
     if (word) {
       setLoading(true);
@@ -74,7 +77,10 @@ export const WordDetailsPage: React.FC = () => {
       setShowRelWords(false);
       setSentenceIndex(0);
 
-      fetchWordLookup(word)
+      const baseWord = getBaseWord(word);
+      setActualWord(baseWord);
+
+      fetchWordLookup(baseWord)
         .then(data => {
           setDetails(data);
           setLoading(false);
@@ -160,7 +166,7 @@ export const WordDetailsPage: React.FC = () => {
   return (
     <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
-        title={word || t('vocab.title')} 
+        title={actualWord || word || t('vocab.title')} 
         rightNode={
           <button 
             onClick={toggleFullScreen} 
