@@ -51,3 +51,15 @@ export const loginApi = async (username: string, password: string): Promise<User
   storeToken(data.token);
   return { username: data.username, role: data.role };
 };
+
+export const registerApi = async (username: string, password: string, invite_key: string): Promise<User> => {
+  const data = await apiRequest<{ username: string; role: UserRole; token: string }>(
+    '/api/auth/register',
+    {
+      method: 'POST',
+      body: JSON.stringify({ username, password, invite_key }),
+    },
+  );
+  storeToken(data.token);
+  return { username: data.username, role: data.role };
+};

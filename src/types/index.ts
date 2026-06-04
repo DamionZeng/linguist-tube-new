@@ -11,8 +11,8 @@ export interface Transcript {
   zh: string;
   highlights: Highlight[];
   words?: {
-    en?: Array<{ text: string; start: number; end: number }>;
-    zh?: Array<{ text: string; start: number; end: number }>;
+    en?: Array<{ text: string; start: string; end: string }>;
+    zh?: Array<{ text: string; start: string; end: string }>;
   };
   isFavorite: boolean;
   isActive?: boolean;
@@ -28,4 +28,5 @@ export interface VideoInfo {
   index: number;
   total: number;
   isVipOnly?: boolean;
+  nextVideoId?: string | null;
 }

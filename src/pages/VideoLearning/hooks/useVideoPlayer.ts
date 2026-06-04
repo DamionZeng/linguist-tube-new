@@ -33,7 +33,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   useEffect(() => {
     if (isPlaying && playerRef.current) {
       lastTimeRef.current = 0;
-      // Update current time every 150ms when playing
+      // Update current time every 50ms when playing — 150ms would miss short words
       intervalRef.current = setInterval(() => {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
           const time = playerRef.current.getCurrentTime();
@@ -42,7 +42,7 @@ export const useVideoPlayer = (transcripts: Transcript[] = []) => {
             lastTimeRef.current = time;
           }
         }
-      }, 150);
+      }, 50);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

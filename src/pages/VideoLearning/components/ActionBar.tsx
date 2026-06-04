@@ -56,6 +56,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       case 'bilingual': return t('video.bilingual');
       case 'en': return t('video.english');
       case 'zh': return t('video.chinese');
+      case 'none': return t('video.noSubtitle');
     }
   };
 

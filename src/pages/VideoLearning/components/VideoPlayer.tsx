@@ -3,6 +3,7 @@ import { Play, Rewind, FastForward, Volume2, Maximize, Pause, VolumeX, Loader2 }
 import { VideoInfo } from '../../../types';
 import ReactPlayer from 'react-player';
 import { motion, AnimatePresence } from 'motion/react';
+import { renderTimedWords, TimedWord } from '../../../utils/highlight';
 
 interface VideoPlayerProps {
   videoInfo: VideoInfo;
@@ -26,10 +27,10 @@ interface VideoPlayerProps {
   activeIndex?: number;
   totalTranscripts?: number;
   onPlayerReady?: (player: any) => void;
-  showVideoCaptions?: boolean;
-  langMode?: 'bilingual' | 'en' | 'zh';
+  langMode?: 'bilingual' | 'en' | 'zh' | 'none';
   activeTranscriptEn?: string;
   activeTranscriptZh?: string;
+  activeTranscriptWords?: { en?: TimedWord[]; zh?: TimedWord[] };
   isLooping?: boolean;
   onVideoEnded?: () => void;
 }
@@ -56,16 +57,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   activeIndex = 0,
   totalTranscripts = 0,
   onPlayerReady,
-  showVideoCaptions = false,
   langMode = 'bilingual',
   activeTranscriptEn = '',
   activeTranscriptZh = '',
+  activeTranscriptWords,
   isLooping = true,
   onVideoEnded
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
   const [showControls, setShowControls] = useState(false);
   const [centerIcon, setCenterIcon] = useState<'play' | 'pause' | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -191,6 +193,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
            onPlay={() => {
              setIsPlaying?.(true);
              setIsBuffering?.(false);
+             setHasStarted(true);
            }}
            onError={(e) => console.error("ReactPlayer Error:", e)}
            onEnded={() => {
@@ -223,6 +226,50 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
          />
       </div>
 
+      {/* Thumbnail preview before first play (avoid black screen while loading) */}
+      <AnimatePresence>
+        {!hasStarted && videoInfo.thumbnail && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 z-[5] bg-black flex items-center justify-center"
+          >
+            <img
+              src={videoInfo.thumbnail}
+              alt={videoInfo.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
+                onClick={() => togglePlay?.()}
+              >
+                <Play className="w-6 h-6 md:w-7 md:h-7 text-white fill-current ml-1" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Play button overlay when paused (after video has started) */}
+      <AnimatePresence>
+        {hasStarted && !isPlaying && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none"
+          >
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center pointer-events-auto cursor-pointer hover:bg-black/50 transition-colors"
+              onClick={() => togglePlay?.()}
+            >
+              <Play className="w-6 h-6 md:w-7 md:h-7 text-white fill-current ml-1" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Click Overlay to catch double clicks on the video surface */}
       <div 
         className="absolute inset-0 z-10" 
@@ -231,11 +278,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       />
 
       {/* Video Captions Overlay */}
-      {showVideoCaptions && (activeTranscriptEn || activeTranscriptZh) && (
+      {langMode !== 'none' && (activeTranscriptEn || activeTranscriptZh) && (
         <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center">
             {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
-              <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">{activeTranscriptEn}</p>
+              <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">
+                {activeTranscriptWords?.en && activeTranscriptWords.en.length > 0
+                  ? renderTimedWords(activeTranscriptWords.en, currentTime)
+                  : activeTranscriptEn
+                }
+              </p>
             )}
             {(langMode === 'bilingual' || langMode === 'zh') && activeTranscriptZh && (
               <p className="text-white/75 text-[10px] leading-snug mt-0.5 drop-shadow-md">{activeTranscriptZh}</p>

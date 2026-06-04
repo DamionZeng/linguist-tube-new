@@ -104,6 +104,15 @@ function persistVideoHistoryCache(): void {
   localStorage.setItem('video_history', JSON.stringify(_videoHistoryCache));
 }
 
+export function clearStorageCache(): void {
+  _checkinsCache = [];
+  _favVideosCache = [];
+  _videoHistoryCache = [];
+  localStorage.removeItem('checkins');
+  localStorage.removeItem('favorite_videos');
+  localStorage.removeItem('video_history');
+}
+
 export async function initStorageFromServer(): Promise<void> {
   const token = getStoredToken();
   if (!token) return;
