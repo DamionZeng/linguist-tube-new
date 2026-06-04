@@ -60,3 +60,13 @@ export const addVocabularyWord = async (wordDetails: any) => {
   await delay(300);
   return true;
 };
+
+export const deleteVocabularyWord = async (vocabId: string) => {
+  await delay(300);
+  return true;
+};
+
+export const batchDeleteVocabularyWords = async (ids: string[]) => {
+  await delay(300);
+  return true;
+};
