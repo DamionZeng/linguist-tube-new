@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { WordScreen } from './WordScreen';
 import { ArrowLeft, Maximize, Star, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useWordLookup } from '../../hooks/useWordLookup';
+import { useWordLookup, prefetchWord } from '../../hooks/useWordLookup';
 
 const Sparkles: React.FC<{ progress: number }> = ({ progress }) => {
   const numSparkles = Math.floor(progress * 12); 
@@ -90,17 +90,24 @@ export const WordDetailsPage: React.FC = () => {
   const [loadingList, setLoadingList] = useState(true);
   const [direction, setDirection] = useState(0);
 
-  // Initialize the list
+  // Initialize the list — 按 added 倒序排列，与 VocabularyPage 默认排序一致
   useEffect(() => {
     let mounted = true;
     const init = async () => {
       setLoadingList(true);
       try {
-        let words: {word: string; id: string}[] = [];
+        let words: {word: string; id: string; added?: string | null}[] = [];
         if (user?.role === 'vip') {
           const res = await fetchVocabularyData();
           if (res) words = res;
         }
+        
+        // 与 VocabularyPage 默认排序保持一致：按 added 倒序（最新的在前）
+        words.sort((a, b) => {
+          const aTime = a.added ? new Date(a.added).getTime() : 0;
+          const bTime = b.added ? new Date(b.added).getTime() : 0;
+          return bTime - aTime;
+        });
         
         if (mounted) {
           const foundIdx = words.findIndex(w => w.word.toLowerCase() === word?.toLowerCase());
@@ -125,6 +132,28 @@ export const WordDetailsPage: React.FC = () => {
     init();
     return () => { mounted = false; };
   }, [word, user]);
+
+  // 预加载邻居单词：首位只预加载下一个，末位只预加载上一个，中间预加载两边
+  useEffect(() => {
+    if (vocabList.length === 0) return;
+
+    const words = vocabList.map((v) => v.word);
+    const isFirst = activeIndex === 0;
+    const isLast = activeIndex === vocabList.length - 1;
+
+    // 始终预加载当前单词
+    prefetchWord(words[activeIndex]);
+
+    // 第一个单词：只预加载下一个
+    if (!isFirst) {
+      prefetchWord(words[activeIndex - 1]);
+    }
+
+    // 最后一个单词：只预加载上一个
+    if (!isLast) {
+      prefetchWord(words[activeIndex + 1]);
+    }
+  }, [vocabList, activeIndex]);
 
   const paginate = (newDirection: number) => {
     const nextIndex = activeIndex + newDirection;
@@ -241,8 +270,8 @@ export const WordDetailsPage: React.FC = () => {
               style={{ height: `${progressPercentage * 100}%` }}
             />
             <div 
-              className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-[#7A8A54] rounded-full transition-all duration-300 ease-out shadow-md"
-              style={{ top: `calc(${progressPercentage * 100}% - 6px)` }}
+              className="absolute w-3 h-3 bg-white border-2 border-[#7A8A54] rounded-full transition-all duration-300 ease-out shadow-md"
+              style={{ left: '50%', top: `${progressPercentage * 100}%`, transform: 'translate(-50%, -50%)' }}
             />
             <Sparkles progress={progressPercentage} />
          </div>
