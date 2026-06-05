@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { prefetchWord } from '../../hooks/useWordLookup';
 
 const Sparkles: React.FC<{ progress: number }> = ({ progress }) => {
-  const numSparkles = Math.floor(progress * 12); 
+  const numSparkles = Math.floor(progress * 20); 
   
   return (
     <div className="absolute left-1/2 -translate-x-1/2 w-[40px] h-[40px] -mt-[20px] overflow-visible pointer-events-none z-40 transition-all duration-300" style={{ top: `${progress * 100}%`}}>
@@ -34,10 +34,10 @@ const BottomActions: React.FC<{
   isDeleting: boolean;
   currentWord: string;
   currentVocabId: string;
-  onMastery: (vocabId: string, direction: number) => Promise<void>;
+  onMastery: (vocabId: string, direction: number) => void;
   isUpdatingMastery: boolean;
   canGoNext: boolean;
-  lastMasteryClick: number | null;
+  lastMasteryClick: number | undefined;
 }> = ({ onDelete, isDeleting, currentWord, currentVocabId, onMastery, isUpdatingMastery, canGoNext, lastMasteryClick }) => {
   const [showConfirm, setShowConfirm] = React.useState(false);
 
@@ -58,7 +58,7 @@ const BottomActions: React.FC<{
     <>
       {/* Confirm Modal Overlay */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 animate-in fade-in duration-150 pointer-events-auto">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={handleCancel} />
           <div className="relative bg-white rounded-2xl px-6 pt-6 pb-5 max-w-[320px] w-full shadow-xl animate-in zoom-in-95 fade-in duration-200">
             <div className="flex flex-col items-center text-center">
@@ -91,19 +91,19 @@ const BottomActions: React.FC<{
          <div className="bg-[#F4F5EF]/95 backdrop-blur-md px-5 py-3 rounded-full flex items-center gap-4 shadow-lg shadow-black/5 border border-white/50 pointer-events-auto">
            {/* 陌生按钮 */}
            <button
-             onClick={async () => {
-               if (currentVocabId !== 'direct') {
-                 await onMastery(currentVocabId, -1);
+             onClick={() => {
+               if (currentVocabId !== 'direct' && lastMasteryClick === undefined) {
+                 onMastery(currentVocabId, -1);
                }
              }}
-             disabled={isUpdatingMastery || currentVocabId === 'direct'}
+             disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
                ${lastMasteryClick === -1
                  ? 'bg-red-100 border-red-300 text-[#E74C3C] shadow-sm shadow-red-200'
                  : lastMasteryClick === 1
                    ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
                    : 'border-[#E0E0D5] hover:bg-red-50 hover:border-red-200 text-[#E74C3C]'}
-               ${isUpdatingMastery || currentVocabId === 'direct' ? 'opacity-50 cursor-not-allowed' : ''}`}
+               ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="不熟悉"
            >
              <ThumbsDown className="w-5 h-5" />
@@ -124,19 +124,19 @@ const BottomActions: React.FC<{
 
            {/* 熟悉按钮 */}
            <button
-             onClick={async () => {
-               if (currentVocabId !== 'direct') {
-                 await onMastery(currentVocabId, 1);
+             onClick={() => {
+               if (currentVocabId !== 'direct' && lastMasteryClick === undefined) {
+                 onMastery(currentVocabId, 1);
                }
              }}
-             disabled={isUpdatingMastery || currentVocabId === 'direct'}
+             disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
                ${lastMasteryClick === 1
                  ? 'bg-green-100 border-green-300 text-[#2ECC71] shadow-sm shadow-green-200'
                  : lastMasteryClick === -1
                    ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
                    : 'border-[#E0E0D5] hover:bg-green-50 hover:border-green-200 text-[#2ECC71]'}
-               ${isUpdatingMastery || currentVocabId === 'direct' ? 'opacity-50 cursor-not-allowed' : ''}`}
+               ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="熟悉"
            >
              <ThumbsUp className="w-5 h-5" />
@@ -149,28 +149,25 @@ const BottomActions: React.FC<{
 
 const flipVariants = {
   enter: (direction: number) => ({
-    rotateX: direction > 0 ? -90 : 90,
+    rotateX: direction > 0 ? -60 : 60,
+    y: direction > 0 ? "30%" : "-30%",
     opacity: 0,
-    originY: direction > 0 ? 1 : 0, 
-    y: direction > 0 ? "50%" : "-50%",
-    scale: 0.9,
-    z: -300
+    scale: 0.95,
+    z: -200
   }),
   center: {
     rotateX: 0,
-    opacity: 1,
     y: 0,
+    opacity: 1,
     scale: 1,
-    originY: 0.5,
     z: 0
   },
   exit: (direction: number) => ({
-    rotateX: direction < 0 ? -90 : 90,
+    rotateX: direction < 0 ? -60 : 60,
+    y: direction < 0 ? "30%" : "-30%",
     opacity: 0,
-    originY: direction < 0 ? 1 : 0,
-    y: direction < 0 ? "50%" : "-50%",
-    scale: 0.9,
-    z: -300
+    scale: 0.95,
+    z: -200
   })
 };
 
@@ -187,7 +184,7 @@ export const WordDetailsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingMastery, setIsUpdatingMastery] = useState(false);
   const [memoryMode, setMemoryMode] = useState(true);
-  const [lastMasteryClick, setLastMasteryClick] = useState<number | null>(null);
+  const [masteryState, setMasteryState] = useState<Record<string, number>>({});
   const [allReviewed, setAllReviewed] = useState(false);
 
   // Initialize the list
@@ -204,12 +201,11 @@ export const WordDetailsPage: React.FC = () => {
             const ids = idsParam.split(',').filter(Boolean);
             const res = await fetchVocabularyData(ids);
             if (res) {
-              words = res as any[];
+              // Extract to prevent backend from returning extra words
+              words = (res as any[]).filter(w => ids.includes(w.id));
               // Reorder to match the IDs sequence from recommend mode
-              const idOrder = new Map(words.map((w: any, i: number) => [w.id, i]));
               words.sort((a: any, b: any) =>
-                (ids.indexOf(a.id) !== -1 ? ids.indexOf(a.id) : 999) -
-                (ids.indexOf(b.id) !== -1 ? ids.indexOf(b.id) : 999)
+                ids.indexOf(a.id) - ids.indexOf(b.id)
               );
             }
           } else {
@@ -219,7 +215,7 @@ export const WordDetailsPage: React.FC = () => {
         }
         
         // Sort by added desc only when not in recommended mode
-        if (!idsParam) {
+        if (!searchParams.get('ids')) {
           words.sort((a, b) => {
             const aTime = a.added ? new Date(a.added).getTime() : 0;
             const bTime = b.added ? new Date(b.added).getTime() : 0;
@@ -251,7 +247,7 @@ export const WordDetailsPage: React.FC = () => {
     return () => { mounted = false; };
   }, [word, user, searchParams]);
 
-  // 预加载邻居单词：首位只预加载下一个，末位只预加载上一个，中间预加载两边
+  // Preload neighboring words
   useEffect(() => {
     if (vocabList.length === 0) return;
 
@@ -259,15 +255,12 @@ export const WordDetailsPage: React.FC = () => {
     const isFirst = activeIndex === 0;
     const isLast = activeIndex === vocabList.length - 1;
 
-    // 始终预加载当前单词
     prefetchWord(words[activeIndex]);
 
-    // 第一个单词：只预加载下一个
     if (!isFirst) {
       prefetchWord(words[activeIndex - 1]);
     }
 
-    // 最后一个单词：只预加载上一个
     if (!isLast) {
       prefetchWord(words[activeIndex + 1]);
     }
@@ -278,16 +271,19 @@ export const WordDetailsPage: React.FC = () => {
       const nextIndex = prev + newDirection;
       if (nextIndex >= 0 && nextIndex < vocabList.length) {
         setDirection(newDirection);
-        // Use setTimeout to avoid setState during render
         const nextWord = vocabList[nextIndex].word;
         setTimeout(() => {
-          window.history.replaceState(null, '', `/vocab/${nextWord}`);
+          let qs = '';
+          if (searchParams.get('ids')) {
+            qs = `?ids=${searchParams.get('ids')}`;
+          }
+          window.history.replaceState(null, '', `/vocab/${nextWord}${qs}`);
         }, 0);
         return nextIndex;
       }
       return prev;
     });
-  }, [vocabList]);
+  }, [vocabList, searchParams]);
 
   const handleDelete = async () => {
     const current = vocabList[activeIndex];
@@ -304,7 +300,9 @@ export const WordDetailsPage: React.FC = () => {
       const newIndex = activeIndex >= nextList.length ? nextList.length - 1 : activeIndex;
       setActiveIndex(newIndex);
       setDirection(0);
-      window.history.replaceState(null, '', `/vocab/${nextList[newIndex].word}`);
+      let qs = '';
+      if (searchParams.get('ids')) qs = `?ids=${searchParams.get('ids')}`;
+      window.history.replaceState(null, '', `/vocab/${nextList[newIndex].word}${qs}`);
     } catch (e) {
       console.error('Failed to delete word', e);
     } finally {
@@ -312,78 +310,88 @@ export const WordDetailsPage: React.FC = () => {
     }
   };
 
-  const handleMastery = useCallback(async (vocabId: string, direction: number) => {
-    if (vocabId === 'direct') return;
-    setLastMasteryClick(direction);
-    setIsUpdatingMastery(true);
-    try {
-      await updateVocabMastery(vocabId, direction);
-    } catch (e) {
-      console.error('Failed to update mastery', e);
-    } finally {
-      setIsUpdatingMastery(false);
-    }
-    // 最后一个单词 → 显示完成页面；否则切换到下一个
-    if (activeIndex >= vocabList.length - 1) {
-      setAllReviewed(true);
-    } else {
-      const nextIndex = activeIndex + 1;
-      setDirection(1);
-      setActiveIndex(nextIndex);
-      setLastMasteryClick(null);
-      window.history.replaceState(null, '', `/vocab/${vocabList[nextIndex].word}`);
-    }
-  }, [activeIndex, vocabList]);
+  const handleMastery = useCallback((vocabId: string, masteryDirection: number) => {
+    if (vocabId === 'direct' || masteryState[vocabId] !== undefined) return;
+    
+    setMasteryState(prev => ({ ...prev, [vocabId]: masteryDirection }));
+    
+    // Background API call
+    updateVocabMastery(vocabId, masteryDirection).catch(e => console.error('Failed to update mastery', e));
+    
+    // Delay slightly to show active button state before flipping
+    setTimeout(() => {
+      if (activeIndex >= vocabList.length - 1) {
+        setAllReviewed(true);
+      } else {
+        const nextIndex = activeIndex + 1;
+        setDirection(1);
+        setActiveIndex(nextIndex);
+        let qs = '';
+        if (searchParams.get('ids')) qs = `?ids=${searchParams.get('ids')}`;
+        window.history.replaceState(null, '', `/vocab/${vocabList[nextIndex].word}${qs}`);
+      }
+    }, 150);
+  }, [activeIndex, vocabList, searchParams, masteryState]);
 
   const canGoPrev = activeIndex > 0;
   const canGoNext = activeIndex < vocabList.length - 1;
 
-  const touchStartY = useRef(0);
-  const touchStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Swipe/wheel handler: let browser scroll naturally, only intercept at boundaries
+  // Swipe/wheel handler: robustly checks target scroll area
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const getScrollState = () => {
-      const sc = el.querySelector('.no-scrollbar') as HTMLDivElement | null;
-      if (!sc) return { atTop: true, atBottom: true };
-      return {
-        atTop: sc.scrollTop <= 1,
-        atBottom: sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 3,
-      };
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let activeScrollContainer: HTMLElement | null = null;
+    let isPaginating = false;
+
+    const handlePaginate = (dir: number) => {
+      if (isPaginating) return;
+      isPaginating = true;
+      paginate(dir);
+      setTimeout(() => isPaginating = false, 500); 
     };
 
-    // --- Touch: detect swipe on touchend ---
     const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchStartX.current = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      activeScrollContainer = (e.target as HTMLElement).closest('.no-scrollbar') as HTMLElement | null;
     };
 
     const onTouchEnd = (e: TouchEvent) => {
-      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      const deltaY = e.changedTouches[0].clientY - touchStartY;
+      const deltaX = e.changedTouches[0].clientX - touchStartX;
       if (Math.abs(deltaX) > Math.abs(deltaY) * 0.6) return;
       if (Math.abs(deltaY) < 50) return;
 
-      const { atTop, atBottom } = getScrollState();
-      if (deltaY > 0 && atTop) paginate(-1);
-      else if (deltaY < 0 && atBottom) paginate(1);
+      const sc = activeScrollContainer;
+      const atTop = sc ? sc.scrollTop <= 1 : true;
+      const atBottom = sc ? Math.ceil(sc.scrollTop + sc.clientHeight) >= sc.scrollHeight - 3 : true;
+
+      if (deltaY > 0 && atTop) handlePaginate(-1);
+      else if (deltaY < 0 && atBottom) handlePaginate(1);
     };
 
-    // --- Wheel ---
     const onWheel = (e: WheelEvent) => {
-      const { atTop, atBottom } = getScrollState();
-      if (e.deltaY < 0 && atTop) { e.preventDefault(); paginate(-1); }
-      else if (e.deltaY > 0 && atBottom) { e.preventDefault(); paginate(1); }
+      const sc = (e.target as HTMLElement).closest('.no-scrollbar') as HTMLElement | null;
+      const atTop = sc ? sc.scrollTop <= 1 : true;
+      const atBottom = sc ? Math.ceil(sc.scrollTop + sc.clientHeight) >= sc.scrollHeight - 3 : true;
+      
+      if (e.deltaY < -40 && atTop) { 
+         e.preventDefault(); 
+         handlePaginate(-1); 
+      } else if (e.deltaY > 40 && atBottom) { 
+         e.preventDefault(); 
+         handlePaginate(1); 
+      }
     };
 
-    // --- Keyboard ---
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp') { e.preventDefault(); paginate(-1); }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); paginate(1); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); handlePaginate(-1); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); handlePaginate(1); }
     };
 
     el.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -407,7 +415,8 @@ export const WordDetailsPage: React.FC = () => {
     );
   }
 
-  const progressPercentage = vocabList.length > 1 ? activeIndex / (vocabList.length - 1) : 0;
+  // 进度计算法则: 到达最后一个时应为100%
+  const progressPercentage = vocabList.length > 1 ? activeIndex / (vocabList.length - 1) : 1;
   const currentWord = vocabList[activeIndex]?.word || word || '';
 
   // All reviewed — congratulations page
@@ -431,7 +440,7 @@ export const WordDetailsPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate('/vocab')}
-            className="bg-[#5A5A40] text-white px-8 py-3 rounded-2xl font-bold text-base hover:bg-[#4A4A40] transition-colors active:scale-95 shadow-md"
+            className="bg-[#5A5A40] text-white px-8 py-3 rounded-2xl font-bold text-base hover:bg-[#4A4A40] transition-colors active:scale-95 shadow-md z-[60] relative"
           >
             返回生词本
           </button>
@@ -443,8 +452,7 @@ export const WordDetailsPage: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="w-full h-[100dvh] bg-[#F4F5EF] relative overflow-hidden flex font-sans"
-      style={{ perspective: 1200 }}
+      className="w-full h-[100dvh] bg-[#F4F5EF] relative flex font-sans overflow-hidden"
     >
        {/* Top Navigation (Fixed) */}
        <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50 safe-area-pt pointer-events-none">
@@ -465,8 +473,8 @@ export const WordDetailsPage: React.FC = () => {
          </div>
        </div>
 
-       {/* Book Flip Content */}
-       <div className="flex-1 w-full relative">
+       {/* Book Flip Content - Apply perspective here so it doesn't break fixed positioning outside */}
+       <div className="flex-1 w-full relative" style={{ perspective: 1500 }}>
          <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={activeIndex}
@@ -476,9 +484,9 @@ export const WordDetailsPage: React.FC = () => {
               animate="center"
               exit="exit"
               transition={{
-                rotateX: { type: "spring", stiffness: 200, damping: 25 },
-                opacity: { duration: 0.2 },
-                y: { type: "spring", stiffness: 200, damping: 25 }
+                rotateX: { type: "spring", stiffness: 300, damping: 30 },
+                y: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.25 },
               }}
               className="absolute inset-0 w-full h-full bg-[#F4F5EF] pointer-events-none"
               style={{ transformStyle: "preserve-3d" }}
@@ -505,7 +513,7 @@ export const WordDetailsPage: React.FC = () => {
          onMastery={handleMastery}
          isUpdatingMastery={isUpdatingMastery}
          canGoNext={canGoNext}
-         lastMasteryClick={lastMasteryClick}
+         lastMasteryClick={masteryState[vocabList[activeIndex]?.id]}
        />
 
        {/* Vertical Progress Bar */}
@@ -525,3 +533,4 @@ export const WordDetailsPage: React.FC = () => {
     </div>
   );
 };
+
