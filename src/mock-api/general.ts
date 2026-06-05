@@ -58,6 +58,7 @@ export const removeFavoriteSentence = async (id: string) => {
 
 export const addVocabularyWord = async (wordDetails: any) => {
   await delay(300);
+  MOCK_VOCAB.push({ id: `w${Date.now()}`, added: 'Just now', ...wordDetails });
   return true;
 };
 

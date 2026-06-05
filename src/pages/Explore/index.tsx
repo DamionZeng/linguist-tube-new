@@ -19,7 +19,9 @@ export const ExplorePage: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(20);
   const observerTarget = React.useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
     fetchExploreData()
       .then((res) => {
         setData(res);
@@ -30,6 +32,10 @@ export const ExplorePage: React.FC = () => {
         setError("Failed to load explore data.");
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -83,8 +89,14 @@ export const ExplorePage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh] gap-4">
         <div className="text-[#D48166] font-bold">{error}</div>
+        <button 
+          onClick={loadData}
+          className="bg-[#D48166] hover:bg-[#C27055] text-white px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95"
+        >
+          {t('common.retry', '重试')}
+        </button>
       </div>
     );
   }

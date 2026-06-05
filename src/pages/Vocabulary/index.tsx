@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { CheckSquare, Trash2, Volume2, Search, SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp, BookOpen, EyeOff, Eye } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { CheckSquare, Trash2, Volume2, Search, SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { fetchVocabularyData, batchDeleteVocabularyWords } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -9,25 +9,6 @@ import { useTranslation } from 'react-i18next';
 type SortKey = 'added' | 'word' | 'pos';
 type SortOrder = 'asc' | 'desc';
 
-function useVocabSettings() {
-  const [hideMeaning, setHideMeaning] = useState(() => {
-    try {
-      const saved = localStorage.getItem('vocab_hide_meaning');
-      return saved ? saved === 'true' : true; // Default to true
-    } catch { return true; }
-  });
-
-  const toggleHideMeaning = useCallback(() => {
-    setHideMeaning(prev => {
-      const next = !prev;
-      try { localStorage.setItem('vocab_hide_meaning', String(next)); } catch {}
-      return next;
-    });
-  }, []);
-
-  return { hideMeaning, toggleHideMeaning };
-}
-
 function truncateMean(mean: string, maxParts: number = 2): string {
   if (!mean) return '';
   const parts = mean.split(/[；;、,，]/);
@@ -35,29 +16,7 @@ function truncateMean(mean: string, maxParts: number = 2): string {
   return selected.join('；') + (parts.length > maxParts ? '…' : '');
 }
 
-const BrushMask = () => (
-  <svg 
-    className="absolute inset-[0%] w-[105%] h-[120%] -left-[2.5%] -top-[10%] text-[#A8CDAE]" 
-    preserveAspectRatio="none" 
-    viewBox="0 0 100 30"
-  >
-    <path 
-      fill="currentColor" 
-      d="M2,15 Q20,5 50,15 T98,15 Q80,25 50,20 T2,15 Z" 
-      opacity="0.9"
-    />
-    <path 
-      fill="currentColor" 
-      d="M0,18 Q30,8 60,22 T100,12 Q70,28 40,20 T0,18 Z" 
-      opacity="0.7"
-    />
-    <path 
-      fill="currentColor" 
-      d="M5,10 Q40,20 70,5 T95,18 Q70,25 30,12 T5,10 Z" 
-      opacity="0.6"
-    />
-  </svg>
-);
+
 
 export const VocabularyPage: React.FC = () => {
   const { user } = useAuth();
@@ -74,10 +33,6 @@ export const VocabularyPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<SortKey>('added');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
-
-  // Revealed words (when hideMeaning is on, track which are temporarily revealed)
-  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
-  const { hideMeaning, toggleHideMeaning } = useVocabSettings();
 
   useEffect(() => {
     if (!user || user.role !== 'vip') return;
@@ -163,14 +118,6 @@ export const VocabularyPage: React.FC = () => {
     }
   };
 
-  const toggleReveal = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    const next = new Set(revealedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setRevealedIds(next);
-  };
-
   const cycleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
@@ -223,13 +170,6 @@ export const VocabularyPage: React.FC = () => {
             <span className="text-sm text-[#8A8A7A] font-medium mt-1">{vocab.length}</span>
          </div>
          <div className="flex gap-2">
-            <button
-              onClick={toggleHideMeaning}
-              className="p-1.5 rounded-lg active:scale-95 transition-all text-[#6A6A5A] hover:bg-[#EAEAE0]"
-              title={hideMeaning ? t('vocab.showMeaning', '显示释义') : t('vocab.hideMeaning', '隐藏释义')}
-            >
-              {hideMeaning ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${showFilters ? 'bg-[#5A5A40] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
@@ -332,8 +272,6 @@ export const VocabularyPage: React.FC = () => {
       {/* Vocabulary List */}
       <div className="px-4 py-2 space-y-2">
          {filteredVocab.map(item => {
-           const isRevealed = revealedIds.has(item.id);
-           const shouldMask = hideMeaning && !isRevealed;
            const displayMean = truncateMean(item.mean || item.trans || '');
 
            return (
@@ -347,60 +285,32 @@ export const VocabularyPage: React.FC = () => {
                )}
                
                <div
-                 className={`flex-1 bg-white rounded-2xl border border-[#E0E0D5] shadow-sm px-4 py-3 transition-all ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
+                 className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E0E0D5] shadow-sm px-4 py-3 transition-all ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
                  onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}`)}
                >
-                  <div className="flex items-center gap-4 md:gap-8">
+                   <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] gap-3 items-center w-full">
                      {/* Left: word + phonetic + audio */}
-                     <div className="flex items-center gap-2 min-w-[120px] md:min-w-[150px] shrink-0">
-                       <span className="font-bold text-lg text-[#4A4A40] truncate max-w-[120px]">{item.word}</span>
+                     <div className="flex items-center justify-between overflow-hidden">
+                       <span className="font-bold text-base md:text-lg text-[#4A4A40] truncate mr-1" title={item.word}>{item.word}</span>
                        <button
                          onClick={e => playAudio(e, item.word)}
-                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all shrink-0"
+                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all shrink-0 outline-none"
                        >
-                         <Volume2 className="w-3.5 h-3.5" />
+                         <Volume2 className="w-4 h-4" />
                        </button>
-                       {item.phonetic && <span className="text-xs font-mono text-[#8A8A7A] truncate hidden sm:inline">{item.phonetic}</span>}
                      </div>
 
                      {/* Right: pos + meaning + arrow */}
-                     <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
-                       {shouldMask ? (
-                         <button
-                           onClick={e => toggleReveal(e, item.id)}
-                           className="relative flex items-center gap-1.5 group/mask active:scale-95 transition-transform"
-                         >
-                           {/* Brush-stroke mask effect */}
-                           <span className="relative flex items-center gap-1 px-1">
-                             <BrushMask />
-                             {item.pos && (
-                               <span
-                                 className="text-[10px] font-serif px-1 rounded-sm relative"
-                                 style={{ color: 'transparent' }}
-                               >
-                                 {item.pos}
-                               </span>
-                             )}
-                             <span
-                               className="text-sm font-medium px-1 relative truncate max-w-[200px]"
-                               style={{ color: 'transparent' }}
-                             >
-                               {displayMean}
-                             </span>
-                           </span>
-                           <Eye className="w-3.5 h-3.5 text-[#8A8A7A] opacity-0 group-hover/mask:opacity-100 transition-opacity" />
-                         </button>
-                       ) : (
-                         <>
-                           {item.pos && (
-                             <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
-                           )}
-                           <span className="text-sm text-[#4A4A40] font-medium truncate max-w-[240px]">{displayMean}</span>
-                         </>
-                       )}
+                     <div className="flex items-center gap-2 min-w-0 justify-between pr-1">
+                       <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+                         {item.pos && (
+                           <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 py-[1px] rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
+                         )}
+                         <span className="text-sm text-[#4A4A40] font-medium truncate" title={displayMean}>{displayMean}</span>
+                       </div>
                        {!isEditing && (
-                         <div className="ml-auto flex items-center pr-2">
-                           <ChevronRight className="w-4 h-4 text-[#C0C0B5] shrink-0 group-hover:text-[#D48166] transition-colors" />
+                         <div className="pl-1 shrink-0 ml-auto">
+                           <ChevronRight className="w-4 h-4 text-[#C0C0B5] group-hover:text-[#D48166] transition-colors" />
                          </div>
                        )}
                      </div>

@@ -403,7 +403,7 @@ export const SentenceMode: React.FC = () => {
               >
                 <div className="text-xl md:text-2xl font-serif leading-relaxed mb-6">
                   <span 
-                    className={`inline transition-all duration-300 ${isPlayingOriginal ? 'box-decoration-clone bg-[linear-gradient(transparent_65%,rgba(33,130,193,0.4)_65%)] bg-[length:100%_100%] bg-no-repeat' : ''}`}
+                    className={`inline transition-all duration-300`}
                   >
                     {isPlayingOriginal && sentence.words?.en && sentence.words.en.length > 0
                         ? renderTimedWordsUnderline(sentence.words.en as TimedWord[], audioCurrentTime)
