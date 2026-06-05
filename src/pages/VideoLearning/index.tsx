@@ -33,7 +33,7 @@ export const VideoLearningPage: React.FC = () => {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [langMode, setLangMode] = useState<LangMode>('bilingual');
   const [showHighlights, setShowHighlights] = useState(true);
-  const [highlightColor, setHighlightColor] = useState('#D48166');
+  const [highlightColor, setHighlightColor] = useState('#2182c1');
   const [subtitleSize, setSubtitleSize] = useState<'small' | 'standard' | 'medium' | 'large'>('standard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPracticeModalOpen, setIsPracticeModalOpen] = useState(false);
@@ -312,6 +312,9 @@ export const VideoLearningPage: React.FC = () => {
                 activeTranscriptZh={activeTranscript.zh}
                 activeTranscriptWords={activeTranscript.words}
                 onVideoEnded={handleVideoEnded}
+                onWordClick={(w) => setSelectedWord(w)}
+                savedWords={savedWords}
+                highlightColor={highlightColor}
               />
             </div>
 

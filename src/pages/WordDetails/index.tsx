@@ -1,378 +1,536 @@
-import React, { useState, useEffect } from 'react';
-import { Volume2, Heart, ChevronDown, ChevronUp, BookOpen, GitBranch, ScrollText, Lightbulb, Loader2, Maximize } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Header } from '../../components/Header';
-import { addVocabularyWord, fetchWordLookup, addFavoriteSentence } from '@api/general';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchVocabularyData, deleteVocabularyWord, updateVocabMastery } from '@api/general';
+import { useAuth } from '../../context/AuthContext';
+import { WordScreen } from './WordScreen';
+import { ArrowLeft, Maximize, ThumbsUp, ThumbsDown, Trash2, Eye, EyeOff, PartyPopper } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { prefetchWord } from '../../hooks/useWordLookup';
 
-interface PhraseItem {
-  p_cn: string;
-  p_content: string;
-}
+const Sparkles: React.FC<{ progress: number }> = ({ progress }) => {
+  const numSparkles = Math.floor(progress * 20); 
+  
+  return (
+    <div className="absolute left-1/2 -translate-x-1/2 w-[40px] h-[40px] -mt-[20px] overflow-visible pointer-events-none z-40 transition-all duration-300" style={{ top: `${progress * 100}%`}}>
+       {Array.from({ length: numSparkles }).map((_, i) => (
+         <div 
+           key={i}
+           className="absolute w-[3px] h-[3px] bg-[#FFD700] rounded-full animate-ping opacity-80"
+           style={{
+             top: `${15 + (Math.random() - 0.5) * 30}px`,
+             left: `${15 + (Math.random() - 0.5) * 30}px`,
+             animationDuration: `${0.4 + Math.random() * 0.8}s`,
+             animationDelay: `${Math.random() * 0.5}s`,
+             transform: `scale(${0.5 + Math.random() * 0.8})`
+           }}
+         />
+       ))}
+    </div>
+  );
+};
 
-interface HwdItem {
-  hwd?: string;
-  tran?: string;
-  word?: string;
-}
+const BottomActions: React.FC<{
+  onDelete: () => void;
+  isDeleting: boolean;
+  currentWord: string;
+  currentVocabId: string;
+  onMastery: (vocabId: string, direction: number) => void;
+  isUpdatingMastery: boolean;
+  canGoNext: boolean;
+  lastMasteryClick: number | undefined;
+}> = ({ onDelete, isDeleting, currentWord, currentVocabId, onMastery, isUpdatingMastery, canGoNext, lastMasteryClick }) => {
+  const [showConfirm, setShowConfirm] = React.useState(false);
 
-interface RelWordGroup {
-  Hwds: HwdItem[];
-  Pos: string;
-}
+  const handleDeleteClick = () => {
+    setShowConfirm(true);
+  };
 
-interface SentenceItem {
-  s_cn: string;
-  s_content: string;
-}
+  const handleConfirmDelete = () => {
+    setShowConfirm(false);
+    onDelete();
+  };
 
-interface SynonymGroup {
-  Hwds: HwdItem[];
-  pos: string;
-  tran: string;
-}
+  const handleCancel = () => {
+    setShowConfirm(false);
+  };
 
-interface TranslationItem {
-  pos: string;
-  tran_cn: string;
-}
+  return (
+    <>
+      {/* Confirm Modal Overlay */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 animate-in fade-in duration-150 pointer-events-auto">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={handleCancel} />
+          <div className="relative bg-white rounded-2xl px-6 pt-6 pb-5 max-w-[320px] w-full shadow-xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#FCF0EC] flex items-center justify-center mb-4">
+                <Trash2 className="w-6 h-6 text-[#D48166]" />
+              </div>
+              <h3 className="text-base font-bold text-[#4A4A40] mb-1">确定删除？</h3>
+              <p className="text-sm text-[#8A8A7A] leading-relaxed mb-5">
+                将从生词本中移除 <span className="text-[#D48166] font-semibold">"{currentWord}"</span>
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 py-2.5 px-4 text-sm font-bold text-[#6A6A5A] bg-[#F5F5F0] rounded-xl hover:bg-[#EAEAE0] transition-colors active:scale-95"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-2.5 px-4 text-sm font-bold text-white bg-[#D48166] rounded-xl hover:bg-[#C07050] transition-colors active:scale-95"
+                >
+                  确认删除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="fixed bottom-8 left-0 right-0 flex justify-center items-center gap-4 z-50 pointer-events-none">
+         <div className="bg-[#F4F5EF]/95 backdrop-blur-md px-5 py-3 rounded-full flex items-center gap-4 shadow-lg shadow-black/5 border border-white/50 pointer-events-auto">
+           {/* 陌生按钮 */}
+           <button
+             onClick={() => {
+               if (currentVocabId !== 'direct' && lastMasteryClick === undefined) {
+                 onMastery(currentVocabId, -1);
+               }
+             }}
+             disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
+             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
+               ${lastMasteryClick === -1
+                 ? 'bg-red-100 border-red-300 text-[#E74C3C] shadow-sm shadow-red-200'
+                 : lastMasteryClick === 1
+                   ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
+                   : 'border-[#E0E0D5] hover:bg-red-50 hover:border-red-200 text-[#E74C3C]'}
+               ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
+             title="不熟悉"
+           >
+             <ThumbsDown className="w-5 h-5" />
+           </button>
 
-interface WordLookupData {
-  bookId: string | null;
-  phrases: PhraseItem[];
-  relWords: RelWordGroup[];
-  sentences: SentenceItem[];
-  synonyms: SynonymGroup[];
-  translations: TranslationItem[];
-  ukphone: string | null;
-  ukspeech: string | null;
-  usphone: string | null;
-  usspeech: string | null;
-  word: string;
-}
+           {/* 删除 */}
+           <button
+             onClick={handleDeleteClick}
+             disabled={isDeleting}
+             className="w-10 h-10 rounded-full flex items-center justify-center bg-white hover:bg-[#F9F9F7] active:scale-95 transition-all text-[#D48166] border border-[#E0E0D5]"
+           >
+             {isDeleting ? (
+               <div className="w-4 h-4 rounded-full border-2 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+             ) : (
+               <Trash2 className="w-4 h-4" />
+             )}
+           </button>
+
+           {/* 熟悉按钮 */}
+           <button
+             onClick={() => {
+               if (currentVocabId !== 'direct' && lastMasteryClick === undefined) {
+                 onMastery(currentVocabId, 1);
+               }
+             }}
+             disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
+             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
+               ${lastMasteryClick === 1
+                 ? 'bg-green-100 border-green-300 text-[#2ECC71] shadow-sm shadow-green-200'
+                 : lastMasteryClick === -1
+                   ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
+                   : 'border-[#E0E0D5] hover:bg-green-50 hover:border-green-200 text-[#2ECC71]'}
+               ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
+             title="熟悉"
+           >
+             <ThumbsUp className="w-5 h-5" />
+           </button>
+         </div>
+      </div>
+    </>
+  );
+};
+
+const flipVariants = {
+  enter: (direction: number) => ({
+    rotateX: direction > 0 ? -60 : 60,
+    y: direction > 0 ? "30%" : "-30%",
+    opacity: 0,
+    scale: 0.95,
+    z: -200
+  }),
+  center: {
+    rotateX: 0,
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    z: 0
+  },
+  exit: (direction: number) => ({
+    rotateX: direction < 0 ? -60 : 60,
+    y: direction < 0 ? "30%" : "-30%",
+    opacity: 0,
+    scale: 0.95,
+    z: -200
+  })
+};
 
 export const WordDetailsPage: React.FC = () => {
   const { word } = useParams<{ word: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  
+  const [vocabList, setVocabList] = useState<{word: string; id: string}[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [loadingList, setLoadingList] = useState(true);
+  const [direction, setDirection] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingMastery, setIsUpdatingMastery] = useState(false);
+  const [memoryMode, setMemoryMode] = useState(true);
+  const [masteryState, setMasteryState] = useState<Record<string, number>>({});
+  const [allReviewed, setAllReviewed] = useState(false);
 
-  const [details, setDetails] = useState<WordLookupData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isFavoriting, setIsFavoriting] = useState(false);
-  const [showPhrases, setShowPhrases] = useState(false);
-  const [showSynonyms, setShowSynonyms] = useState(false);
-  const [showRelWords, setShowRelWords] = useState(false);
-  const [sentenceIndex, setSentenceIndex] = useState(0);
-
+  // Initialize the list
   useEffect(() => {
-    if (word) {
-      setLoading(true);
-      setShowPhrases(false);
-      setShowSynonyms(false);
-      setShowRelWords(false);
-      setSentenceIndex(0);
+    let mounted = true;
+    const init = async () => {
+      setLoadingList(true);
+      try {
+        let words: {word: string; id: string; added?: string | null}[] = [];
+        if (user?.role === 'vip') {
+          // Check if ids query param exists (from smart recommend)
+          const idsParam = searchParams.get('ids');
+          if (idsParam) {
+            const ids = idsParam.split(',').filter(Boolean);
+            const res = await fetchVocabularyData(ids);
+            if (res) {
+              // Extract to prevent backend from returning extra words
+              words = (res as any[]).filter(w => ids.includes(w.id));
+              // Reorder to match the IDs sequence from recommend mode
+              words.sort((a: any, b: any) =>
+                ids.indexOf(a.id) - ids.indexOf(b.id)
+              );
+            }
+          } else {
+            const res = await fetchVocabularyData();
+            if (res) words = res as any[];
+          }
+        }
+        
+        // Sort by added desc only when not in recommended mode
+        if (!searchParams.get('ids')) {
+          words.sort((a, b) => {
+            const aTime = a.added ? new Date(a.added).getTime() : 0;
+            const bTime = b.added ? new Date(b.added).getTime() : 0;
+            return bTime - aTime;
+          });
+        }
+        
+        if (mounted) {
+          const foundIdx = words.findIndex(w => w.word.toLowerCase() === word?.toLowerCase());
+          
+          if (foundIdx !== -1) {
+             setVocabList(words);
+             setActiveIndex(foundIdx);
+          } else {
+             setVocabList([{ word: word || '', id: 'direct' }]);
+             setActiveIndex(0);
+          }
+        }
+      } catch (err) {
+        if (mounted) {
+           setVocabList([{ word: word || '', id: 'direct' }]);
+           setActiveIndex(0);
+        }
+      } finally {
+        if (mounted) setLoadingList(false);
+      }
+    };
+    init();
+    return () => { mounted = false; };
+  }, [word, user, searchParams]);
 
-      fetchWordLookup(word)
-        .then(data => {
-          setDetails(data);
-          setLoading(false);
-        })
-        .catch(() => {
-          setDetails(null);
-          setLoading(false);
-        });
+  // Preload neighboring words
+  useEffect(() => {
+    if (vocabList.length === 0) return;
 
-      setIsFavorited(false);
+    const words = vocabList.map((v) => v.word);
+    const isFirst = activeIndex === 0;
+    const isLast = activeIndex === vocabList.length - 1;
+
+    prefetchWord(words[activeIndex]);
+
+    if (!isFirst) {
+      prefetchWord(words[activeIndex - 1]);
     }
-  }, [word]);
 
-  const playAudio = (url: string | null | undefined) => {
-    if (url) {
-      new Audio(url).play().catch(() => {});
+    if (!isLast) {
+      prefetchWord(words[activeIndex + 1]);
     }
-  };
+  }, [vocabList, activeIndex]);
 
-  const formatPhonetic = (): string => {
-    if (!details) return '';
-    const parts: string[] = [];
-    if (details.ukphone) parts.push(`UK: /${details.ukphone}/`);
-    if (details.usphone) parts.push(`US: /${details.usphone}/`);
-    return parts.join('  ');
-  };
+  const paginate = useCallback((newDirection: number) => {
+    setActiveIndex(prev => {
+      const nextIndex = prev + newDirection;
+      if (nextIndex >= 0 && nextIndex < vocabList.length) {
+        setDirection(newDirection);
+        const nextWord = vocabList[nextIndex].word;
+        setTimeout(() => {
+          let qs = '';
+          if (searchParams.get('ids')) {
+            qs = `?ids=${searchParams.get('ids')}`;
+          }
+          window.history.replaceState(null, '', `/vocab/${nextWord}${qs}`);
+        }, 0);
+        return nextIndex;
+      }
+      return prev;
+    });
+  }, [vocabList, searchParams]);
 
-  const formatTrans = (): string => {
-    if (!details || !details.translations.length) return '';
-    return details.translations.map(t => `${t.pos} ${t.tran_cn}`).join('；');
-  };
-
-  const handleSaveToVocab = async () => {
-    if (!details) return;
-    setIsSaving(true);
+  const handleDelete = async () => {
+    const current = vocabList[activeIndex];
+    if (!current || current.id === 'direct') return;
+    setIsDeleting(true);
     try {
-      await addVocabularyWord({
-        word: details.word,
-        phonetic: formatPhonetic(),
-        trans: formatTrans(),
-        pos: details.translations[0]?.pos || '',
-        mean: details.translations[0]?.tran_cn || '',
-        example: details.sentences[0]?.s_content || '',
-        exampleTrans: details.sentences[0]?.s_cn || '',
-      });
+      await deleteVocabularyWord(current.id);
+      const nextList = vocabList.filter((_, i) => i !== activeIndex);
+      if (nextList.length === 0) {
+        navigate('/vocab', { replace: true });
+        return;
+      }
+      setVocabList(nextList);
+      const newIndex = activeIndex >= nextList.length ? nextList.length - 1 : activeIndex;
+      setActiveIndex(newIndex);
+      setDirection(0);
+      let qs = '';
+      if (searchParams.get('ids')) qs = `?ids=${searchParams.get('ids')}`;
+      window.history.replaceState(null, '', `/vocab/${nextList[newIndex].word}${qs}`);
     } catch (e) {
+      console.error('Failed to delete word', e);
     } finally {
-      setIsSaving(false);
+      setIsDeleting(false);
     }
   };
 
-  const handleFavoriteSentence = async () => {
-    if (isFavorited || !details) return;
-    const sent = details.sentences[sentenceIndex];
-    if (!sent) return;
-    setIsFavoriting(true);
-    try {
-      await addFavoriteSentence({
-        en: sent.s_content,
-        zh: sent.s_cn,
-        videoTitle: '生词例句 (Vocab Example)',
-        time: 'Word Details',
-      });
-      setIsFavorited(true);
-    } catch (e) {
-    } finally {
-      setIsFavoriting(false);
-    }
-  };
+  const handleMastery = useCallback((vocabId: string, masteryDirection: number) => {
+    if (vocabId === 'direct' || masteryState[vocabId] !== undefined) return;
+    
+    setMasteryState(prev => ({ ...prev, [vocabId]: masteryDirection }));
+    
+    // Background API call
+    updateVocabMastery(vocabId, masteryDirection).catch(e => console.error('Failed to update mastery', e));
+    
+    // Delay slightly to show active button state before flipping
+    setTimeout(() => {
+      if (activeIndex >= vocabList.length - 1) {
+        setAllReviewed(true);
+      } else {
+        const nextIndex = activeIndex + 1;
+        setDirection(1);
+        setActiveIndex(nextIndex);
+        let qs = '';
+        if (searchParams.get('ids')) qs = `?ids=${searchParams.get('ids')}`;
+        window.history.replaceState(null, '', `/vocab/${vocabList[nextIndex].word}${qs}`);
+      }
+    }, 150);
+  }, [activeIndex, vocabList, searchParams, masteryState]);
 
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  };
+  const canGoPrev = activeIndex > 0;
+  const canGoNext = activeIndex < vocabList.length - 1;
 
-  const totalSentences = details?.sentences?.length || 0;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Swipe/wheel handler: robustly checks target scroll area
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let activeScrollContainer: HTMLElement | null = null;
+    let isPaginating = false;
+
+    const handlePaginate = (dir: number) => {
+      if (isPaginating) return;
+      isPaginating = true;
+      paginate(dir);
+      setTimeout(() => isPaginating = false, 500); 
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      activeScrollContainer = (e.target as HTMLElement).closest('.no-scrollbar') as HTMLElement | null;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const deltaY = e.changedTouches[0].clientY - touchStartY;
+      const deltaX = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 0.6) return;
+      if (Math.abs(deltaY) < 50) return;
+
+      const sc = activeScrollContainer;
+      const atTop = sc ? sc.scrollTop <= 1 : true;
+      const atBottom = sc ? Math.ceil(sc.scrollTop + sc.clientHeight) >= sc.scrollHeight - 3 : true;
+
+      if (deltaY > 0 && atTop) handlePaginate(-1);
+      else if (deltaY < 0 && atBottom) handlePaginate(1);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      const sc = (e.target as HTMLElement).closest('.no-scrollbar') as HTMLElement | null;
+      const atTop = sc ? sc.scrollTop <= 1 : true;
+      const atBottom = sc ? Math.ceil(sc.scrollTop + sc.clientHeight) >= sc.scrollHeight - 3 : true;
+      
+      if (e.deltaY < -40 && atTop) { 
+         e.preventDefault(); 
+         handlePaginate(-1); 
+      } else if (e.deltaY > 40 && atBottom) { 
+         e.preventDefault(); 
+         handlePaginate(1); 
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp') { e.preventDefault(); handlePaginate(-1); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); handlePaginate(1); }
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('wheel', onWheel);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [paginate]);
+
+  if (loadingList) {
+    return (
+      <div className="w-full h-[100dvh] flex flex-col items-center justify-center p-12 relative bg-[#F4F5EF]">
+        <div className="w-10 h-10 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin mb-4" />
+      </div>
+    );
+  }
+
+  // 进度计算法则: 到达最后一个时应为100%
+  const progressPercentage = vocabList.length > 1 ? activeIndex / (vocabList.length - 1) : 1;
+  const currentWord = vocabList[activeIndex]?.word || word || '';
+
+  // All reviewed — congratulations page
+  if (allReviewed) {
+    return (
+      <div className="w-full h-[100dvh] bg-[#F4F5EF] flex flex-col items-center justify-center px-6">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="flex flex-col items-center text-center"
+        >
+          <div className="w-20 h-20 rounded-full bg-[#7A8A54]/10 flex items-center justify-center mb-6">
+            <PartyPopper className="w-10 h-10 text-[#7A8A54]" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#4A4A40] mb-3">
+            🎉 太棒了！
+          </h1>
+          <p className="text-[#8A8A7A] text-base leading-relaxed max-w-xs mb-8">
+            所有单词已复习完毕，继续保持学习的好习惯！
+          </p>
+          <button
+            onClick={() => navigate('/vocab')}
+            className="bg-[#5A5A40] text-white px-8 py-3 rounded-2xl font-bold text-base hover:bg-[#4A4A40] transition-colors active:scale-95 shadow-md z-[60] relative"
+          >
+            返回生词本
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
-      <Header 
-        title={word || t('vocab.title')} 
-        rightNode={
-          <button 
-            onClick={toggleFullScreen} 
-            className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
-          >
-            <Maximize className="w-[22px] h-[22px]" />
-          </button>
-        }
-      />
+    <div 
+      ref={containerRef}
+      className="w-full h-[100dvh] bg-[#F4F5EF] relative flex font-sans overflow-hidden"
+    >
+       {/* Top Navigation (Fixed) */}
+       <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50 safe-area-pt pointer-events-none">
+         <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border border-white/40 shadow-sm pointer-events-auto">
+           <ArrowLeft className="w-5 h-5 text-[#3A3A30]" />
+         </button>
+         <div className="flex gap-2 pointer-events-auto">
+           <button
+             onClick={() => setMemoryMode(!memoryMode)}
+             className={`p-2.5 rounded-full backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border shadow-sm ${memoryMode ? 'bg-[#7A8A54]/60 text-white border-[#7A8A54]/30' : 'bg-white/40 border-white/40 text-[#3A3A30]'}`}
+             title={memoryMode ? '关闭记忆模式' : '开启记忆模式'}
+           >
+             {memoryMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+           </button>
+           <button className="p-2.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border border-white/40 shadow-sm">
+              <Maximize className="w-4 h-4 text-[#3A3A30]" />
+           </button>
+         </div>
+       </div>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-4 md:p-6 lg:p-8">
-          {loading || !details ? (
-            <div className="flex flex-col items-center justify-center p-12 min-h-[50vh]">
-              <Loader2 className="w-10 h-10 text-[#D48166] animate-spin mb-4" />
-              <p className="text-[#8A8A7A] font-medium">{t('common.loading', 'Loading details...')}</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#E0E0D5]">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-6 border-b border-[#E0E0D5]/50">
-                <div>
-                  <div className="flex items-center gap-3 mb-2 overflow-x-auto pb-1">
-                    <h2 className="text-4xl md:text-5xl font-bold text-[#4A4A40] tracking-tight">{details.word}</h2>
-                    <div className="flex shrink-0 gap-2">
-                      {details.ukspeech && (
-                        <button
-                          onClick={() => playAudio(details.ukspeech)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[#D48166] bg-[#FCF5F3] hover:bg-[#F2E5E1] transition-colors border border-[#D48166]/20"
-                          title="UK pronunciation"
-                        >
-                          <Volume2 className="w-4 h-4" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">UK</span>
-                        </button>
-                      )}
-                      {details.usspeech && (
-                        <button
-                          onClick={() => playAudio(details.usspeech)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[#5A5A40] bg-[#EAEAE0] hover:bg-[#E0E0D5] transition-colors border border-[#5A5A40]/10"
-                          title="US pronunciation"
-                        >
-                          <Volume2 className="w-4 h-4" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">US</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {formatPhonetic() && (
-                    <p className="text-[#8A8A7A] font-mono text-sm tracking-widest">{formatPhonetic()}</p>
-                  )}
-                </div>
+       {/* Book Flip Content - Apply perspective here so it doesn't break fixed positioning outside */}
+       <div className="flex-1 w-full relative" style={{ perspective: 1500 }}>
+         <AnimatePresence initial={false} custom={direction}>
+            <motion.div
+              key={activeIndex}
+              custom={direction}
+              variants={flipVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                rotateX: { type: "spring", stiffness: 300, damping: 30 },
+                y: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.25 },
+              }}
+              className="absolute inset-0 w-full h-full bg-[#F4F5EF] pointer-events-none"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <div className="w-full h-full pointer-events-auto">
+              <WordScreen 
+                word={currentWord} 
+                isPreloaded={true} 
+                isCurrent={true}
+                memoryMode={memoryMode}
+                onReveal={() => {}}
+              />
               </div>
+            </motion.div>
+         </AnimatePresence>
+       </div>
 
-              {details.translations.length > 0 && (
-                <div className="mb-8 pl-1">
-                  <div className="flex flex-col gap-3">
-                    {details.translations.map((tr, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <span className="text-[12px] text-[#94A684] font-bold uppercase tracking-wider bg-[#F2F5F0] px-2 py-1 rounded shrink-0 mt-0.5">{tr.pos}</span>
-                        <span className="text-lg text-[#4A4A40] font-medium leading-relaxed">{tr.tran_cn}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+       {/* Bottom Actions Fixed Overlay */}
+       <BottomActions
+         onDelete={handleDelete}
+         isDeleting={isDeleting}
+         currentWord={currentWord}
+         currentVocabId={vocabList[activeIndex]?.id || 'direct'}
+         onMastery={handleMastery}
+         isUpdatingMastery={isUpdatingMastery}
+         canGoNext={canGoNext}
+         lastMasteryClick={masteryState[vocabList[activeIndex]?.id]}
+       />
 
-              {details.sentences.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex items-center justify-between mb-3 border-b-2 border-[#F5F5F0] pb-2">
-                    <div className="flex items-center gap-2 text-[#6A6A5A] font-bold text-sm tracking-wide">
-                      <ScrollText className="w-4 h-4 text-[#D48166]" />
-                      <span>{t('video.subtitleExample', 'Example Sentences')} {totalSentences > 1 && <span className="text-[#8A8A7A] font-normal ml-1">({sentenceIndex + 1}/{totalSentences})</span>}</span>
-                    </div>
-                    {totalSentences > 1 && (
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setSentenceIndex(i => Math.max(0, i - 1))}
-                          disabled={sentenceIndex === 0}
-                          className="p-1 px-2.5 text-xs font-bold uppercase rounded-lg bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          Prev
-                        </button>
-                        <button
-                          onClick={() => setSentenceIndex(i => Math.min(totalSentences - 1, i + 1))}
-                          disabled={sentenceIndex >= totalSentences - 1}
-                          className="p-1 px-2.5 text-xs font-bold uppercase rounded-lg bg-[#F5F5F0] text-[#6A6A5A] hover:bg-[#EAEAE0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="bg-[#F9F9F7] border border-[#EAEAE0] p-5 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#94A684]/60" />
-                    <p className="text-[16px] md:text-[18px] font-serif text-[#4A4A40] mb-2.5 leading-relaxed">{details.sentences[sentenceIndex]?.s_content}</p>
-                    <p className="text-[14px] md:text-[15px] text-[#6A6A5A] leading-relaxed">{details.sentences[sentenceIndex]?.s_cn}</p>
-                    <button
-                      onClick={handleFavoriteSentence}
-                      disabled={isFavoriting || details.sentences.length === 0}
-                      className={`absolute top-4 right-4 p-2 rounded-full transition-all
-                                  ${isFavorited ? 'text-[#D48166] bg-[#FCF5F3]' : 'text-[#8A8A7A] bg-white opacity-0 group-hover:opacity-100 hover:text-[#D48166] hover:bg-[#FCF5F3] shadow-sm'}
-                                  ${isFavoriting ? 'opacity-50' : 'active:scale-95'}`}
-                      title={isFavorited ? 'Favorited' : 'Favorite sentence'}
-                    >
-                      <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {details.synonyms.length > 0 && (
-                <div className="mb-4">
-                  <button
-                    onClick={() => setShowSynonyms(!showSynonyms)}
-                    className={`flex items-center gap-2 w-full text-left font-bold text-sm transition-all p-3 rounded-xl ${showSynonyms ? 'bg-[#F9F9F7] text-[#4A4A40]' : 'bg-transparent text-[#6A6A5A] hover:bg-[#F5F5F0]'}`}
-                  >
-                    <Lightbulb className="w-4 h-4 text-[#E1B12C]" />
-                    <span>Synonyms & Antonyms</span>
-                    {showSynonyms ? <ChevronUp className="w-4 h-4 ml-auto text-[#8A8A7A]" /> : <ChevronDown className="w-4 h-4 ml-auto text-[#8A8A7A]" />}
-                  </button>
-                  {showSynonyms && (
-                    <div className="bg-[#F9F9F7] px-4 pt-1 pb-4 rounded-b-xl -mt-2 space-y-3">
-                      {details.synonyms.map((syn, i) => (
-                        <div key={i} className="flex flex-col md:flex-row md:items-start gap-2 md:gap-4 pb-3 border-b border-[#EAEAE0] last:border-0 last:pb-0">
-                          <div className="flex gap-2 items-center md:items-start md:w-[120px] shrink-0 pt-0.5">
-                            <span className="text-[10px] text-[#94A684] font-bold uppercase tracking-wider bg-[#F2F5F0] px-1.5 py-0.5 rounded">{syn.pos}</span>
-                            <span className="text-[13px] text-[#6A6A5A]">{syn.tran}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {syn.Hwds.map((h, j) => (
-                              <span key={j} className="text-[14px] text-[#4A4A40] bg-white px-2.5 py-1 rounded-lg border border-[#E0E0D5] hover:border-[#D48166]/50 cursor-default transition-colors">
-                                {h.word || h.hwd}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {details.relWords.length > 0 && (
-                <div className="mb-4">
-                  <button
-                    onClick={() => setShowRelWords(!showRelWords)}
-                    className={`flex items-center gap-2 w-full text-left font-bold text-sm transition-all p-3 rounded-xl ${showRelWords ? 'bg-[#F9F9F7] text-[#4A4A40]' : 'bg-transparent text-[#6A6A5A] hover:bg-[#F5F5F0]'}`}
-                  >
-                    <GitBranch className="w-4 h-4 text-[#94A684]" />
-                    <span>Related Words</span>
-                    {showRelWords ? <ChevronUp className="w-4 h-4 ml-auto text-[#8A8A7A]" /> : <ChevronDown className="w-4 h-4 ml-auto text-[#8A8A7A]" />}
-                  </button>
-                  {showRelWords && (
-                    <div className="bg-[#F9F9F7] px-4 pt-1 pb-4 rounded-b-xl -mt-2 space-y-3">
-                      {details.relWords.map((rw, i) => (
-                        <div key={i} className="flex gap-3 md:gap-4 items-start pb-3 border-b border-[#EAEAE0] last:border-0 last:pb-0">
-                          <span className="text-[10px] text-[#94A684] font-bold uppercase tracking-wider bg-[#F2F5F0] px-1.5 py-0.5 rounded shrink-0 mt-1">{rw.Pos}</span>
-                          <div className="flex flex-wrap gap-2">
-                            {rw.Hwds.map((h, j) => (
-                              <span key={j} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-[#E0E0D5]">
-                                <span className="text-[14px] font-medium text-[#4A4A40]">{h.hwd}</span>
-                                {h.tran && <span className="text-[#8A8A7A] text-[12px] border-l border-[#EAEAE0] pl-2">{h.tran}</span>}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {details.phrases.length > 0 && (
-                <div className="mb-8">
-                  <button
-                    onClick={() => setShowPhrases(!showPhrases)}
-                    className={`flex items-center gap-2 w-full text-left font-bold text-sm transition-all p-3 rounded-xl ${showPhrases ? 'bg-[#F9F9F7] text-[#4A4A40]' : 'bg-transparent text-[#6A6A5A] hover:bg-[#F5F5F0]'}`}
-                  >
-                    <BookOpen className="w-4 h-4 text-[#5A5A40]" />
-                    <span>Common Phrases ({details.phrases.length})</span>
-                    {showPhrases ? <ChevronUp className="w-4 h-4 ml-auto text-[#8A8A7A]" /> : <ChevronDown className="w-4 h-4 ml-auto text-[#8A8A7A]" />}
-                  </button>
-                  {showPhrases && (
-                    <div className="bg-[#F9F9F7] px-4 pt-2 pb-4 rounded-b-xl -mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
-                      {details.phrases.map((p, i) => (
-                        <div key={i} className="flex flex-col p-3 bg-white rounded-xl border border-[#EAEAE0] hover:border-[#D48166]/30 transition-colors">
-                          <span className="text-[14px] font-bold text-[#4A4A40] mb-1">{p.p_content}</span>
-                          <span className="text-[13px] text-[#6A6A5A] leading-tight">{p.p_cn}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-8 pt-6 border-t border-[#EAEAE0] flex flex-col md:flex-row gap-4">
-                <button
-                  onClick={handleSaveToVocab}
-                  disabled={isSaving}
-                  className={`flex-1 py-4 px-6 rounded-2xl font-bold text-[16px] transition-all flex items-center justify-center gap-2
-                             bg-[#5A5A40] hover:bg-[#4A4A40] text-white shadow-lg shadow-[#5A5A40]/10
-                             hover:shadow-xl hover:shadow-[#5A5A40]/20 active:scale-95
-                             ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
-                  <BookOpen className="w-5 h-5" />
-                  {isSaving ? t('video.processing', 'Saving...') : t('video.saveToVocab', 'Save to Vocabulary List')}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
+       {/* Vertical Progress Bar */}
+       {vocabList.length > 1 && (
+         <div className="absolute right-4 top-[25%] bottom-[25%] w-1.5 bg-[#EAEAE0] rounded-full pointer-events-none z-40 shadow-inner">
+            <div 
+              className="absolute top-0 w-full bg-gradient-to-b from-[#A8CDAE] to-[#7A8A54] rounded-full transition-all duration-300 ease-out shadow-sm origin-top"
+              style={{ height: `${progressPercentage * 100}%` }}
+            />
+            <div 
+              className="absolute w-3 h-3 bg-white border-2 border-[#7A8A54] rounded-full transition-all duration-300 ease-out shadow-md"
+              style={{ left: '50%', top: `${progressPercentage * 100}%`, transform: 'translate(-50%, -50%)' }}
+            />
+            <Sparkles progress={progressPercentage} />
+         </div>
+       )}
     </div>
   );
 };
+

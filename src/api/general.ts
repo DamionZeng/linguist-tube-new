@@ -1,4 +1,5 @@
 import { getStoredToken } from './auth';
+import type { VocabItem, MasteryResult } from '../types/word';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -46,6 +47,23 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return json.data;
 }
 
+async function apiDelete<T>(path: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
+  const json: ApiResponse<T> = await res.json();
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json.data;
+}
+
 export const fetchExploreData = async (): Promise<{
   categories: string[];
   videos: Array<{
@@ -71,17 +89,7 @@ export const fetchExploreData = async (): Promise<{
 };
 
 export const fetchLibraryData = async (): Promise<{
-  vocab: Array<{
-    id: string;
-    word: string;
-    phonetic: string | null;
-    pos: string | null;
-    mean: string | null;
-    trans: string | null;
-    added: string | null;
-    example: string | null;
-    exampleTrans: string | null;
-  }>;
+  vocab: Array<VocabItem>;
   history: Array<{
     id: string;
     title: string;
@@ -112,24 +120,13 @@ export const fetchHistoryData = async (): Promise<
   return apiGet('/api/history');
 };
 
-export const fetchVocabularyData = async (): Promise<
-  Array<{
-    id: string;
-    word: string;
-    phonetic: string | null;
-    pos: string | null;
-    mean: string | null;
-    trans: string | null;
-    added: string | null;
-    example: string | null;
-    exampleTrans: string | null;
-  }>
-> => {
+export const fetchVocabularyData = async (ids?: string[]): Promise<VocabItem[]> => {
   const token = getStoredToken();
   if (!token) {
     return [];
   }
-  return apiGet('/api/vocabulary');
+  const query = ids && ids.length > 0 ? `?ids=${ids.join(',')}` : '';
+  return apiGet(`/api/vocabulary${query}`);
 };
 
 export const fetchFavoritesData = async (): Promise<{
@@ -192,24 +189,23 @@ export const addVocabularyWord = async (wordDetails: {
   return apiPost('/api/vocabulary', wordDetails);
 };
 
-async function apiDelete<T>(path: string): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getStoredToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
-  const json: ApiResponse<T> = await res.json();
-  if (res.status === 401) {
-    window.dispatchEvent(new Event('auth:unauthorized'));
-  }
-  if (!res.ok || json.code !== 200) {
-    throw new Error(json.message || `Request failed with status ${res.status}`);
-  }
-  return json.data;
-}
+export const deleteVocabularyWord = async (vocabId: string): Promise<boolean> => {
+  return apiDelete(`/api/vocabulary/${encodeURIComponent(vocabId)}`);
+};
+
+export const batchDeleteVocabularyWords = async (ids: string[]): Promise<boolean> => {
+  return apiPost('/api/vocabulary/batch-delete', { ids });
+};
 
 export const removeFavoriteSentence = async (id: string): Promise<boolean> => {
   return apiDelete(`/api/favorites/sentence/${encodeURIComponent(id)}`);
+};
+
+export const updateVocabMastery = async (vocabId: string, direction: number): Promise<MasteryResult> => {
+  return apiPost(`/api/vocabulary/${encodeURIComponent(vocabId)}/mastery`, { direction });
+};
+
+export const fetchRecommendedVocab = async (limit: number = 20): Promise<VocabItem[]> => {
+  return apiGet(`/api/vocabulary/recommend?limit=${limit}`);
 };
 
