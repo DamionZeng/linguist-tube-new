@@ -11,6 +11,10 @@ class VocabItem(BaseModel):
     added: str | None = None
     example: str | None = None
     exampleTrans: str | None = None
+    mastery: int = 1
+    masteryScore: float = 1.0
+    lastReviewedAt: str | None = None
+    reviewCount: int = 0
 
 
 class HistoryItem(BaseModel):
@@ -64,6 +68,9 @@ class WordDetail(BaseModel):
     example: str | None = None
     exampleTrans: str | None = None
     isSaved: bool = False
+    mastery: int = 1
+    lastReviewedAt: str | None = None
+    reviewCount: int = 0
 
 
 class WordDetailResponse(BaseModel):
@@ -137,4 +144,20 @@ class SaveHistoryRequest(BaseModel):
 class SaveHistoryResponse(BaseModel):
     code: int = 200
     data: bool
+    message: str = "success"
+
+
+class UpdateMasteryRequest(BaseModel):
+    direction: int  # 1 = familiar (熟悉), -1 = unfamiliar (陌生)
+
+
+class UpdateMasteryResponse(BaseModel):
+    code: int = 200
+    data: dict  # { mastery: int, masteryScore: float, reviewCount: int }
+    message: str = "success"
+
+
+class VocabRecommendResponse(BaseModel):
+    code: int = 200
+    data: list[VocabItem]
     message: str = "success"

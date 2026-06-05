@@ -58,10 +58,10 @@ export const MOCK_HISTORY = [
 ];
 
 export const MOCK_VOCAB = [
-  { id: 'w1', word: 'get by', phonetic: "/get baɪ/", pos: 'phrasal verb', mean: 'To manage or survive with limited resources.', trans: '勉强生存，维持', added: '2 days ago', example: '"I can get by on just 5 hours of sleep."', exampleTrans: '我只睡5个小时也能勉强应付。' },
-  { id: 'w2', word: 'knackered', phonetic: "/'nækəd/", pos: 'adj.', mean: 'Extremely tired; exhausted. (British Informal)', trans: '极度疲倦的，筋疲力尽的', added: 'Oct 12', example: '"I am absolutely knackered after that long trip."', exampleTrans: '那趟长途旅行后我真是累坏了。' },
-  { id: 'w3', word: 'try on', phonetic: "/traɪ ɒn/", pos: 'phrasal verb', mean: 'Put on a piece of clothing to see if it fits.', trans: '试穿', added: 'Just now', example: '"Can I try this on before buying it?"', exampleTrans: '买之前我可以试穿一下这个吗？' },
-  { id: 'w4', word: 'freshen up', phonetic: "/ˈfreʃ.ən ʌp/", pos: 'phrasal verb', mean: 'To wash and make yourself look clean and tidy.', trans: '梳洗打扮', added: '1 week ago', example: '"We wanted to freshen up a bit before going out."', exampleTrans: '出门前我们想稍加梳洗打扮一下。' },
+  { id: 'w1', word: 'get by', phonetic: "/get baɪ/", pos: 'phrasal verb', mean: 'To manage or survive with limited resources.', trans: '勉强生存，维持', added: '2 days ago', example: '"I can get by on just 5 hours of sleep."', exampleTrans: '我只睡5个小时也能勉强应付。', mastery: 2, masteryScore: 1.8, lastReviewedAt: new Date(Date.now() - 2 * 86400000).toISOString(), reviewCount: 3 },
+  { id: 'w2', word: 'knackered', phonetic: "/'nækəd/", pos: 'adj.', mean: 'Extremely tired; exhausted. (British Informal)', trans: '极度疲倦的，筋疲力尽的', added: 'Oct 12', example: '"I am absolutely knackered after that long trip."', exampleTrans: '那趟长途旅行后我真是累坏了。', mastery: 4, masteryScore: 4.2, lastReviewedAt: new Date(Date.now() - 5 * 86400000).toISOString(), reviewCount: 8 },
+  { id: 'w3', word: 'try on', phonetic: "/traɪ ɒn/", pos: 'phrasal verb', mean: 'Put on a piece of clothing to see if it fits.', trans: '试穿', added: 'Just now', example: '"Can I try this on before buying it?"', exampleTrans: '买之前我可以试穿一下这个吗？', mastery: 1, masteryScore: 1.0, lastReviewedAt: null, reviewCount: 0 },
+  { id: 'w4', word: 'freshen up', phonetic: "/ˈfreʃ.ən ʌp/", pos: 'phrasal verb', mean: 'To wash and make yourself look clean and tidy.', trans: '梳洗打扮', added: '1 week ago', example: '"We wanted to freshen up a bit before going out."', exampleTrans: '出门前我们想稍加梳洗打扮一下。', mastery: 3, masteryScore: 3.0, lastReviewedAt: new Date(Date.now() - 7 * 86400000).toISOString(), reviewCount: 5 },
 ];
 
 export const MOCK_FAVORITE_SENTENCES = [

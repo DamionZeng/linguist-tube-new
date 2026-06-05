@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { CheckSquare, Trash2, Volume2, Search, SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
-import { fetchVocabularyData, batchDeleteVocabularyWords } from '@api/general';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { CheckSquare, Trash2, Volume2, Search, SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp, BookOpen, Brain } from 'lucide-react';
+import { fetchVocabularyData, fetchRecommendedVocab, batchDeleteVocabularyWords } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { MasteryBar } from '../../components/MasteryBar';
 import { useTranslation } from 'react-i18next';
 
 type SortKey = 'added' | 'word' | 'pos';
@@ -33,6 +34,11 @@ export const VocabularyPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<SortKey>('added');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRecommendedMode, setIsRecommendedMode] = useState(false);
+  const [recommendedIds, setRecommendedIds] = useState<string[] | null>(null);
+  const [isRecommending, setIsRecommending] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== 'vip') return;
@@ -64,22 +70,33 @@ export const VocabularyPage: React.FC = () => {
       list = list.filter(v => v.pos === filterPos);
     }
 
-    list.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === 'word') {
-        cmp = (a.word || '').localeCompare(b.word || '');
-      } else if (sortKey === 'pos') {
-        cmp = (a.pos || '').localeCompare(b.pos || '');
-      } else {
-        const aTime = a.added ? new Date(a.added).getTime() : 0;
-        const bTime = b.added ? new Date(b.added).getTime() : 0;
-        cmp = aTime - bTime;
-      }
-      return sortOrder === 'asc' ? cmp : -cmp;
-    });
+    // Sort
+    if (isRecommendedMode && recommendedIds) {
+      // Recommended mode: recommended words on top (A-Z), then rest
+      const recSet = new Set(recommendedIds);
+      list.sort((a, b) => {
+        const aRec = recSet.has(a.id) ? 0 : 1;
+        const bRec = recSet.has(b.id) ? 0 : 1;
+        return aRec - bRec || (a.word || '').localeCompare(b.word || '');
+      });
+    } else {
+      list.sort((a, b) => {
+        let cmp = 0;
+        if (sortKey === 'word') {
+          cmp = (a.word || '').localeCompare(b.word || '');
+        } else if (sortKey === 'pos') {
+          cmp = (a.pos || '').localeCompare(b.pos || '');
+        } else {
+          const aTime = a.added ? new Date(a.added).getTime() : 0;
+          const bTime = b.added ? new Date(b.added).getTime() : 0;
+          cmp = aTime - bTime;
+        }
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+    }
 
     return list;
-  }, [vocab, filterPos, sortKey, sortOrder]);
+  }, [vocab, filterPos, sortKey, sortOrder, isRecommendedMode, recommendedIds]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedWords);
@@ -98,6 +115,13 @@ export const VocabularyPage: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     if (selectedWords.size === 0) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false);
+    if (selectedWords.size === 0) return;
+    setIsDeleting(true);
     try {
       await batchDeleteVocabularyWords(Array.from(selectedWords));
       setSelectedWords(new Set());
@@ -105,6 +129,8 @@ export const VocabularyPage: React.FC = () => {
       setVocab(res);
     } catch (e) {
       console.error('Failed to delete words', e);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -125,6 +151,42 @@ export const VocabularyPage: React.FC = () => {
       setSortKey(key);
       setSortOrder(key === 'added' ? 'desc' : 'asc');
     }
+  };
+
+  const handleSmartRecommend = useCallback(async () => {
+    // Toggle recommended mode
+    if (isRecommendedMode) {
+      setIsRecommendedMode(false);
+      setRecommendedIds(null);
+      return;
+    }
+    setIsRecommending(true);
+    try {
+      const recs = await fetchRecommendedVocab(20);
+      setRecommendedIds(recs.map(r => r.id));
+      // Merge recommended data into vocab list
+      const existingMap = new Map(vocab.map(v => [v.id, v]));
+      const merged = recs.map(r => ({ ...r, ...existingMap.get(r.id), ...r }));
+      // Also keep non-recommended words that are already in vocab
+      setVocab(prev => {
+        const recSet = new Set(recs.map(r => r.id));
+        const nonRecRetained = prev.filter(v => !recSet.has(v.id));
+        return [...merged, ...nonRecRetained];
+      });
+      setIsRecommendedMode(true);
+    } catch (e) {
+      console.error('Failed to recommend', e);
+    } finally {
+      setIsRecommending(false);
+    }
+  }, [isRecommendedMode, vocab]);
+
+  const toggleRecommended = (id: string) => {
+    if (!recommendedIds) return;
+    setRecommendedIds(prev => {
+      if (!prev) return prev;
+      return prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    });
   };
 
   if (!user) {
@@ -168,8 +230,26 @@ export const VocabularyPage: React.FC = () => {
          <div className="flex items-center gap-2">
             <h1 className="text-3xl font-serif font-bold text-[#5A5A40] tracking-tight">{t('vocab.title')}</h1>
             <span className="text-sm text-[#8A8A7A] font-medium mt-1">{vocab.length}</span>
+            {isRecommendedMode && recommendedIds && (
+              <span className="text-xs font-bold text-[#7A8A54] bg-[#7A8A54]/10 px-2 py-0.5 rounded-full mt-1">
+                推荐 {recommendedIds.length} 个
+              </span>
+            )}
          </div>
          <div className="flex gap-2">
+            <button 
+              onClick={handleSmartRecommend}
+              disabled={isRecommending}
+              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex items-center gap-1.5 ${isRecommendedMode ? 'bg-[#7A8A54] text-white shadow-sm' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+              title={isRecommendedMode ? '显示全部' : '智能推荐复习'}
+            >
+              {isRecommending ? (
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#E0E0D5] border-t-current animate-spin" />
+              ) : (
+                <Brain className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">{isRecommendedMode ? '全部' : '智能'}</span>
+            </button>
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${showFilters ? 'bg-[#5A5A40] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
@@ -235,10 +315,15 @@ export const VocabularyPage: React.FC = () => {
             <div className="flex gap-4">
                <button
                  onClick={handleDeleteSelected}
-                 className={`flex items-center gap-1.5 ${selectedWords.size > 0 ? 'text-[#D48166]' : 'text-[#D48166] opacity-50 cursor-not-allowed'}`}
-                 disabled={selectedWords.size === 0}
+                 disabled={selectedWords.size === 0 || isDeleting}
+                 className={`flex items-center gap-1.5 ${selectedWords.size > 0 && !isDeleting ? 'text-[#D48166]' : 'text-[#D48166] opacity-50 cursor-not-allowed'}`}
                >
-                   <Trash2 className="w-4 h-4" /> {t('vocab.deleteSelected')}
+                   {isDeleting ? (
+                     <div className="w-4 h-4 rounded-full border-2 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+                   ) : (
+                     <Trash2 className="w-4 h-4" />
+                   )}
+                   {isDeleting ? '删除中...' : t('vocab.deleteSelected')}
                </button>
             </div>
          </div>
@@ -273,9 +358,18 @@ export const VocabularyPage: React.FC = () => {
       <div className="px-4 py-2 space-y-2">
          {filteredVocab.map(item => {
            const displayMean = truncateMean(item.mean || item.trans || '');
+           const isRecommended = isRecommendedMode && recommendedIds?.includes(item.id);
 
            return (
-            <div key={item.id} className="flex items-center gap-3 group">
+            <div key={item.id} className={`flex items-center gap-3 group ${isRecommendedMode && !isRecommended ? 'opacity-40' : ''}`}>
+               {/* Recommended mode: toggle checkbox */}
+               {isRecommendedMode && recommendedIds && (
+                  <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 transition-all active:scale-90" title={isRecommended ? '取消推荐' : '加入推荐'}>
+                     <div className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#C0C0B5] hover:border-[#7A8A54]/60'}`}>
+                        {isRecommended && <CheckSquare className="w-[11px] h-[11px] text-white" />}
+                     </div>
+                  </button>
+               )}
                {isEditing && (
                   <button onClick={() => toggleSelect(item.id)} className="shrink-0 transition-all">
                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#C0C0B5]'}`}>
@@ -285,34 +379,38 @@ export const VocabularyPage: React.FC = () => {
                )}
                
                <div
-                 className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E0E0D5] shadow-sm px-4 py-3 transition-all ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
-                 onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}`)}
+                 className={`flex-1 min-w-0 bg-white rounded-2xl border ${isRecommended ? 'border-[#7A8A54]/60 shadow-[#7A8A54]/10' : 'border-[#E0E0D5]'} shadow-sm px-4 py-3 transition-all relative ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
+                 onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}${isRecommendedMode && recommendedIds ? `?ids=${recommendedIds.join(',')}` : ''}`)}
                >
-                   <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] gap-3 items-center w-full">
-                     {/* Left: word + phonetic + audio */}
-                     <div className="flex items-center justify-between overflow-hidden">
-                       <span className="font-bold text-base md:text-lg text-[#4A4A40] truncate mr-1" title={item.word}>{item.word}</span>
+                   {isRecommended && (
+                     <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold text-white bg-[#7A8A54] px-1.5 py-[1px] rounded-full shadow-sm">
+                      推荐
+                     </span>
+                   )}
+                   <div className="flex flex-col gap-1 w-full">
+                     {/* Row 1: word + audio + mastery + arrow */}
+                     <div className="flex items-center gap-2 min-w-0">
+                       <span className="font-bold text-base text-[#4A4A40] truncate" title={item.word}>{item.word}</span>
                        <button
                          onClick={e => playAudio(e, item.word)}
-                         className="p-1 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all shrink-0 outline-none"
+                         className="p-0.5 rounded-full hover:bg-[#F5F5F0] text-[#D48166] active:scale-95 transition-all shrink-0 outline-none"
                        >
-                         <Volume2 className="w-4 h-4" />
+                         <Volume2 className="w-3.5 h-3.5" />
                        </button>
+                       <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                         <MasteryBar mastery={item.mastery ?? 1} />
+                         {!isEditing && (
+                           <ChevronRight className="w-3.5 h-3.5 text-[#C0C0B5] group-hover:text-[#D48166] transition-colors" />
+                         )}
+                       </div>
                      </div>
 
-                     {/* Right: pos + meaning + arrow */}
-                     <div className="flex items-center gap-2 min-w-0 justify-between pr-1">
-                       <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-                         {item.pos && (
-                           <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 py-[1px] rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
-                         )}
-                         <span className="text-sm text-[#4A4A40] font-medium truncate" title={displayMean}>{displayMean}</span>
-                       </div>
-                       {!isEditing && (
-                         <div className="pl-1 shrink-0 ml-auto">
-                           <ChevronRight className="w-4 h-4 text-[#C0C0B5] group-hover:text-[#D48166] transition-colors" />
-                         </div>
+                     {/* Row 2: pos + meaning */}
+                     <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                       {item.pos && (
+                         <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 py-[1px] rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
                        )}
+                       <span className="text-xs text-[#6A6A5A] truncate" title={displayMean}>{displayMean}</span>
                      </div>
                   </div>
                </div>
@@ -320,6 +418,57 @@ export const VocabularyPage: React.FC = () => {
            );
          })}
       </div>
+
+      {/* Recommended mode: start review button */}
+      {isRecommendedMode && recommendedIds && recommendedIds.length > 0 && (
+        <div className="px-4 pb-4 pt-2 shrink-0">
+          <button
+            onClick={() => {
+              const firstRecId = recommendedIds[0];
+              const firstWord = vocab.find(v => v.id === firstRecId)?.word;
+              if (firstWord) {
+                navigate(`/vocab/${firstWord}?ids=${recommendedIds.join(',')}`);
+              }
+            }}
+            className="w-full py-3 rounded-2xl bg-[#7A8A54] text-white font-bold text-base shadow-md shadow-[#7A8A54]/20 hover:bg-[#6A7A44] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <Brain className="w-5 h-5" />
+            开始复习 ({recommendedIds.length} 个单词)
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 animate-in fade-in duration-150">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-white rounded-2xl px-6 pt-6 pb-5 max-w-[320px] w-full shadow-xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#FCF0EC] flex items-center justify-center mb-4">
+                <Trash2 className="w-6 h-6 text-[#D48166]" />
+              </div>
+              <h3 className="text-base font-bold text-[#4A4A40] mb-1">确认删除？</h3>
+              <p className="text-sm text-[#8A8A7A] leading-relaxed mb-5">
+                将删除选中的 <span className="text-[#D48166] font-semibold">{selectedWords.size}</span> 个单词
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 px-4 text-sm font-bold text-[#6A6A5A] bg-[#F5F5F0] rounded-xl hover:bg-[#EAEAE0] transition-colors active:scale-95"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-2.5 px-4 text-sm font-bold text-white bg-[#D48166] rounded-xl hover:bg-[#C07050] transition-colors active:scale-95"
+                >
+                  确认删除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Brush shimmer animation keyframes */}
       <style>{`

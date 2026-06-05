@@ -204,6 +204,14 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
 
   const totalSentences = details?.sentences?.length || 0;
 
+  const speakSentence = useCallback((text: string) => {
+    if (!text || !('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.85;
+    speechSynthesis.speak(utterance);
+  }, []);
+
   return {
     details,
     loading,
@@ -226,5 +234,6 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
     formatTrans,
     handleSaveToVocab,
     handleFavoriteSentence,
+    speakSentence,
   };
 }

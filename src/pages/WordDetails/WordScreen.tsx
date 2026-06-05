@@ -6,11 +6,13 @@ interface WordScreenProps {
   word: string;
   isPreloaded: boolean;
   isCurrent: boolean;
+  memoryMode?: boolean;
+  onReveal?: () => void;
 }
 
 type TabType = 'examples' | 'phrases' | 'synonyms' | 'relWords';
 
-export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCurrent }) => {
+export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCurrent, memoryMode = false, onReveal }) => {
   const {
     details,
     loading,
@@ -18,9 +20,16 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
     handleSaveToVocab,
     playAudio,
     formatPhonetic,
+    speakSentence,
   } = useWordLookup({ word, enabled: isPreloaded });
 
   const [activeTab, setActiveTab] = useState<TabType>('examples');
+  const [revealed, setRevealed] = useState(false);
+
+  // Reset revealed when word changes (memory mode re-hides)
+  useEffect(() => {
+    setRevealed(false);
+  }, [word]);
 
   useEffect(() => {
     if (details) {
@@ -44,9 +53,17 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
   }
 
   const phonetic = formatPhonetic();
+  const hideContent = memoryMode && !revealed;
+
+  const handleReveal = () => {
+    if (hideContent) {
+      setRevealed(true);
+      onReveal?.();
+    }
+  };
 
   return (
-    <div className="w-full h-full relative bg-transparent flex flex-col font-sans overflow-hidden">
+    <div className="w-full h-full relative bg-transparent flex flex-col font-sans overflow-hidden" onClick={handleReveal}>
       <div className="flex-1 overflow-y-auto no-scrollbar pb-32 pt-24 safe-area-pb">
         <div className="px-6 flex flex-col items-center">
           {/* Word Title & Audio */}
@@ -54,20 +71,50 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
             {details.word}
           </h1>
           
-          <div className="flex items-center gap-3 mb-6">
-            {phonetic && (
-              <span className="text-sm font-mono text-[#7A7A6A] tracking-wider">{phonetic}</span>
+          <div className="flex flex-col items-center gap-1.5 mb-6">
+            {details.ukphone && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#A0A090] bg-[#EAEAE0] px-2 py-0.5 rounded">UK</span>
+                <span className="text-sm font-mono text-[#7A7A6A] tracking-wider">/{details.ukphone}/</span>
+                {details.ukspeech && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(details.ukspeech); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E8EAD0] text-[#7A8A54] hover:bg-[#DCE0B8] active:scale-95 transition-all outline-none"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 ml-[1px]" />
+                  </button>
+                )}
+              </div>
             )}
-            {(details.usspeech || details.ukspeech) && (
-              <button
-                onClick={() => playAudio(details.usspeech || details.ukspeech)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-[#E8EAD0] text-[#7A8A54] hover:bg-[#DCE0B8] active:scale-95 transition-all outline-none"
-              >
-                <Volume2 className="w-4 h-4 ml-[1px]" />
-              </button>
+            {details.usphone && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#A0A090] bg-[#EAEAE0] px-2 py-0.5 rounded">US</span>
+                <span className="text-sm font-mono text-[#7A7A6A] tracking-wider">/{details.usphone}/</span>
+                {details.usspeech && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(details.usspeech); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E8EAD0] text-[#7A8A54] hover:bg-[#DCE0B8] active:scale-95 transition-all outline-none"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 ml-[1px]" />
+                  </button>
+                )}
+              </div>
+            )}
+            {!details.ukphone && !details.usphone && phonetic && (
+              <span className="text-sm font-mono text-[#7A7A6A] tracking-wider">{phonetic}</span>
             )}
           </div>
 
+          {/* Memory mode: show hint to tap */}
+          {hideContent && (
+            <div className="mt-8 animate-pulse">
+              <p className="text-[#A0A090] text-sm font-medium">点击任意位置查看释义</p>
+            </div>
+          )}
+
+          {/* Hidden content in memory mode */}
+          {hideContent ? null : (
+            <>
           {/* Translations */}
           {details.translations.length > 0 && (
             <div className="w-full max-w-lg mx-auto flex flex-col gap-4 mb-10">
@@ -95,7 +142,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
                ].map(tab => tab.show && (
                  <button 
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as TabType)}
+                    onClick={(e) => { e.stopPropagation(); setActiveTab(tab.id as TabType); }}
                     className={`text-sm md:text-base font-bold transition-all relative ${activeTab === tab.id ? 'text-[#7A8A54]' : 'text-[#A0A090] hover:text-[#7A8A54]/70'}`}
                  >
                    {tab.label}
@@ -117,7 +164,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
                         <span className="bg-[#2A2A20] text-[#F4F5EF] text-[10px] font-bold px-1.5 py-0.5 rounded font-mono italic">
                           example {idx + 1}
                         </span>
-                        <button onClick={() => {}} className="text-[#A0A090] p-1 rounded-full hover:bg-black/5">
+                        <button onClick={(e) => { e.stopPropagation(); speakSentence(sentence.s_content); }} className="text-[#A0A090] p-1 rounded-full hover:bg-black/5 active:scale-95 transition-all">
                            <Volume1 className="w-4 h-4 text-[#7A8A54]" />
                         </button>
                       </div>
@@ -187,6 +234,8 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
                </div>
              )}
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>

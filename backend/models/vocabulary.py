@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Text, ForeignKey, DateTime
+from sqlalchemy import String, Integer, Text, ForeignKey, DateTime, Float
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
@@ -17,3 +17,7 @@ class Vocabulary(Base):
     example: Mapped[str] = mapped_column(Text, nullable=True)
     example_trans: Mapped[str] = mapped_column(Text, nullable=True)
     added_at = mapped_column(DateTime(timezone=True), nullable=True)
+    mastery: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    mastery_score: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+    last_reviewed_at = mapped_column(DateTime(timezone=True), nullable=True)
+    review_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

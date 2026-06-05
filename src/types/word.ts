@@ -43,3 +43,25 @@ export interface WordLookupData {
   usspeech: string | null;
   word: string;
 }
+
+export interface VocabItem {
+  id: string;
+  word: string;
+  phonetic: string | null;
+  pos: string | null;
+  mean: string | null;
+  trans: string | null;
+  added: string | null;
+  example: string | null;
+  exampleTrans: string | null;
+  mastery: number;
+  masteryScore: number;
+  lastReviewedAt: string | null;
+  reviewCount: number;
+}
+
+export interface MasteryResult {
+  mastery: number;
+  masteryScore: number;
+  reviewCount: number;
+}
