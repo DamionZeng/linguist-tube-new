@@ -3,6 +3,45 @@ import { fetchWordLookup, addVocabularyWord, addFavoriteSentence } from '@api/ge
 import { getBaseWord } from '../utils/lemmatize';
 import type { WordLookupData } from '../types/word';
 
+// ======== 模块级缓存：跨组件挂载/卸载保持 ========
+const wordDataCache = new Map<string, WordLookupData>();
+const pendingFetches = new Map<string, Promise<WordLookupData | null>>();
+
+/**
+ * 静默预加载单词数据到缓存（不触发任何 UI 状态变化）
+ * 如果已有缓存或正在加载，则跳过
+ */
+export async function prefetchWord(word: string): Promise<void> {
+  const baseWord = getBaseWord(word);
+  if (!baseWord || wordDataCache.has(baseWord) || pendingFetches.has(baseWord)) return;
+
+  const promise = fetchWordLookup(baseWord)
+    .then((data) => {
+      wordDataCache.set(baseWord, data);
+      pendingFetches.delete(baseWord);
+      return data;
+    })
+    .catch(() => {
+      pendingFetches.delete(baseWord);
+      return null;
+    });
+
+  pendingFetches.set(baseWord, promise);
+  try {
+    await promise;
+  } catch {
+    // silent
+  }
+}
+
+/**
+ * 从缓存中获取单词数据（同步，无副作用）
+ */
+export function getCachedWordData(word: string): WordLookupData | undefined {
+  const baseWord = getBaseWord(word);
+  return baseWord ? wordDataCache.get(baseWord) : undefined;
+}
+
 interface UseWordLookupOptions {
   word: string;
   enabled?: boolean;
@@ -11,8 +50,12 @@ interface UseWordLookupOptions {
 }
 
 export function useWordLookup({ word, enabled = true, savedWords = [], onWordSaved }: UseWordLookupOptions) {
-  const [details, setDetails] = useState<WordLookupData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 初始化时先检查缓存，有缓存则直接从缓存恢复，避免 loading 闪烁
+  const baseWord = enabled && word ? getBaseWord(word) : '';
+  const cached = baseWord ? wordDataCache.get(baseWord) : undefined;
+
+  const [details, setDetails] = useState<WordLookupData | null>(cached || null);
+  const [loading, setLoading] = useState(!cached);
   const [actualWord, setActualWord] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isWordSaved, setIsWordSaved] = useState(false);
@@ -24,7 +67,23 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
   const [showRelWords, setShowRelWords] = useState(false);
 
   useEffect(() => {
-    if (enabled && word) {
+    if (!enabled || !word) {
+      if (!enabled) setDetails(null);
+      return;
+    }
+
+    const bw = getBaseWord(word);
+    setActualWord(bw);
+
+    // 1. 缓存命中 → 直接展示，无 loading
+    if (wordDataCache.has(bw)) {
+      setDetails(wordDataCache.get(bw)!);
+      setLoading(false);
+      return;
+    }
+
+    // 2. 正在静默预加载中 → 显示 loading 等待
+    if (pendingFetches.has(bw)) {
       setLoading(true);
       setShowPhrases(false);
       setShowSynonyms(false);
@@ -33,21 +92,49 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
       setIsFavorited(false);
       setIsWordSaved(false);
 
-      const baseWord = getBaseWord(word);
-      setActualWord(baseWord);
-
-      fetchWordLookup(baseWord)
-        .then(data => {
+      let cancelled = false;
+      pendingFetches.get(bw)!.then((data) => {
+        if (!cancelled && data) {
           setDetails(data);
           setLoading(false);
-        })
-        .catch(() => {
+        } else if (!cancelled) {
           setDetails(null);
           setLoading(false);
-        });
-    } else if (!enabled) {
-      setDetails(null);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
+
+    // 3. 无缓存也无预加载 → 正常请求 + 缓存结果
+    setLoading(true);
+    setShowPhrases(false);
+    setShowSynonyms(false);
+    setShowRelWords(false);
+    setSentenceIndex(0);
+    setIsFavorited(false);
+    setIsWordSaved(false);
+
+    let cancelled = false;
+    fetchWordLookup(bw)
+      .then((data) => {
+        if (!cancelled) {
+          wordDataCache.set(bw, data);
+          setDetails(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDetails(null);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [enabled, word]);
 
   useEffect(() => {
@@ -117,6 +204,14 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
 
   const totalSentences = details?.sentences?.length || 0;
 
+  const speakSentence = useCallback((text: string) => {
+    if (!text || !('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.85;
+    speechSynthesis.speak(utterance);
+  }, []);
+
   return {
     details,
     loading,
@@ -139,5 +234,6 @@ export function useWordLookup({ word, enabled = true, savedWords = [], onWordSav
     formatTrans,
     handleSaveToVocab,
     handleFavoriteSentence,
+    speakSentence,
   };
 }
