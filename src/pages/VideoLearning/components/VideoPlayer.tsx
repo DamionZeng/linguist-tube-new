@@ -33,6 +33,9 @@ interface VideoPlayerProps {
   activeTranscriptWords?: { en?: TimedWord[]; zh?: TimedWord[] };
   isLooping?: boolean;
   onVideoEnded?: () => void;
+  onWordClick?: (word: string) => void;
+  savedWords?: string[];
+  highlightColor?: string;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -62,7 +65,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   activeTranscriptZh = '',
   activeTranscriptWords,
   isLooping = true,
-  onVideoEnded
+  onVideoEnded,
+  onWordClick,
+  savedWords = [],
+  highlightColor = '#2182c1'
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
   const [showControls, setShowControls] = useState(false);
@@ -277,11 +283,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Video Captions Overlay */}
       {langMode !== 'none' && (activeTranscriptEn || activeTranscriptZh) && (
         <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
-          <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center">
+          <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center pointer-events-auto">
             {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
               <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">
                 {activeTranscriptWords?.en && activeTranscriptWords.en.length > 0
-                  ? renderTimedWords(activeTranscriptWords.en, currentTime)
+                  ? renderTimedWords(activeTranscriptWords.en, currentTime, onWordClick, savedWords, highlightColor)
                   : activeTranscriptEn
                 }
               </p>

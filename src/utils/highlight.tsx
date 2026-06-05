@@ -23,7 +23,7 @@ export const renderTimedWords = (
   currentTime: number,
   onWordClick?: (word: string) => void,
   savedWords: string[] = [],
-  highlightColor: string = '#D48166',
+  highlightColor: string = '#2182c1',
   isActiveTranscript: boolean = true
 ) => {
   let activeWordIndex = -1;
@@ -40,8 +40,10 @@ export const renderTimedWords = (
     <>
       {words.map((w, i) => {
         const isActive = isActiveTranscript && i === activeWordIndex;
+        // Clean the word for checking against savedWords
+        const cleaned = w.text.replace(/[^a-zA-Z']/g, '');
         const isVocabWord = savedWords.some(
-          sw => sw.toLowerCase() === w.text.toLowerCase()
+          sw => sw.toLowerCase() === cleaned.toLowerCase()
         );
 
         return (
@@ -49,18 +51,16 @@ export const renderTimedWords = (
             <span
               onClick={(e) => {
                 e.stopPropagation();
-                if (onWordClick && /^[a-zA-Z]+(?:'[a-zA-Z]+)?$/.test(w.text)) {
-                  onWordClick(w.text);
+                if (onWordClick && cleaned) {
+                  onWordClick(cleaned);
                 }
               }}
-              className={`transition-colors duration-150 rounded-sm ${
+              className={`transition-colors duration-150 rounded-sm cursor-pointer hover:bg-black/5 ${
                 isActive
                   ? 'text-[#D48166] dark:text-[#E8A87C]'
                   : isVocabWord
-                    ? 'font-semibold cursor-pointer hover:bg-black/5'
-                    : /^[a-zA-Z]+(?:'[a-zA-Z]+)?$/.test(w.text)
-                      ? 'cursor-pointer hover:bg-black/5'
-                      : ''
+                    ? 'font-semibold'
+                    : ''
               }`}
               style={!isActive && isVocabWord ? { color: highlightColor } : undefined}
             >

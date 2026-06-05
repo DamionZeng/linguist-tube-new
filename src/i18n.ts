@@ -143,7 +143,7 @@ const resources = {
       },
       practice: {
         title: "Select Practice Mode",
-        sentenceTitle: "Sentence Practice",
+        sentenceTitle: "Shadowing Mode",
         sentenceDesc: "Refine every pronunciation. Step-by-step shadowing for each sentence.",
         fullTitle: "Full Challenge",
         fullDesc: "Fluency shadowing test. Uninterrupted reading with comprehensive report analysis.",
@@ -303,7 +303,7 @@ const resources = {
       },
       practice: {
         title: "选择练习模式",
-        sentenceTitle: "逐句精听",
+        sentenceTitle: "跟读模式",
         sentenceDesc: "精准打磨每个发音。通过听、读、评的单句闭环，不断提升发音细节。",
         fullTitle: "全文挑战",
         fullDesc: "流利度影子跟读测试。不间断跟读原音，最终生成全面的发音报告分析。",

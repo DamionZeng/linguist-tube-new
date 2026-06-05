@@ -59,7 +59,7 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
                     <ListMusic className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.sentenceTitle') || '逐句精听'}</h3>
+                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.sentenceTitle') || '跟读模式'}</h3>
                     <p className="text-[#8A8A7A] dark:text-[#94A3B8] text-sm leading-relaxed">
                       {t('practice.sentenceDesc') || '精准打磨每个发音。通过听、读、评的单句闭环，不断提升发音细节。'}
                     </p>
