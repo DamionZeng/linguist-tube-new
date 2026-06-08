@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon, Gift, Crown, Calendar } from 'lucide-react';
 import { fetchLibraryData } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
@@ -7,15 +7,57 @@ import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import { redeemKeyApi } from '@api/auth';
 
 export const LibraryPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // 卡密兑换状态
+  const [showRedeem, setShowRedeem] = useState(false);
+  const [redeemKey, setRedeemKey] = useState('');
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
+  const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
+
+  const handleRedeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!redeemKey.trim()) return;
+    setRedeemLoading(true);
+    setRedeemError(null);
+    setRedeemSuccess(null);
+    try {
+      const updatedUser = await redeemKeyApi(redeemKey.trim());
+      login(updatedUser);
+      setRedeemSuccess(t('library.redeemSuccess'));
+      setRedeemKey('');
+    } catch (err: any) {
+      setRedeemError(err.message || t('library.redeemFailed'));
+    } finally {
+      setRedeemLoading(false);
+    }
+  };
+
+  // 格式化 VIP 到期信息
+  const vipExpiryInfo = useMemo(() => {
+    if (!user || user.role !== 'vip') return null;
+    if (!user.vipExpiresAt) {
+      return { label: t('library.lifetime'), isLifetime: true };
+    }
+    const now = Date.now();
+    const exp = new Date(user.vipExpiresAt).getTime();
+    const daysLeft = Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
+    const dateStr = new Date(user.vipExpiresAt).toLocaleDateString(
+      i18n.language === 'zh' ? 'zh-CN' : 'en-US',
+      { month: 'short', day: 'numeric' }
+    );
+    return { label: t('library.daysLeft', { days: daysLeft }), secondary: dateStr, isLifetime: false, daysLeft };
+  }, [user, i18n.language, t]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,11 +111,27 @@ export const LibraryPage: React.FC = () => {
               {user.username}
             </h2>
             {user.role === 'vip' ? (
-              <span className="bg-[#E1B12C]/10 border border-[#E1B12C]/30 text-[#C29828] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                <ShieldCheck className="w-3.5 h-3.5" /> {t('library.vip')}
+              <span className={`inline-flex items-center gap-1.5 text-[11px] md:text-xs font-bold tracking-wider px-3 py-1.5 rounded-full shadow-sm border ${
+                vipExpiryInfo?.isLifetime
+                  ? 'bg-[#E1B12C]/10 border-[#E1B12C]/30 text-[#C29828]'
+                  : (vipExpiryInfo?.daysLeft ?? 0) <= 7
+                    ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                    : 'bg-[#E1B12C]/10 border-[#E1B12C]/30 text-[#C29828]'
+              }`}>
+                {vipExpiryInfo?.isLifetime ? (
+                  <Crown className="w-3.5 h-3.5" />
+                ) : (
+                  <Calendar className="w-3 h-3" />
+                )}
+                <span>VIP</span>
+                <span className="opacity-40">·</span>
+                <span>{vipExpiryInfo?.label}</span>
+                {vipExpiryInfo?.secondary && (
+                  <span className="opacity-50 font-normal text-[10px]">({vipExpiryInfo.secondary})</span>
+                )}
               </span>
             ) : (
-              <span className="bg-[#94A684]/10 border border-[#94A684]/30 text-[#71855F] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center shadow-sm">
+              <span className="inline-flex items-center gap-1.5 bg-[#94A684]/10 border border-[#94A684]/30 text-[#71855F] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-sm">
                 {t('library.standard')}
               </span>
             )}
@@ -83,7 +141,9 @@ export const LibraryPage: React.FC = () => {
           </p>
           <div className="flex items-center gap-4 text-xs font-bold text-[#6A6A5A] dark:text-[#94A3B8]">
             <span>
-              {t('library.joined')} 2026-01-12
+              {t('library.joined')} {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                : '—'}
             </span>
           </div>
         </div>
@@ -98,6 +158,49 @@ export const LibraryPage: React.FC = () => {
       </div>
 
       <GithubHeatmap />
+
+      {/* Redeem Key Section */}
+      <div className="bg-white p-5 md:p-6 rounded-[24px] border border-[#E0E0D5] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B]">
+        <button
+          onClick={() => { setShowRedeem(!showRedeem); setRedeemError(null); setRedeemSuccess(null); }}
+          className="flex items-center gap-2 text-sm font-bold text-[#6A6A5A] dark:text-[#94A3B8] hover:text-[#D48166] transition-colors"
+        >
+          <Gift className="w-4 h-4" />
+          {t('library.redeemKey')}
+        </button>
+
+        {showRedeem && (
+          <form onSubmit={handleRedeem} className="mt-4 space-y-3">
+            {redeemSuccess && (
+              <div className="bg-green-50 text-green-600 p-3 rounded-xl text-sm border border-green-100">
+                {redeemSuccess}
+              </div>
+            )}
+            {redeemError && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
+                {redeemError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                required
+                className="flex-1 border border-[#E0E0D5] bg-[#F5F5F0] dark:bg-[#1E293B] dark:border-[#2a323f] rounded-xl px-4 py-2.5 outline-none focus:border-[#D48166] transition-colors text-sm"
+                value={redeemKey}
+                onChange={e => setRedeemKey(e.target.value)}
+                placeholder={t('library.enterRedeemKey')}
+              />
+              <button
+                type="submit"
+                disabled={redeemLoading}
+                className="bg-[#D48166] text-white font-bold rounded-xl px-6 py-2.5 hover:bg-[#C27055] transition-colors disabled:opacity-50 text-sm"
+              >
+                {redeemLoading ? t('library.redeeming') : t('library.doRedeem')}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
       
       {/* Settings / Sign Out Actions */}
       <div className="pt-8 flex flex-col md:flex-row items-center gap-4">

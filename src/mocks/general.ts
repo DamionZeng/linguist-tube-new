@@ -1,6 +1,6 @@
 export const MOCK_USERS = [
-  { username: 'damion', password: '123456', role: 'user' },
-  { username: 'root', password: '123456', role: 'vip' }
+  { username: 'damion', password: '123456', role: 'user', vipExpiresAt: null, createdAt: '2025-06-15T08:00:00Z' },
+  { username: 'root', password: '123456', role: 'vip', vipExpiresAt: null, createdAt: '2025-01-10T08:00:00Z' }
 ];
 
 export const MOCK_CATEGORIES = ["All", "Business", "Daily Life", "Travel", "IELTS", "Slang"];

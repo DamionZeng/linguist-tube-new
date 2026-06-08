@@ -213,28 +213,39 @@ async def delete_video_batch(video_ids: list[str]) -> dict:
     }
 
 
-async def generate_registration_key(days_valid: int = 365) -> dict:
-    """生成一个随机注册卡密。"""
+async def generate_registration_key(days_valid: int = 365, vip_duration_days: int | None = None) -> dict:
+    """生成一个随机注册卡密。
+
+    Args:
+        days_valid: 卡密本身的有效天数（过期后无法使用）
+        vip_duration_days: VIP 会员时长（天），None 表示终生 VIP
+    """
     import secrets
     import string
     from datetime import datetime, timedelta
 
-    # 生成 16 位随机码: 前缀 VIP + 时间戳 + 随机字符
+    # 生成纯随机字符串，不使用任何前缀
     alphabet = string.ascii_uppercase + string.digits
-    random_part = "".join(secrets.choice(alphabet) for _ in range(12))
-    key = f"VIP-{random_part}"
+    random_part = "".join(secrets.choice(alphabet) for _ in range(16))
+    key = random_part
 
     expires_at = datetime.utcnow() + timedelta(days=days_valid)
 
     session_factory = _get_async_session()
     async with session_factory() as session:
-        registration_key = RegistrationKey(key=key, expires_at=expires_at)
+        registration_key = RegistrationKey(
+            key=key,
+            expires_at=expires_at,
+            vip_duration_days=vip_duration_days,
+        )
         session.add(registration_key)
         await session.commit()
 
-    logger.info(f"生成新卡密: {key}, 有效期 {days_valid} 天")
+    vip_type = "终生" if vip_duration_days is None else f"{vip_duration_days}天"
+    logger.info(f"生成新卡密: {key}, 卡密有效期 {days_valid} 天, VIP类型: {vip_type}")
     return {
         "key": key,
         "expires_at": expires_at.isoformat(),
         "days_valid": days_valid,
+        "vip_duration_days": vip_duration_days,
     }

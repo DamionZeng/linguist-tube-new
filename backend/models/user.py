@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import String, Integer, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,4 +13,5 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(10), nullable=False, default="user")
+    vip_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, default=None)
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())

@@ -40,8 +40,16 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
   return json.data as T;
 }
 
+interface AuthData {
+  username: string;
+  role: UserRole;
+  vip_expires_at: string | null;
+  created_at: string | null;
+  token: string;
+}
+
 export const loginApi = async (username: string, password: string): Promise<User> => {
-  const data = await apiRequest<{ username: string; role: UserRole; token: string }>(
+  const data = await apiRequest<AuthData>(
     '/api/auth/login',
     {
       method: 'POST',
@@ -49,11 +57,11 @@ export const loginApi = async (username: string, password: string): Promise<User
     },
   );
   storeToken(data.token);
-  return { username: data.username, role: data.role };
+  return { username: data.username, role: data.role, vipExpiresAt: data.vip_expires_at, createdAt: data.created_at };
 };
 
 export const registerApi = async (username: string, password: string, invite_key: string): Promise<User> => {
-  const data = await apiRequest<{ username: string; role: UserRole; token: string }>(
+  const data = await apiRequest<AuthData>(
     '/api/auth/register',
     {
       method: 'POST',
@@ -61,5 +69,17 @@ export const registerApi = async (username: string, password: string, invite_key
     },
   );
   storeToken(data.token);
-  return { username: data.username, role: data.role };
+  return { username: data.username, role: data.role, vipExpiresAt: data.vip_expires_at, createdAt: data.created_at };
+};
+
+export const redeemKeyApi = async (key: string): Promise<User> => {
+  const data = await apiRequest<AuthData>(
+    '/api/auth/redeem-key',
+    {
+      method: 'POST',
+      body: JSON.stringify({ key }),
+    },
+  );
+  storeToken(data.token);
+  return { username: data.username, role: data.role, vipExpiresAt: data.vip_expires_at, createdAt: data.created_at };
 };

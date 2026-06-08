@@ -22,7 +22,7 @@ export const registerApi = async (username: string, password: string, invite_key
         return;
       }
       // Mock: 总是注册成功
-      resolve({ username, role: 'vip', token: 'mock-token-' + Date.now() });
+      resolve({ username, role: 'vip', vipExpiresAt: null, createdAt: new Date().toISOString(), token: 'mock-token-' + Date.now() });
     }, 500);
   });
 };

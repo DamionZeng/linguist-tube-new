@@ -6,6 +6,8 @@ export type UserRole = 'user' | 'vip';
 export interface User {
   username: string;
   role: UserRole;
+  vipExpiresAt: string | null;
+  createdAt: string | null;
 }
 
 interface AuthContextType {

@@ -43,7 +43,8 @@ const resources = {
         registerHere: "Register here",
         loginHere: "Login here",
         switchToRegister: "Register",
-        switchToLogin: "Back to Login"
+        switchToLogin: "Back to Login",
+        getKey: "Get Invitation Key"
       },
       messages: {
         loginHistory: "Please login to view your watch history.",
@@ -134,7 +135,16 @@ const resources = {
         lightMode: "Light Mode",
         darkMode: "Dark Mode",
         bio: "Passionate about language learning and exploring world cultures. Improving bit by bit every day.",
-        joined: "Joined"
+        joined: "Joined",
+        lifetime: "Lifetime",
+        expiresAt: "Expires",
+        daysLeft: "{{days}} days",
+        redeemKey: "Redeem VIP Key",
+        enterRedeemKey: "Enter redemption key",
+        doRedeem: "Redeem",
+        redeeming: "Redeeming...",
+        redeemSuccess: "VIP upgraded successfully!",
+        redeemFailed: "Redemption failed"
       },
       checkin: {
         title: "Check-in Records",
@@ -160,6 +170,29 @@ const resources = {
         weaknessAnalysis: "Weakness Analysis",
         refine: "Refine",
         retry: "Retry Challenge"
+      },
+      getKey: {
+        title: "Get Invitation Key",
+        qrTitle: "Scan QR Code to Get VIP",
+        qrDesc: "Add our WeChat account below and receive a 30-day VIP membership for free!",
+        qrAlt: "WeChat QR Code",
+        vipReward: "Add WeChat → Get 30-Day VIP Free!",
+        featuresTitle: "Product Highlights",
+        feature1Title: "300+ Resources",
+        feature1Desc: "Access over 300 video resources and switch freely between 4 learning modes.",
+        feature2Title: "Sentence-by-Sentence Shadowing",
+        feature2Desc: "Follow along word by word. Real-time feedback on your pronunciation.",
+        feature3Title: "Smart Vocabulary Lookup",
+        feature3Desc: "Definitions, pronunciations, and example sentences — one tap, instant results.",
+        feature4Title: "Progress Tracking & Review",
+        feature4Desc: "Visual progress charts and AI-powered spaced repetition for efficient review.",
+        feature5Title: "Dual-Platform Support",
+        feature5Desc: "Seamless experience across desktop and mobile devices.",
+        galleryTitle: "App Preview",
+        img1Alt: "App Feature Preview 1",
+        img2Alt: "App Feature Preview 2",
+        img3Alt: "App Feature Preview 3",
+        backToRegister: "Back to Register"
       }
     }
   },
@@ -203,7 +236,8 @@ const resources = {
         registerHere: "点此注册",
         loginHere: "点此登录",
         switchToRegister: "注册",
-        switchToLogin: "返回登录"
+        switchToLogin: "返回登录",
+        getKey: "获取邀请卡密"
       },
       messages: {
         loginHistory: "请登录以查看您的历史记录。",
@@ -294,7 +328,16 @@ const resources = {
         lightMode: "浅色模式",
         darkMode: "深色模式",
         bio: "热爱学习语言，探索世界文化。每天进步一点点。",
-        joined: "加入于"
+        joined: "加入于",
+        lifetime: "终生",
+        expiresAt: "到期",
+        daysLeft: "剩余 {{days}} 天",
+        redeemKey: "兑换VIP卡密",
+        enterRedeemKey: "请输入卡密",
+        doRedeem: "兑换",
+        redeeming: "兑换中...",
+        redeemSuccess: "VIP升级成功！",
+        redeemFailed: "兑换失败"
       },
       checkin: {
         title: "打卡记录",
@@ -320,6 +363,29 @@ const resources = {
         weaknessAnalysis: "发音攻坚（最低评分）",
         refine: "去精修",
         retry: "重新挑战"
+      },
+      getKey: {
+        title: "获取邀请卡密",
+        qrTitle: "扫码添加微信，免费领VIP",
+        qrDesc: "扫描下方二维码添加「小铃铛」微信，即可领取 30 天 VIP 会员！",
+        qrAlt: "微信二维码",
+        vipReward: "添加小铃铛微信 → 免费领取30天VIP会员！",
+        featuresTitle: "产品亮点",
+        feature1Title: "300+资源尽情使用",
+        feature1Desc: "海量视频资源库，4种学习模式自由切换，想怎么学就怎么学。",
+        feature2Title: "逐词原声精跟读模式",
+        feature2Desc: "告别听不清，跟随声走，即时跟读提升发音。",
+        feature3Title: "全网释义智能秒查",
+        feature3Desc: "释义、发音、全景例句一应俱全，即查即得。",
+        feature4Title: "可视化熟练度进阶追踪",
+        feature4Desc: "红黄绿电池精细化图标，学习进展一目了然。",
+        feature5Title: "双端显示",
+        feature5Desc: "桌面端与移动端无缝切换，随时随地学习。",
+        galleryTitle: "应用预览",
+        img1Alt: "应用功能预览图1",
+        img2Alt: "应用功能预览图2",
+        img3Alt: "应用功能预览图3",
+        backToRegister: "返回注册"
       }
     }
   }
