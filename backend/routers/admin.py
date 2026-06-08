@@ -43,5 +43,7 @@ async def promote_video_carousel(video_id: str, body: PromoteCarouselRequest | N
 @router.post("/keys/generate", response_model=GenerateKeyResponse)
 async def generate_key(body: GenerateKeyRequest | None = None):
     days = body.days_valid if body else 365
-    result = await generate_registration_key(days)
-    return {"code": 200, "data": result, "message": f"卡密已生成，有效期 {days} 天"}
+    vip_days = body.vip_duration_days if body else None
+    result = await generate_registration_key(days, vip_days)
+    vip_type = "终生" if vip_days is None else f"{vip_days}天"
+    return {"code": 200, "data": result, "message": f"卡密已生成，VIP类型: {vip_type}"}

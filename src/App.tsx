@@ -18,6 +18,7 @@ import { YoutubeNewsPage } from './pages/YoutubeNews';
 import { CheckInVideosPage } from './pages/CheckInVideos';
 import { SentenceMode } from './pages/Practice/SentenceMode';
 import { FullMode } from './pages/Practice/FullMode';
+import { GetKeyPage } from './pages/GetKey';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -80,6 +81,9 @@ export default function App() {
             {/* Practice Module Routes */}
             <Route path="/practice/sentence/:id" element={<SentenceMode />} />
             <Route path="/practice/full/:id" element={<FullMode />} />
+
+            {/* Standalone Pages */}
+            <Route path="/get-key" element={<GetKeyPage />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

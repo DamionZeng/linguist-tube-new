@@ -47,11 +47,14 @@ async def seed_data():
             import string as _string
             alphabet = _string.ascii_uppercase + _string.digits
             keys = []
-            for _ in range(3):
-                random_part = "".join(secrets.choice(alphabet) for _ in range(12))
+            for i in range(3):
+                random_part = "".join(secrets.choice(alphabet) for _ in range(16))
+                # 第一个终生VIP，第二个30天，第三个365天
+                vip_durations = [None, 30, 365]
                 keys.append(RegistrationKey(
-                    key=f"VIP-{random_part}",
+                    key=random_part,
                     expires_at=datetime(2026, 12, 31, tzinfo=timezone.utc),
+                    vip_duration_days=vip_durations[i],
                     is_used=False,
                 ))
             session.add_all(keys)

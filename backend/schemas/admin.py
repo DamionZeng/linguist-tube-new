@@ -29,6 +29,7 @@ class PromoteCarouselResponse(BaseModel):
 
 class GenerateKeyRequest(BaseModel):
     days_valid: int = 365
+    vip_duration_days: int | None = None  # None = 终生VIP, 具体天数 = 限时VIP
 
 
 class GenerateKeyResponse(BaseModel):

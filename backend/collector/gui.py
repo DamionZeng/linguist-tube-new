@@ -182,13 +182,27 @@ class CollectorApp:
 
         row1 = ttk.Frame(key_frame)
         row1.pack(fill=tk.X, pady=(0, 4))
-        ttk.Label(row1, text="有效期 (天):").pack(side=tk.LEFT)
+        ttk.Label(row1, text="卡密有效期 (天):").pack(side=tk.LEFT)
         self.key_days_var = tk.StringVar(value="365")
-        ttk.Entry(row1, textvariable=self.key_days_var, width=10).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Entry(row1, textvariable=self.key_days_var, width=10).pack(side=tk.LEFT, padx=(8, 16))
+        ttk.Label(row1, text="VIP 时长:").pack(side=tk.LEFT)
+        self.vip_type_var = tk.StringVar(value="终生")
+        vip_type_combo = ttk.Combobox(
+            row1, textvariable=self.vip_type_var, width=12,
+            values=["终生", "7天", "30天", "90天", "180天", "365天", "自定义"],
+            state="readonly",
+        )
+        vip_type_combo.pack(side=tk.LEFT, padx=(8, 8))
+        self.vip_custom_days_var = tk.StringVar(value="")
+        self.vip_custom_entry = ttk.Entry(row1, textvariable=self.vip_custom_days_var, width=6)
+        self.vip_custom_entry.pack(side=tk.LEFT)
+        ttk.Label(row1, text="天").pack(side=tk.LEFT, padx=(2, 0))
 
         row2 = ttk.Frame(key_frame)
-        row2.pack(fill=tk.X)
+        row2.pack(fill=tk.X, pady=(4, 0))
         ttk.Button(row2, text="生成卡密", command=self._generate_key).pack(side=tk.LEFT)
+        ttk.Label(key_frame, text="卡密有效期=卡密本身可用时限, VIP时长=激活后获得的会员天数（终生=不过期）",
+                  foreground="gray").pack(anchor=tk.W, pady=(4, 0))
 
     def _load_defaults(self):
         self._refresh_id()
@@ -342,13 +356,31 @@ class CollectorApp:
             messagebox.showwarning("提示", "天数必须大于 0")
             return
 
-        self._log(f"\n{'='*50}")
-        self._log(f"生成注册卡密 (有效期 {days} 天)...")
+        # 解析 VIP 时长
+        vip_type = self.vip_type_var.get()
+        if vip_type == "终生":
+            vip_days = None
+        elif vip_type == "自定义":
+            custom_text = self.vip_custom_days_var.get().strip()
+            try:
+                vip_days = int(custom_text)
+            except ValueError:
+                messagebox.showwarning("提示", "请输入有效的自定义天数")
+                return
+            if vip_days < 1:
+                messagebox.showwarning("提示", "天数必须大于 0")
+                return
+        else:
+            vip_days = int(vip_type.replace("天", ""))
 
-        thread = threading.Thread(target=self._run_generate_key, args=(days,), daemon=True)
+        vip_label = "终生" if vip_days is None else f"{vip_days}天"
+        self._log(f"\n{'='*50}")
+        self._log(f"生成注册卡密 (卡密有效期 {days} 天, VIP类型: {vip_label})...")
+
+        thread = threading.Thread(target=self._run_generate_key, args=(days, vip_days), daemon=True)
         thread.start()
 
-    def _run_generate_key(self, days: int):
+    def _run_generate_key(self, days: int, vip_days: int | None):
         import asyncio
         try:
             from services.admin_service import generate_registration_key
@@ -356,14 +388,16 @@ class CollectorApp:
 
             loop = asyncio.new_event_loop()
             try:
-                result = loop.run_until_complete(generate_registration_key(days))
+                result = loop.run_until_complete(generate_registration_key(days, vip_days))
             finally:
                 loop.run_until_complete(dispose_engine())
                 loop.close()
 
+            vip_label = "终生" if result['vip_duration_days'] is None else f"{result['vip_duration_days']}天"
             self._log(f"  卡密: {result['key']}")
-            self._log(f"  过期时间: {result['expires_at']}")
-            self._log(f"  有效期: {result['days_valid']} 天")
+            self._log(f"  卡密过期时间: {result['expires_at']}")
+            self._log(f"  卡密有效期: {result['days_valid']} 天")
+            self._log(f"  VIP 类型: {vip_label}")
             self._log(f"\n  生成完成!")
         except Exception as e:
             self._log(f"\n  生成卡密出错: {e}")

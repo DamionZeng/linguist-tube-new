@@ -4,10 +4,12 @@ import { Lock } from 'lucide-react';
 import { loginApi, registerApi } from '@api/auth';
 import { clearStorageCache, initStorageFromServer } from '@api/storage';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
   const { login } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -119,6 +121,15 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
                 onChange={e => setInviteKey(e.target.value)}
                 placeholder={t('auth.enterInviteKey')}
               />
+              <p className="text-xs text-center mt-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/get-key')}
+                  className="text-[#D48166] hover:underline cursor-pointer"
+                >
+                  {t('auth.getKey')}
+                </button>
+              </p>
             </div>
           )}
 

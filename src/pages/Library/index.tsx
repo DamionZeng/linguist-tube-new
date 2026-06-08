@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon, Gift, Crown, Calendar, KeyRound, Copy, Check } from 'lucide-react';
 import { fetchLibraryData } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
@@ -7,15 +7,103 @@ import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import { redeemKeyApi } from '@api/auth';
+import { generateKeyApi } from '@api/admin';
 
 export const LibraryPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // 卡密兑换状态
+  const [showRedeem, setShowRedeem] = useState(false);
+  const [redeemKey, setRedeemKey] = useState('');
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
+  const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
+
+  // Admin: 卡密生成状态
+  const [showGenKey, setShowGenKey] = useState(false);
+  const [vipType, setVipType] = useState<string>('终生');
+  const [vipCustomDays, setVipCustomDays] = useState('');
+  const [genLoading, setGenLoading] = useState(false);
+  const [genKeyResult, setGenKeyResult] = useState<{ key: string; vipLabel: string } | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleRedeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!redeemKey.trim()) return;
+    setRedeemLoading(true);
+    setRedeemError(null);
+    setRedeemSuccess(null);
+    try {
+      const updatedUser = await redeemKeyApi(redeemKey.trim());
+      login(updatedUser);
+      setRedeemSuccess(t('library.redeemSuccess'));
+      setRedeemKey('');
+    } catch (err: any) {
+      setRedeemError(err.message || t('library.redeemFailed'));
+    } finally {
+      setRedeemLoading(false);
+    }
+  };
+
+  // Admin: 生成卡密
+  const handleGenKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenLoading(true);
+    setGenError(null);
+    setGenKeyResult(null);
+    try {
+      let vipDays: number | null = null;
+      if (vipType === '终生') {
+        vipDays = null;
+      } else if (vipType === '自定义') {
+        const d = parseInt(vipCustomDays, 10);
+        if (!d || d < 1) { setGenError('请输入有效的天数'); setGenLoading(false); return; }
+        vipDays = d;
+      } else {
+        vipDays = parseInt(vipType.replace('天', ''), 10);
+      }
+      const result = await generateKeyApi(vipDays);
+      const label = vipDays === null ? t('library.lifetime') : `${vipDays}${i18n.language === 'zh' ? '天' : ' days'}`;
+      setGenKeyResult({ key: result.key, vipLabel: label });
+    } catch (err: any) {
+      setGenError(err.message || '生成失败');
+    } finally {
+      setGenLoading(false);
+    }
+  };
+
+  const handleCopyKey = async () => {
+    if (!genKeyResult) return;
+    try {
+      await navigator.clipboard.writeText(genKeyResult.key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  // 格式化 VIP 到期信息
+  const vipExpiryInfo = useMemo(() => {
+    if (!user || user.role !== 'vip') return null;
+    if (!user.vipExpiresAt) {
+      return { label: t('library.lifetime'), isLifetime: true };
+    }
+    const now = Date.now();
+    const exp = new Date(user.vipExpiresAt).getTime();
+    const daysLeft = Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
+    const dateStr = new Date(user.vipExpiresAt).toLocaleDateString(
+      i18n.language === 'zh' ? 'zh-CN' : 'en-US',
+      { month: 'short', day: 'numeric' }
+    );
+    return { label: t('library.daysLeft', { days: daysLeft }), secondary: dateStr, isLifetime: false, daysLeft };
+  }, [user, i18n.language, t]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,11 +157,27 @@ export const LibraryPage: React.FC = () => {
               {user.username}
             </h2>
             {user.role === 'vip' ? (
-              <span className="bg-[#E1B12C]/10 border border-[#E1B12C]/30 text-[#C29828] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                <ShieldCheck className="w-3.5 h-3.5" /> {t('library.vip')}
+              <span className={`inline-flex items-center gap-1.5 text-[11px] md:text-xs font-bold tracking-wider px-3 py-1.5 rounded-full shadow-sm border ${
+                vipExpiryInfo?.isLifetime
+                  ? 'bg-[#E1B12C]/10 border-[#E1B12C]/30 text-[#C29828]'
+                  : (vipExpiryInfo?.daysLeft ?? 0) <= 7
+                    ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                    : 'bg-[#E1B12C]/10 border-[#E1B12C]/30 text-[#C29828]'
+              }`}>
+                {vipExpiryInfo?.isLifetime ? (
+                  <Crown className="w-3.5 h-3.5" />
+                ) : (
+                  <Calendar className="w-3 h-3" />
+                )}
+                <span>VIP</span>
+                <span className="opacity-40">·</span>
+                <span>{vipExpiryInfo?.label}</span>
+                {vipExpiryInfo?.secondary && (
+                  <span className="opacity-50 font-normal text-[10px]">({vipExpiryInfo.secondary})</span>
+                )}
               </span>
             ) : (
-              <span className="bg-[#94A684]/10 border border-[#94A684]/30 text-[#71855F] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full flex items-center shadow-sm">
+              <span className="inline-flex items-center gap-1.5 bg-[#94A684]/10 border border-[#94A684]/30 text-[#71855F] text-[11px] md:text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-sm">
                 {t('library.standard')}
               </span>
             )}
@@ -83,7 +187,9 @@ export const LibraryPage: React.FC = () => {
           </p>
           <div className="flex items-center gap-4 text-xs font-bold text-[#6A6A5A] dark:text-[#94A3B8]">
             <span>
-              {t('library.joined')} 2026-01-12
+              {t('library.joined')} {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                : '—'}
             </span>
           </div>
         </div>
@@ -98,6 +204,133 @@ export const LibraryPage: React.FC = () => {
       </div>
 
       <GithubHeatmap />
+
+      {/* Admin: Generate Key Section */}
+      {user.username === 'admin' && (
+        <div className="bg-white p-5 md:p-6 rounded-[24px] border border-[#E0E0D5] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B]">
+          <button
+            onClick={() => { setShowGenKey(!showGenKey); setGenError(null); setGenKeyResult(null); }}
+            className="flex items-center gap-2 text-sm font-bold text-[#6A6A5A] dark:text-[#94A3B8] hover:text-[#D48166] transition-colors"
+          >
+            <KeyRound className="w-4 h-4" />
+            {t('library.genKey')}
+          </button>
+
+          {showGenKey && (
+            <form onSubmit={handleGenKey} className="mt-4 space-y-3">
+              {genError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                  {genError}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-[#5A5A40] dark:text-gray-300">{t('library.vipType')}:</span>
+                {(['终生', '7天', '30天', '90天', '180天', '365天', '自定义'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setVipType(opt)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors ${
+                      vipType === opt
+                        ? 'bg-[#D48166] text-white border-[#D48166]'
+                        : 'bg-[#F5F5F0] dark:bg-[#1E293B] text-[#6A6A5A] dark:text-gray-400 border-[#E0E0D5] dark:border-gray-700 hover:border-[#D48166]/30'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+                {vipType === '自定义' && (
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-16 border border-[#E0E0D5] bg-[#F5F5F0] dark:bg-[#1E293B] dark:border-[#2a323f] rounded-lg px-2 py-1.5 outline-none focus:border-[#D48166] transition-colors text-xs"
+                    value={vipCustomDays}
+                    onChange={e => setVipCustomDays(e.target.value)}
+                    placeholder={i18n.language === 'zh' ? '天数' : 'days'}
+                  />
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={genLoading}
+                className="bg-[#D48166] text-white font-bold rounded-xl px-6 py-2.5 hover:bg-[#C27055] transition-colors disabled:opacity-50 text-sm"
+              >
+                {genLoading ? t('library.genLoading') : t('library.doGen')}
+              </button>
+
+              {genKeyResult && (
+                <div className="mt-3 p-4 bg-gradient-to-r from-[#D48166]/8 to-[#C27055]/8 rounded-xl border border-[#D48166]/20">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-[#8A8A7A] uppercase tracking-wider mb-1">{t('library.generatedKey')} ({genKeyResult.vipLabel})</p>
+                      <p className="font-mono text-base font-bold text-[#5A5A40] dark:text-white tracking-widest select-all">{genKeyResult.key}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyKey}
+                      className={`shrink-0 p-2.5 rounded-xl border transition-colors ${
+                        copied
+                          ? 'bg-green-50 border-green-200 text-green-600'
+                          : 'bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#D48166] hover:text-[#D48166]'
+                      }`}
+                      title={copied ? (i18n.language === 'zh' ? '已复制' : 'Copied') : (i18n.language === 'zh' ? '复制' : 'Copy')}
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Redeem Key Section - 隐藏终生会员 */}
+      {!vipExpiryInfo?.isLifetime && (
+        <div className="bg-white p-5 md:p-6 rounded-[24px] border border-[#E0E0D5] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B]">
+        <button
+          onClick={() => { setShowRedeem(!showRedeem); setRedeemError(null); setRedeemSuccess(null); }}
+          className="flex items-center gap-2 text-sm font-bold text-[#6A6A5A] dark:text-[#94A3B8] hover:text-[#D48166] transition-colors"
+        >
+          <Gift className="w-4 h-4" />
+          {t('library.redeemKey')}
+        </button>
+
+        {showRedeem && (
+          <form onSubmit={handleRedeem} className="mt-4 space-y-3">
+            {redeemSuccess && (
+              <div className="bg-green-50 text-green-600 p-3 rounded-xl text-sm border border-green-100">
+                {redeemSuccess}
+              </div>
+            )}
+            {redeemError && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
+                {redeemError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                required
+                className="flex-1 border border-[#E0E0D5] bg-[#F5F5F0] dark:bg-[#1E293B] dark:border-[#2a323f] rounded-xl px-4 py-2.5 outline-none focus:border-[#D48166] transition-colors text-sm"
+                value={redeemKey}
+                onChange={e => setRedeemKey(e.target.value)}
+                placeholder={t('library.enterRedeemKey')}
+              />
+              <button
+                type="submit"
+                disabled={redeemLoading}
+                className="bg-[#D48166] text-white font-bold rounded-xl px-6 py-2.5 hover:bg-[#C27055] transition-colors disabled:opacity-50 text-sm"
+              >
+                {redeemLoading ? t('library.redeeming') : t('library.doRedeem')}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+      )}
       
       {/* Settings / Sign Out Actions */}
       <div className="pt-8 flex flex-col md:flex-row items-center gap-4">
