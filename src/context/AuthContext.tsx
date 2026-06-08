@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { clearStorageCache } from '@api/storage';
 
-export type UserRole = 'user' | 'vip';
+export type UserRole = 'user' | 'vip' | 'admin';
 
 export interface User {
   username: string;

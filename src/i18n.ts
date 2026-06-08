@@ -144,7 +144,12 @@ const resources = {
         doRedeem: "Redeem",
         redeeming: "Redeeming...",
         redeemSuccess: "VIP upgraded successfully!",
-        redeemFailed: "Redemption failed"
+        redeemFailed: "Redemption failed",
+        genKey: "Generate Key",
+        vipType: "VIP Type",
+        genLoading: "Generating...",
+        doGen: "Generate Key",
+        generatedKey: "Generated Key"
       },
       checkin: {
         title: "Check-in Records",
@@ -337,7 +342,12 @@ const resources = {
         doRedeem: "兑换",
         redeeming: "兑换中...",
         redeemSuccess: "VIP升级成功！",
-        redeemFailed: "兑换失败"
+        redeemFailed: "兑换失败",
+        genKey: "生成卡密",
+        vipType: "VIP类型",
+        genLoading: "生成中...",
+        doGen: "生成卡密",
+        generatedKey: "已生成卡密"
       },
       checkin: {
         title: "打卡记录",
