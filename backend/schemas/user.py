@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class VocabItem(BaseModel):
     id: str
     word: str
+    isPhrase: bool = False
     phonetic: str | None = None
     pos: str | None = None
     mean: str | None = None
@@ -81,6 +82,7 @@ class WordDetailResponse(BaseModel):
 
 class AddVocabRequest(BaseModel):
     word: str
+    isPhrase: bool = False
     phonetic: str | None = None
     trans: str | None = None
     pos: str | None = None

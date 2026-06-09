@@ -31,6 +31,7 @@ export const VideoLearningPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedSentence, setSelectedSentence] = useState<string | null>(null);
   const [langMode, setLangMode] = useState<LangMode>('bilingual');
   const [showHighlights, setShowHighlights] = useState(true);
   const [highlightColor, setHighlightColor] = useState('#2182c1');
@@ -42,6 +43,7 @@ export const VideoLearningPage: React.FC = () => {
   const [isMaskActive, setIsMaskActive] = useState(false);
   const [videoDisplayMode, setVideoDisplayMode] = useState<DisplayMode>('normal');
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [savedPhrases, setSavedPhrases] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
 
   const cycleDisplayMode = () => {
@@ -160,10 +162,21 @@ export const VideoLearningPage: React.FC = () => {
         // 单独加载词汇表数据，失败不影响页面加载
         try {
           const vocabData = await fetchVocabularyData();
-          setSavedWords((vocabData || []).map((v: any) => v.word.toLowerCase()));
+          const phrases: string[] = [];
+          const words: string[] = [];
+          (vocabData || []).forEach((v: any) => {
+            if (v.isPhrase) {
+              phrases.push(v.word.toLowerCase());
+            } else {
+              words.push(v.word.toLowerCase());
+            }
+          });
+          setSavedWords(words);
+          setSavedPhrases(phrases);
         } catch (vocabErr) {
           // 词汇表加载失败不设置页面错误，仅保存空数组
           setSavedWords([]);
+          setSavedPhrases([]);
         }
       } catch (err) {
         setError('Failed to load learning materials.');
@@ -312,8 +325,9 @@ export const VideoLearningPage: React.FC = () => {
                 activeTranscriptZh={activeTranscript.zh}
                 activeTranscriptWords={activeTranscript.words}
                 onVideoEnded={handleVideoEnded}
-                onWordClick={(w) => setSelectedWord(w)}
+                onWordClick={(w, s) => { setSelectedWord(w); setSelectedSentence(s || null); }}
                 savedWords={savedWords}
+                savedPhrases={savedPhrases}
                 highlightColor={highlightColor}
               />
             </div>
@@ -335,10 +349,11 @@ export const VideoLearningPage: React.FC = () => {
                activeIndex={videoContext.activeIndex}
                onSeek={videoContext.seek}
                onToggleFavorite={handleToggleFavorite}
-               onWordClick={(w) => setSelectedWord(w)}
+               onWordClick={(w, s) => { setSelectedWord(w); setSelectedSentence(s || null); }}
                langMode={langMode}
                showHighlights={showHighlights}
                savedWords={savedWords}
+               savedPhrases={savedPhrases}
                highlightColor={highlightColor}
                subtitleSize={subtitleSize}
              />
@@ -353,10 +368,19 @@ export const VideoLearningPage: React.FC = () => {
 
       <WordModal 
         isOpen={!!selectedWord} 
-        onClose={() => setSelectedWord(null)} 
+        onClose={() => { setSelectedWord(null); setSelectedSentence(null); }} 
         word={selectedWord || ''} 
-        onWordSaved={(w) => setSavedWords(prev => [...prev, w.toLowerCase()])}
+        sentence={selectedSentence || undefined}
+        onWordSaved={(w) => {
+          const lower = w.toLowerCase();
+          if (w.includes(' ')) {
+            setSavedPhrases(prev => [...prev, lower]);
+          } else {
+            setSavedWords(prev => [...prev, lower]);
+          }
+        }}
         savedWords={savedWords}
+        savedPhrases={savedPhrases}
       />
 
       <PlaybackSettingsModal 

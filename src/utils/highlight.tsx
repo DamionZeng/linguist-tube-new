@@ -21,10 +21,12 @@ const parseTimestamp = (ts: string): number => {
 export const renderTimedWords = (
   words: TimedWord[],
   currentTime: number,
-  onWordClick?: (word: string) => void,
+  onWordClick?: (word: string, sentence?: string) => void,
   savedWords: string[] = [],
   highlightColor: string = '#2182c1',
-  isActiveTranscript: boolean = true
+  isActiveTranscript: boolean = true,
+  sentence?: string,
+  savedPhrases: string[] = [],
 ) => {
   let activeWordIndex = -1;
   for (let i = 0; i < words.length; i++) {
@@ -36,13 +38,43 @@ export const renderTimedWords = (
     }
   }
 
+  // Build phrase span map: for each matched phrase, map word index → [phrase text, is start, is end]
+  const phraseSpans: Map<number, { text: string; isFirst: boolean; isLast: boolean }> = new Map();
+  if (savedPhrases.length > 0) {
+    const cleanWords = words.map(w => w.text.replace(/[^a-zA-Z']/g, '').toLowerCase());
+    for (const phrase of savedPhrases) {
+      const phraseWords = phrase.toLowerCase().split(/\s+/);
+      if (phraseWords.length < 2) continue;
+      // Find phrase in the words array
+      for (let start = 0; start <= cleanWords.length - phraseWords.length; start++) {
+        let match = true;
+        for (let j = 0; j < phraseWords.length; j++) {
+          if (cleanWords[start + j] !== phraseWords[j]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          for (let j = 0; j < phraseWords.length; j++) {
+            phraseSpans.set(start + j, {
+              text: phrase,
+              isFirst: j === 0,
+              isLast: j === phraseWords.length - 1,
+            });
+          }
+          break; // match once per phrase
+        }
+      }
+    }
+  }
+
   return (
     <>
       {words.map((w, i) => {
         const isActive = isActiveTranscript && i === activeWordIndex;
-        // Clean the word for checking against savedWords
         const cleaned = w.text.replace(/[^a-zA-Z']/g, '');
-        const isVocabWord = savedWords.some(
+        const phraseSpan = phraseSpans.get(i);
+        const isVocabWord = !phraseSpan && savedWords.some(
           sw => sw.toLowerCase() === cleaned.toLowerCase()
         );
 
@@ -51,18 +83,20 @@ export const renderTimedWords = (
             <span
               onClick={(e) => {
                 e.stopPropagation();
-                if (onWordClick && cleaned) {
-                  onWordClick(cleaned);
+                if (onWordClick) {
+                  onWordClick(phraseSpan ? phraseSpan.text : cleaned, sentence);
                 }
               }}
               className={`transition-colors duration-150 rounded-sm cursor-pointer hover:bg-black/5 ${
                 isActive
                   ? 'text-[#D48166] dark:text-[#E8A87C]'
-                  : isVocabWord
-                    ? 'font-semibold'
-                    : ''
+                  : phraseSpan
+                    ? 'font-semibold text-purple-600'
+                    : isVocabWord
+                      ? 'font-semibold'
+                      : ''
               }`}
-              style={!isActive && isVocabWord ? { color: highlightColor } : undefined}
+              style={!isActive && !phraseSpan && isVocabWord ? { color: highlightColor } : undefined}
             >
               {w.text}
             </span>
@@ -112,7 +146,7 @@ export const renderTimedWordsUnderline = (
   );
 };
 
-export const renderHighlightedText = (text: string, highlights: Highlight[], onWordClick?: (word: string) => void, showHighlights: boolean = true, savedWords: string[] = [], highlightColor: string = '#D48166') => {
+export const renderHighlightedText = (text: string, highlights: Highlight[], onWordClick?: (word: string, sentence?: string) => void, showHighlights: boolean = true, savedWords: string[] = [], highlightColor: string = '#D48166', sentence?: string, savedPhrases: string[] = []) => {
   let parts = [{ text, isHighlight: false, color: '', targetWord: '' }];
 
   const allHighlights = [...(highlights || [])];
@@ -125,6 +159,19 @@ export const renderHighlightedText = (text: string, highlights: Highlight[], onW
            // Only add if not already highlighted to avoid conflicts
            if (!allHighlights.find(h => h.word.toLowerCase() === word.toLowerCase())) {
               allHighlights.push({ word, color: highlightColor });
+           }
+        }
+     }
+  });
+
+  // Convert saved phrases to highlights with purple color
+  savedPhrases.forEach(phrase => {
+     if (phrase && phrase.length > 0 && typeof text === 'string') {
+        const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+        if (regex.test(text)) {
+           if (!allHighlights.find(h => h.word.toLowerCase() === phrase.toLowerCase())) {
+              allHighlights.push({ word: phrase, color: '#7C3AED' });
            }
         }
      }
@@ -169,7 +216,7 @@ export const renderHighlightedText = (text: string, highlights: Highlight[], onW
                onClick={(e) => { 
                  e.stopPropagation();
                  if (onWordClick) {
-                   onWordClick(p.targetWord); 
+                   onWordClick(p.targetWord, sentence); 
                  }
                }} 
                className={`font-semibold rounded-sm transition-all ${!isHexColor ? p.color : ''} ${showHighlights ? 'cursor-pointer px-0.5 hover:bg-black/5 active:scale-95' : ''}`}
@@ -190,7 +237,7 @@ export const renderHighlightedText = (text: string, highlights: Highlight[], onW
                     key={j} 
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (onWordClick) onWordClick(sub);
+                      if (onWordClick) onWordClick(sub, sentence);
                     }} 
                     className="cursor-pointer hover:bg-black/5 active:bg-black/10 transition-colors rounded-sm px-0.5 -mx-0.5"
                   >

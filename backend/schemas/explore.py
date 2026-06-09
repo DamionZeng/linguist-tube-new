@@ -31,3 +31,5 @@ class ExploreData(BaseModel):
     categories: list[str]
     videos: list[ExploreVideoItem]
     carousel: list[ExploreCarouselItem]
+    total: int = 0
+    hasMore: bool = False

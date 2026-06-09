@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import select
+from sqlalchemy import select, func, and_, or_
 
 from core.database import _get_async_session
 from models.video import Video, Transcript
@@ -39,21 +39,32 @@ async def get_video_info(video_id: str) -> dict | None:
         if video is None:
             return None
 
-        total_result = await session.execute(select(Video))
-        total = len(total_result.scalars().all())
+        # 用 COUNT 获取总数（不再加载全表）
+        total_result = await session.execute(select(func.count(Video.id)))
+        total = total_result.scalar_one()
 
-        vid_index = 1
-        next_video_id = None
-        all_videos = (
-            await session.execute(select(Video).order_by(Video.sort_order, Video.id))
-        ).scalars().all()
-        for i, v in enumerate(all_videos, 1):
-            if v.id == video_id:
-                vid_index = i
-                # Get next video in order
-                if i < len(all_videos):
-                    next_video_id = all_videos[i].id
-                break
+        # 用 COUNT 计算当前视频在排序中的位置
+        sort_order = video.sort_order or 0
+        index_result = await session.execute(
+            select(func.count(Video.id)).where(
+                or_(
+                    Video.sort_order < sort_order,
+                    and_(Video.sort_order == sort_order, Video.id < video_id),
+                )
+            )
+        )
+        vid_index = index_result.scalar_one() + 1
+
+        # 用 LIMIT 1 获取下一个视频
+        next_result = await session.execute(
+            select(Video.id).where(
+                or_(
+                    Video.sort_order > sort_order,
+                    and_(Video.sort_order == sort_order, Video.id > video_id),
+                )
+            ).order_by(Video.sort_order, Video.id).limit(1)
+        )
+        next_video_id = next_result.scalar_one_or_none()
 
         return {
             "id": video.id,

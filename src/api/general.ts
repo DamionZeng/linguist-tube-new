@@ -64,7 +64,7 @@ async function apiDelete<T>(path: string): Promise<T> {
   return json.data;
 }
 
-export const fetchExploreData = async (): Promise<{
+export const fetchExploreData = async (offset: number = 0, limit: number = 20, category?: string): Promise<{
   categories: string[];
   videos: Array<{
     id: string;
@@ -84,8 +84,14 @@ export const fetchExploreData = async (): Promise<{
     image: string | null;
     tag: string | null;
   }>;
+  total: number;
+  hasMore: boolean;
 }> => {
-  return apiGet('/api/explore');
+  const params = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+  if (category && category !== 'All') {
+    params.set('category', category);
+  }
+  return apiGet(`/api/explore?${params.toString()}`);
 };
 
 export const fetchLibraryData = async (): Promise<{
@@ -153,6 +159,7 @@ export const fetchFavoritesData = async (): Promise<{
 export const fetchWordLookup = async (
   word: string
 ): Promise<{
+  notFound?: boolean;
   bookId: string | null;
   phrases: Array<{ p_cn: string; p_content: string }>;
   relWords: Array<{ Hwds: Array<{ hwd?: string; tran?: string; word?: string }>; Pos: string }>;
@@ -179,6 +186,7 @@ export const addFavoriteSentence = async (sentence: {
 
 export const addVocabularyWord = async (wordDetails: {
   word: string;
+  isPhrase?: boolean;
   phonetic?: string;
   trans?: string;
   pos?: string;

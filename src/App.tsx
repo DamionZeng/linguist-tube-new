@@ -3,24 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { FullscreenToolbar } from './components/FullscreenToolbar';
-import { ExplorePage } from './pages/Explore';
-import { LibraryPage } from './pages/Library';
-import { VideoLearningPage } from './pages/VideoLearning';
-import { VocabularyPage } from './pages/Vocabulary';
-import { WordDetailsPage } from './pages/WordDetails';
-import { HistoryPage } from './pages/History';
-import { FavoritesPage } from './pages/Favorites';
-import { YoutubeNewsPage } from './pages/YoutubeNews';
-import { CheckInVideosPage } from './pages/CheckInVideos';
-import { SentenceMode } from './pages/Practice/SentenceMode';
-import { FullMode } from './pages/Practice/FullMode';
-import { GetKeyPage } from './pages/GetKey';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+
+// ── 路由级代码分割：按需懒加载各页面 ──
+const ExplorePage = lazy(() => import('./pages/Explore').then(m => ({ default: m.ExplorePage })));
+const LibraryPage = lazy(() => import('./pages/Library').then(m => ({ default: m.LibraryPage })));
+const VideoLearningPage = lazy(() => import('./pages/VideoLearning').then(m => ({ default: m.VideoLearningPage })));
+const VocabularyPage = lazy(() => import('./pages/Vocabulary').then(m => ({ default: m.VocabularyPage })));
+const WordDetailsPage = lazy(() => import('./pages/WordDetails').then(m => ({ default: m.WordDetailsPage })));
+const HistoryPage = lazy(() => import('./pages/History').then(m => ({ default: m.HistoryPage })));
+const FavoritesPage = lazy(() => import('./pages/Favorites').then(m => ({ default: m.FavoritesPage })));
+const YoutubeNewsPage = lazy(() => import('./pages/YoutubeNews').then(m => ({ default: m.YoutubeNewsPage })));
+const CheckInVideosPage = lazy(() => import('./pages/CheckInVideos').then(m => ({ default: m.CheckInVideosPage })));
+const SentenceMode = lazy(() => import('./pages/Practice/SentenceMode').then(m => ({ default: m.SentenceMode })));
+const FullMode = lazy(() => import('./pages/Practice/FullMode').then(m => ({ default: m.FullMode })));
+const GetKeyPage = lazy(() => import('./pages/GetKey').then(m => ({ default: m.GetKeyPage })));
+
+/** 统一的页面加载占位 */
+function PageFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-6 h-6 rounded-full border-[3px] border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+    </div>
+  );
+}
 
 function GlobalFullscreenToolbar() {
   const navigate = useNavigate();
@@ -64,27 +75,29 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <GlobalFullscreenToolbar />
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/explore" replace />} />
-              <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/youtube-news" element={<YoutubeNewsPage />} />
-              <Route path="/library" element={<LibraryPage />} />
-              <Route path="/vocab" element={<VocabularyPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/favorites" element={<FavoritesPage />} />
-            </Route>
-            <Route path="/video/:id" element={<VideoLearningPage />} />
-            <Route path="/checkin/:date" element={<CheckInVideosPage />} />
-            <Route path="/vocab/:word" element={<WordDetailsPage />} />
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Navigate to="/explore" replace />} />
+                <Route path="/explore" element={<ExplorePage />} />
+                <Route path="/youtube-news" element={<YoutubeNewsPage />} />
+                <Route path="/library" element={<LibraryPage />} />
+                <Route path="/vocab" element={<VocabularyPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/favorites" element={<FavoritesPage />} />
+              </Route>
+              <Route path="/video/:id" element={<VideoLearningPage />} />
+              <Route path="/checkin/:date" element={<CheckInVideosPage />} />
+              <Route path="/vocab/:word" element={<WordDetailsPage />} />
 
-            {/* Practice Module Routes */}
-            <Route path="/practice/sentence/:id" element={<SentenceMode />} />
-            <Route path="/practice/full/:id" element={<FullMode />} />
+              {/* Practice Module Routes */}
+              <Route path="/practice/sentence/:id" element={<SentenceMode />} />
+              <Route path="/practice/full/:id" element={<FullMode />} />
 
-            {/* Standalone Pages */}
-            <Route path="/get-key" element={<GetKeyPage />} />
-          </Routes>
+              {/* Standalone Pages */}
+              <Route path="/get-key" element={<GetKeyPage />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

@@ -119,6 +119,17 @@ export function clearStorageCache(): void {
   localStorage.removeItem('video_history');
 }
 
+export async function initHistoryFromServer(): Promise<void> {
+  const token = getStoredToken();
+  if (!token) return;
+
+  try {
+    const history = await apiGet<any[]>('/api/history');
+    _videoHistoryCache = history;
+    persistVideoHistoryCache();
+  } catch { /* keep cache */ }
+}
+
 export async function initStorageFromServer(): Promise<void> {
   const token = getStoredToken();
   if (!token) return;

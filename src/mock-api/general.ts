@@ -36,6 +36,7 @@ export const fetchWordLookup = async (word: string) => {
   await delay(300);
   return {
     word,
+    notFound: false,
     bookId: "b1",
     ukphone: "/tes/",
     usphone: "/tes/",
