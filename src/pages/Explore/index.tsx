@@ -1,30 +1,39 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchExploreData } from "@api/general";
 import { useTranslation } from "react-i18next";
 
+const PAGE_SIZE = 50;
+
 export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [data, setData] = useState<{ categories: string[]; videos: any[]; carousel: any[] }>({
-    categories: [],
-    videos: [],
-    carousel: [],
-  });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [carousel, setCarousel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [visibleCount, setVisibleCount] = useState(20);
-  const observerTarget = React.useRef<HTMLDivElement>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const loadData = () => {
+  // 首次加载 / 切换分类时重新加载
+  const loadData = useCallback((category: string) => {
     setLoading(true);
     setError(null);
-    fetchExploreData()
+    setVideos([]);
+    setHasMore(false);
+    fetchExploreData(0, PAGE_SIZE, category)
       .then((res) => {
-        setData(res);
+        setCategories(res.categories);
+        setVideos(res.videos);
+        setCarousel(res.carousel);
+        setTotal(res.total);
+        setHasMore(res.hasMore);
         setLoading(false);
       })
       .catch((err) => {
@@ -32,21 +41,34 @@ export const ExplorePage: React.FC = () => {
         setError("Failed to load explore data.");
         setLoading(false);
       });
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
   useEffect(() => {
-    setVisibleCount(20);
-  }, [activeCategory]);
+    loadData(activeCategory);
+  }, [activeCategory, loadData]);
 
+  // 滚动加载更多
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    fetchExploreData(videos.length, PAGE_SIZE, activeCategory)
+      .then((res) => {
+        setVideos(prev => [...prev, ...res.videos]);
+        setTotal(res.total);
+        setHasMore(res.hasMore);
+        setLoadingMore(false);
+      })
+      .catch(() => {
+        setLoadingMore(false);
+      });
+  }, [videos.length, activeCategory, loadingMore, hasMore]);
+
+  // IntersectionObserver 触发加载更多
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + 5);
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
         }
       },
       { threshold: 0.1 }
@@ -62,21 +84,21 @@ export const ExplorePage: React.FC = () => {
         observer.unobserve(currentTarget);
       }
     };
-  }); // Run without dependency array to re-attach if observerTarget.current becomes available
+  }, [loadMore, hasMore, loadingMore]);
 
   useEffect(() => {
-    if (data.carousel.length === 0) return;
+    if (carousel.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % data.carousel.length);
+      setCurrentSlide((prev) => (prev + 1) % carousel.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [data.carousel.length]);
+  }, [carousel.length]);
 
   const nextSlide = () =>
-    setCurrentSlide((prev) => data.carousel.length > 0 ? (prev + 1) % data.carousel.length : 0);
+    setCurrentSlide((prev) => carousel.length > 0 ? (prev + 1) % carousel.length : 0);
   const prevSlide = () =>
     setCurrentSlide(
-      (prev) => data.carousel.length > 0 ? (prev - 1 + data.carousel.length) % data.carousel.length : 0,
+      (prev) => carousel.length > 0 ? (prev - 1 + carousel.length) % carousel.length : 0,
     );
 
   if (loading) {
@@ -92,7 +114,7 @@ export const ExplorePage: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh] gap-4">
         <div className="text-[#D48166] font-bold">{error}</div>
         <button 
-          onClick={loadData}
+          onClick={() => loadData(activeCategory)}
           className="bg-[#D48166] hover:bg-[#C27055] text-white px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95"
         >
           {t('common.retry', '重试')}
@@ -105,7 +127,7 @@ export const ExplorePage: React.FC = () => {
     <div className="md:p-8 max-w-7xl mx-auto pb-10 mt-2 md:mt-0">
       {/* Hero Carousel */}
       <section className="relative w-full rounded-2xl md:rounded-[32px] overflow-hidden bg-[#2A2A25] h-[220px] md:h-[300px] shadow-lg group mb-6 md:mb-10">
-        {data.carousel.map((item, index) => (
+        {carousel.map((item, index) => (
           <div
             key={item.id}
             className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"}`}
@@ -163,7 +185,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Carousel Indicators */}
         <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 md:gap-2">
-          {data.carousel.map((_, idx) => (
+          {carousel.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
@@ -214,7 +236,7 @@ export const ExplorePage: React.FC = () => {
             window.addEventListener('mouseup', onMouseUp);
           }}
         >
-          {data.categories.map((cat, i) => (
+          {categories.map((cat, i) => (
             <button
               key={i}
               onClick={() => setActiveCategory(cat)}
@@ -227,7 +249,7 @@ export const ExplorePage: React.FC = () => {
 
         {/* Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
-          {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).slice(0, visibleCount).map((v) => (
+          {videos.map((v) => (
             <div
               key={v.id}
               onClick={() => navigate(`/video/${v.id}`)}
@@ -280,8 +302,8 @@ export const ExplorePage: React.FC = () => {
           ))}
         </div>
         
-        {/* Intersection Observer Target */}
-        {data.videos.filter(v => activeCategory === "All" || v.category === activeCategory).length > visibleCount && (
+        {/* Intersection Observer Target — 触底加载更多 */}
+        {hasMore && (
           <div ref={observerTarget} className="w-full h-10 mt-6 flex flex-col items-center justify-center">
             <div className="w-6 h-6 border-2 border-[#D48166] border-t-transparent rounded-full animate-spin"></div>
           </div>
