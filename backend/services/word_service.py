@@ -33,7 +33,7 @@ async def lookup_word(word: str) -> dict:
             return None
 
         if api_result.get("code") != 200 or not api_result.get("data"):
-            return None
+            return {"notFound": True, "word": word_lower}
 
         word_data = api_result["data"]
 

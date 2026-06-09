@@ -10,16 +10,17 @@ interface TranscriptItemProps {
   currentTime: number;
   onSeek: () => void;
   onToggleFavorite: () => void;
-  onWordClick: (word: string) => void;
+  onWordClick: (word: string, sentence?: string) => void;
   forwardRef: React.Ref<HTMLDivElement>;
   langMode: LangMode;
   showHighlights: boolean;
   savedWords?: string[];
+  savedPhrases?: string[];
   highlightColor?: string;
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [looping, setLooping] = useState(false);
 
@@ -114,14 +115,14 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         {langMode !== 'none' && (langMode === 'bilingual' || langMode === 'en') && (
           <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
             {isActive && transcript.words?.en && transcript.words.en.length > 0
-              ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true)
-              : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)
+              ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true, transcript.en, savedPhrases)
+              : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, transcript.en, savedPhrases)
             }
           </p>
         )}
         {langMode !== 'none' && (langMode === 'bilingual' || langMode === 'zh') && (
           <p className={`${getZhSizeClass()} leading-snug ${isActive ? 'text-[#6A6A5A] dark:text-[#CBD5E1]' : 'text-[#8A8A7A] dark:text-[#64748B]'}`}>
-            {renderHighlightedText(transcript.zh, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)}
+            {renderHighlightedText(transcript.zh, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, undefined, savedPhrases)}
           </p>
         )}
         {/* None mode: show current line subtitle when toggled */}
@@ -130,14 +131,14 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
             {transcript.en && (
               <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight text-black dark:text-[#F8FAFC] animate-in fade-in slide-in-from-bottom-2 duration-200`}>
                 {isActive && transcript.words?.en && transcript.words.en.length > 0
-                  ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true)
-                  : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)
+                  ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true, transcript.en, savedPhrases)
+                  : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, transcript.en, savedPhrases)
                 }
               </p>
             )}
             {transcript.zh && (
               <p className={`${getZhSizeClass()} leading-snug text-[#6A6A5A] dark:text-[#CBD5E1] animate-in fade-in slide-in-from-bottom-2 duration-200`}>
-                {renderHighlightedText(transcript.zh, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor)}
+                {renderHighlightedText(transcript.zh, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, undefined, savedPhrases)}
               </p>
             )}
           </>

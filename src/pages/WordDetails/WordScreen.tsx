@@ -16,6 +16,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
   const {
     details,
     loading,
+    notFound,
     isWordSaved,
     handleSaveToVocab,
     playAudio,
@@ -44,10 +45,22 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
     return <div className="w-full min-h-[100dvh]" />;
   }
 
-  if (loading || !details) {
+  if (loading) {
     return (
       <div className="w-full min-h-[100dvh] flex flex-col items-center justify-center p-12 relative bg-transparent">
         {isCurrent && <div className="w-10 h-10 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin mb-4" />}
+      </div>
+    );
+  }
+
+  if (notFound || !details) {
+    return (
+      <div className="w-full min-h-[100dvh] flex flex-col items-center justify-center p-12 relative bg-transparent">
+        <div className="w-16 h-16 rounded-full bg-[#F5F5F0] flex items-center justify-center mb-4">
+          <Star className="w-8 h-8 text-[#8A8A7A]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#4A4A40] mb-2">{word}</h2>
+        <p className="text-[#8A8A7A]">未找到该单词的释义</p>
       </div>
     );
   }

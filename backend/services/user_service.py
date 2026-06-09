@@ -40,6 +40,7 @@ async def get_library_data(user_id: int) -> dict:
             vocab.append({
                 "id": v.id,
                 "word": v.word,
+                "isPhrase": v.is_phrase,
                 "phonetic": v.phonetic,
                 "pos": v.pos,
                 "mean": v.mean,
@@ -148,6 +149,7 @@ async def get_vocabulary(user_id: int, ids: list[str] | None = None) -> list[dic
             vocab.append({
                 "id": v.id,
                 "word": v.word,
+                "isPhrase": v.is_phrase,
                 "phonetic": v.phonetic,
                 "pos": v.pos,
                 "mean": v.mean,
@@ -222,6 +224,7 @@ async def add_vocabulary(user_id: int, word_data: dict) -> bool:
             vocab.trans = word_data.get("trans") or vocab.trans
             vocab.example = word_data.get("example") or vocab.example
             vocab.example_trans = word_data.get("exampleTrans") or vocab.example_trans
+            vocab.is_phrase = word_data.get("isPhrase", False) or vocab.is_phrase
             vocab.added_at = datetime.now(timezone.utc)
             await session.commit()
             return True
@@ -233,6 +236,7 @@ async def add_vocabulary(user_id: int, word_data: dict) -> bool:
             id=vid,
             user_id=user_id,
             word=word_data.get("word", ""),
+            is_phrase=word_data.get("isPhrase", False),
             phonetic=word_data.get("phonetic"),
             pos=word_data.get("pos"),
             mean=word_data.get("mean"),
@@ -393,6 +397,7 @@ async def get_recommended_vocab(user_id: int, limit: int = 20) -> list[dict]:
             result_list.append({
                 "id": v.id,
                 "word": v.word,
+                "isPhrase": v.is_phrase,
                 "phonetic": v.phonetic,
                 "pos": v.pos,
                 "mean": v.mean,

@@ -153,6 +153,7 @@ export const fetchFavoritesData = async (): Promise<{
 export const fetchWordLookup = async (
   word: string
 ): Promise<{
+  notFound?: boolean;
   bookId: string | null;
   phrases: Array<{ p_cn: string; p_content: string }>;
   relWords: Array<{ Hwds: Array<{ hwd?: string; tran?: string; word?: string }>; Pos: string }>;
@@ -179,6 +180,7 @@ export const addFavoriteSentence = async (sentence: {
 
 export const addVocabularyWord = async (wordDetails: {
   word: string;
+  isPhrase?: boolean;
   phonetic?: string;
   trans?: string;
   pos?: string;

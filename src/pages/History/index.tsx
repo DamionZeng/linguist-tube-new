@@ -4,17 +4,29 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
 import { useTranslation } from 'react-i18next';
-import { getVideoHistory } from '@api/storage';
+import { getVideoHistory, initHistoryFromServer } from '@api/storage';
 
 export const HistoryPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
-    setHistory(getVideoHistory());
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    initHistoryFromServer().then(() => {
+      setHistory(getVideoHistory());
+      setLoading(false);
+    }).catch(() => {
+      // fallback to local cache
+      setHistory(getVideoHistory());
+      setLoading(false);
+    });
   }, [user]);
 
   if (!user) {
@@ -25,7 +37,11 @@ export const HistoryPage: React.FC = () => {
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-20">
       <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2 px-2">{t('history.title')}</h2>
       
-      {history.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+        </div>
+      ) : history.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center text-[#8A8A7A]">
           <Clock className="w-12 h-12 mb-4 opacity-50" />
           <p className="font-bold">No watch history yet</p>
@@ -44,14 +60,14 @@ export const HistoryPage: React.FC = () => {
                   </div>
                </div>
                
-               <div className="flex flex-col flex-1 py-1">
-                  <h3 className="font-bold text-[15px] md:text-[17px] text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors mb-1">{v.title}</h3>
-                  <div className="flex items-center gap-2 mb-auto shrink-0">
-                     <span className="text-[10px] uppercase tracking-widest font-bold bg-[#F5F5F0] text-[#6A6A5A] px-2 py-0.5 rounded-md border border-[#E0E0D5]">{v.tag || 'VIDEO'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-[#8A8A7A] font-bold mt-2">
-                     <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {t('history.watched')} {v.lastWatched}</span>
-                     <span className="text-[#94A684]">{v.progress}% {t('history.complete')}</span>
+               <div className="flex flex-col flex-1 py-1 min-w-0">
+                  <h3 className="font-bold text-[15px] md:text-[17px] text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors mb-2">{v.title}</h3>
+                  <div className="flex flex-col gap-1 text-xs text-[#8A8A7A] font-medium mt-auto">
+                     <span className="text-[10px] uppercase tracking-widest font-bold bg-[#F5F5F0] text-[#6A6A5A] px-2 py-0.5 rounded-md border border-[#E0E0D5] w-fit">{((v.tag || '') as string).split(',')[0] || 'VIDEO'}</span>
+                     <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 shrink-0"><Clock className="w-3 h-3" /> {v.lastWatched}</span>
+                        <span className="text-[#94A684]">{v.progress}%</span>
+                     </div>
                   </div>
                </div>
             </div>

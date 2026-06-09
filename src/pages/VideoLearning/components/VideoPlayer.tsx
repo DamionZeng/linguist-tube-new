@@ -33,8 +33,9 @@ interface VideoPlayerProps {
   activeTranscriptWords?: { en?: TimedWord[]; zh?: TimedWord[] };
   isLooping?: boolean;
   onVideoEnded?: () => void;
-  onWordClick?: (word: string) => void;
+  onWordClick?: (word: string, sentence?: string) => void;
   savedWords?: string[];
+  savedPhrases?: string[];
   highlightColor?: string;
 }
 
@@ -68,6 +69,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onVideoEnded,
   onWordClick,
   savedWords = [],
+  savedPhrases = [],
   highlightColor = '#2182c1'
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
@@ -287,7 +289,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
               <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">
                 {activeTranscriptWords?.en && activeTranscriptWords.en.length > 0
-                  ? renderTimedWords(activeTranscriptWords.en, currentTime, onWordClick, savedWords, highlightColor)
+                  ? renderTimedWords(activeTranscriptWords.en, currentTime, onWordClick, savedWords, highlightColor, true, activeTranscriptEn, savedPhrases)
                   : activeTranscriptEn
                 }
               </p>

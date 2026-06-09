@@ -31,6 +31,7 @@ export interface TranslationItem {
 }
 
 export interface WordLookupData {
+  notFound?: boolean;
   bookId: string | null;
   phrases: PhraseItem[];
   relWords: RelWordGroup[];
@@ -47,6 +48,7 @@ export interface WordLookupData {
 export interface VocabItem {
   id: string;
   word: string;
+  isPhrase?: boolean;
   phonetic: string | null;
   pos: string | null;
   mean: string | null;

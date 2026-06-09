@@ -10,15 +10,16 @@ interface TranscriptListProps {
   activeIndex: number;
   onSeek: (time: number) => void;
   onToggleFavorite: (id: string) => void;
-  onWordClick: (word: string) => void;
+  onWordClick: (word: string, sentence?: string) => void;
   langMode: LangMode;
   showHighlights: boolean;
   savedWords?: string[];
+  savedPhrases?: string[];
   highlightColor?: string;
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, activeIndex, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, activeIndex, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
   const prevActiveIndex = useRef(activeIndex);
@@ -49,6 +50,7 @@ export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, cur
             langMode={langMode}
             showHighlights={showHighlights}
             savedWords={savedWords}
+            savedPhrases={savedPhrases}
             highlightColor={highlightColor}
             subtitleSize={subtitleSize}
           />

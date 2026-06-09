@@ -34,6 +34,7 @@ class TranslationItem(BaseModel):
 
 
 class WordData(BaseModel):
+    notFound: bool = False
     bookId: str | None = None
     phrases: list[PhraseItem] = []
     relWords: list[RelWordGroup] = []
@@ -44,7 +45,7 @@ class WordData(BaseModel):
     ukspeech: str | None = None
     usphone: str | None = None
     usspeech: str | None = None
-    word: str
+    word: str = ""
 
 
 class WordLookupResponse(BaseModel):
