@@ -66,6 +66,8 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
   // Build the phrase from selected indices
   const currentPhrase = useMemo(() => {
     if (selectedIndices.length === 0) return word;
+    // 安全防护：selectedIndices 可能包含越界索引（当 sentenceWords 因 props 变化被清空时）
+    if (selectedIndices.some(i => i >= sentenceWords.length)) return word;
     if (selectedIndices.length === 1) return sentenceWords[selectedIndices[0]]?.text || word;
     // Sort indices and join consecutive words
     const sorted = [...selectedIndices].sort((a, b) => a - b);
