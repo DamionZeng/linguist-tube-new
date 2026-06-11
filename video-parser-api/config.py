@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     ai_api_key: str = ""
     ai_model: str = "deepseek-chat"
 
+    # yt-dlp cookies 文件路径 (Netscape 格式)
+    yt_cookies_file: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

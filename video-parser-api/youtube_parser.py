@@ -18,6 +18,16 @@ import tempfile
 import time
 import urllib.request
 from pathlib import Path
+
+from config import get_settings
+
+
+def _yt_cookies_opts() -> dict:
+    """返回 yt-dlp cookies 选项（如果配置了 cookies 文件）"""
+    settings = get_settings()
+    if settings.yt_cookies_file and os.path.isfile(settings.yt_cookies_file):
+        return {"cookiefile": settings.yt_cookies_file}
+    return {}
 from typing import Optional
 
 
@@ -201,6 +211,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         "retries": 5,
         "fragment_retries": 5,
         "socket_timeout": 30,
+        **_yt_cookies_opts(),
     }
 
     for attempt in range(3):
@@ -341,7 +352,7 @@ def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
 def fetch_meta(url: str) -> dict:
     import yt_dlp
 
-    opts = {"quiet": True, "no_warnings": True, "extract_flat": False}
+    opts = {"quiet": True, "no_warnings": True, "extract_flat": False, **_yt_cookies_opts()}
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
@@ -403,7 +414,7 @@ def download_video(url: str, quality: Optional[str] = None) -> Optional[tuple[by
 
         for i, fmt in enumerate(formats_to_try):
             need_merge = "+" in fmt
-            opts = {"outtmpl": outtmpl, "format": fmt, "no_warnings": True}
+            opts = {"outtmpl": outtmpl, "format": fmt, "no_warnings": True, **_yt_cookies_opts()}
             if need_merge:
                 opts["merge_output_format"] = "mp4"
             if i > 0:
