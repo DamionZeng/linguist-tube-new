@@ -17,6 +17,7 @@ from routers.search import router as search_router
 from routers.word import router as word_router
 from routers.speech import router as speech_router
 from routers.admin import router as admin_router
+from routers.parse_task import router as parse_task_router
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,7 @@ app.include_router(search_router)
 app.include_router(word_router)
 app.include_router(speech_router)
 app.include_router(admin_router)
+app.include_router(parse_task_router)
 
 
 @app.get("/api/health")

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Compass, BookText, Search, History, Heart, User, Maximize, Minimize, Moon, Sun } from "lucide-react";
+import { Compass, BookText, Search, History, Heart, User, Maximize, Minimize, Moon, Sun, Youtube, ExternalLink } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -56,12 +56,12 @@ export const Layout: React.FC = () => {
               {t('nav.explore')}
             </NavLink>
             <NavLink
-              to="/history"
+              to="/youtube-resource"
               className={({ isActive }) =>
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] dark:bg-[#D48166] text-white shadow-md" : "text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B]"}`
               }
             >
-              {t('nav.history')}
+              {t('nav.youtubeResource')}
             </NavLink>
             <NavLink
               to="/favorites"
@@ -178,13 +178,13 @@ export const Layout: React.FC = () => {
           <span className="text-[10px] font-bold tracking-wide">{t('nav.explore')}</span>
         </NavLink>
         <NavLink
-          to="/history"
+          to="/youtube-resource"
           className={({ isActive }) =>
             `flex flex-col items-center gap-1.5 w-[20%] transition-colors ${isActive ? "text-[#D48166]" : "text-[#8A8A7A] dark:text-[#94A3B8] hover:text-[#6A6A5A] dark:hover:text-[#CBD5E1]"}`
           }
         >
-          <History className="w-[20px] h-[20px]" />
-          <span className="text-[10px] font-bold tracking-wide">{t('nav.history')}</span>
+          <Youtube className="w-[20px] h-[20px]" />
+          <span className="text-[10px] font-bold tracking-wide">{t('nav.external')}</span>
         </NavLink>
         <NavLink
           to="/favorites"

@@ -2,10 +2,10 @@ import os
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 from sqlalchemy.pool import NullPool
 
-from core.config import get_settings
+from config import get_settings
 
 
 class Base(DeclarativeBase):
@@ -127,61 +127,22 @@ async def _auto_migrate(conn):
                 stmt = parts[0]
                 print(f"  [Auto-Migrate] {stmt}")
                 await conn.execute(text(stmt))
-                continue
-
-            model_sql_type = _column_to_sql_type(col_obj)
-            db_info = cols_in_db[col_name]
-            db_type = (db_info["data_type"] or "").upper()
-            db_max_len = db_info["max_length"]
-
-            if col_obj.type.__class__.__name__ == "String" and db_type == "CHARACTER VARYING":
-                model_len = col_obj.type.length
-                if db_max_len is not None and model_len is not None and model_len > db_max_len:
-                    stmt = f"ALTER TABLE {table_name} ALTER COLUMN {col_name} TYPE VARCHAR({model_len})"
-                    print(f"  [Auto-Migrate] {stmt} (was VARCHAR({db_max_len}))")
-                    await conn.execute(text(stmt))
 
 
 async def dispose_engine():
     global _engine, _async_session
     _async_session = None
     if _engine is not None:
-        await _engine.dispose()
+        try:
+            await _engine.dispose()
+        except Exception:
+            pass
         _engine = None
 
 
 async def init_db():
-    from models.user import User  # noqa
-    from models.video import Video, Transcript  # noqa
-    from models.category import Category  # noqa
-    from models.carousel import CarouselItem  # noqa
-    from models.watch_history import WatchHistory  # noqa
-    from models.vocabulary import Vocabulary  # noqa
-    from models.favorite_sentence import FavoriteSentence  # noqa
-    from models.favorite_video import FavoriteVideo  # noqa
-    from models.check_in import CheckIn  # noqa
-    from models.word_cache import WordCache  # noqa
-    from models.registration_key import RegistrationKey  # noqa
-    from models.parse_task import ParseTask  # noqa
+    from models import Video, Transcript, ParseTask
 
     async with _get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await _auto_migrate(conn)
-        await _migrate_checkin_constraints(conn)
-
-
-async def _migrate_checkin_constraints(conn):
-    result = await conn.execute(text(
-        "SELECT constraint_name FROM information_schema.table_constraints "
-        "WHERE table_schema = 'public' AND table_name = 'check_ins' AND constraint_type = 'UNIQUE'"
-    ))
-    existing_constraints = {row[0] for row in result}
-
-    if "uq_user_checkin_date" in existing_constraints and "uq_user_checkin_date_video" not in existing_constraints:
-        print("  [Auto-Migrate] Dropping old constraint uq_user_checkin_date from check_ins")
-        await conn.execute(text("ALTER TABLE check_ins DROP CONSTRAINT uq_user_checkin_date"))
-        print("  [Auto-Migrate] Adding new constraint uq_user_checkin_date_video to check_ins")
-        await conn.execute(text(
-            "ALTER TABLE check_ins ADD CONSTRAINT uq_user_checkin_date_video "
-            "UNIQUE (user_id, check_in_date, video_id)"
-        ))

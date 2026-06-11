@@ -27,7 +27,7 @@ export const ExplorePage: React.FC = () => {
     setError(null);
     setVideos([]);
     setHasMore(false);
-    fetchExploreData(0, PAGE_SIZE, category)
+    fetchExploreData(0, PAGE_SIZE, category, 'platform')
       .then((res) => {
         setCategories(res.categories);
         setVideos(res.videos);
@@ -51,7 +51,7 @@ export const ExplorePage: React.FC = () => {
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    fetchExploreData(videos.length, PAGE_SIZE, activeCategory)
+    fetchExploreData(videos.length, PAGE_SIZE, activeCategory, 'platform')
       .then((res) => {
         setVideos(prev => [...prev, ...res.videos]);
         setTotal(res.total);
@@ -202,10 +202,10 @@ export const ExplorePage: React.FC = () => {
             {t('explore.recommended')}
           </h2>
           <button 
-             onClick={() => navigate('/youtube-news')}
+             onClick={() => navigate('/youtube-resource')}
              className="text-xs sm:text-sm font-bold text-[#D48166] hover:text-[#C27055] transition-colors flex items-center gap-1 bg-[#D48166]/10 px-2 sm:px-3 py-1.5 rounded-lg shrink-0 whitespace-nowrap"
           >
-            <Play className="w-3 h-3 sm:w-4 sm:h-4" /> {t('explore.youtubeNews')}
+            <Play className="w-3 h-3 sm:w-4 sm:h-4" /> {t('explore.youtubeResource')}
           </button>
         </div>
 

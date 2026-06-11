@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon, Gift, Crown, Calendar, KeyRound, Copy, Check } from 'lucide-react';
+import { BookOpen, Heart, Clock, Trophy, ArrowRight, LogOut, ShieldCheck, Globe, Sun, Moon, Gift, Crown, Calendar, KeyRound, Copy, Check, History } from 'lucide-react';
 import { fetchLibraryData } from '@api/general';
 import { useNavigate } from 'react-router-dom';
 import { GithubHeatmap } from '../../components/GithubHeatmap';
@@ -204,6 +204,23 @@ export const LibraryPage: React.FC = () => {
       </div>
 
       <GithubHeatmap />
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          onClick={() => navigate('/history')}
+          className="bg-white dark:bg-[#151B25] p-5 rounded-[24px] border border-[#E0E0D5] dark:border-[#1E293B] shadow-sm flex items-center gap-4 hover:border-[#D48166]/30 hover:-translate-y-0.5 transition-all text-left group"
+        >
+          <div className="w-12 h-12 bg-[#D48166]/10 rounded-xl flex items-center justify-center shrink-0">
+            <History className="w-6 h-6 text-[#D48166]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold text-[#4A4A40] dark:text-[#F8FAFC]">{t('library.history')}</div>
+            <div className="text-xs text-[#8A8A7A] dark:text-[#94A3B8] mt-0.5">{t('library.historyDesc')}</div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-[#8A8A7A] dark:text-[#94A3B8] group-hover:text-[#D48166] transition-colors shrink-0" />
+        </button>
+      </div>
 
       {/* Admin: Generate Key Section */}
       {user.username === 'admin' && (

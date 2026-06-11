@@ -19,6 +19,8 @@ const WordDetailsPage = lazy(() => import('./pages/WordDetails').then(m => ({ de
 const HistoryPage = lazy(() => import('./pages/History').then(m => ({ default: m.HistoryPage })));
 const FavoritesPage = lazy(() => import('./pages/Favorites').then(m => ({ default: m.FavoritesPage })));
 const YoutubeNewsPage = lazy(() => import('./pages/YoutubeNews').then(m => ({ default: m.YoutubeNewsPage })));
+const YoutubeResourcePage = lazy(() => import('./pages/YoutubeResource').then(m => ({ default: m.YoutubeResourcePage })));
+const ParseTasksPage = lazy(() => import('./pages/ParseTasks').then(m => ({ default: m.ParseTasksPage })));
 const CheckInVideosPage = lazy(() => import('./pages/CheckInVideos').then(m => ({ default: m.CheckInVideosPage })));
 const SentenceMode = lazy(() => import('./pages/Practice/SentenceMode').then(m => ({ default: m.SentenceMode })));
 const FullMode = lazy(() => import('./pages/Practice/FullMode').then(m => ({ default: m.FullMode })));
@@ -81,6 +83,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/explore" replace />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/youtube-news" element={<YoutubeNewsPage />} />
+                <Route path="/youtube-resource" element={<YoutubeResourcePage />} />
                 <Route path="/library" element={<LibraryPage />} />
                 <Route path="/vocab" element={<VocabularyPage />} />
                 <Route path="/history" element={<HistoryPage />} />
@@ -89,6 +92,7 @@ export default function App() {
               <Route path="/video/:id" element={<VideoLearningPage />} />
               <Route path="/checkin/:date" element={<CheckInVideosPage />} />
               <Route path="/vocab/:word" element={<WordDetailsPage />} />
+              <Route path="/parse-tasks" element={<ParseTasksPage />} />
 
               {/* Practice Module Routes */}
               <Route path="/practice/sentence/:id" element={<SentenceMode />} />

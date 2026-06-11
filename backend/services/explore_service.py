@@ -14,20 +14,24 @@ async def get_explore_data(
     offset: int = 0,
     limit: int = DEFAULT_PAGE_SIZE,
     category: str | None = None,
+    source_type: str | None = None,
 ) -> dict:
-    """获取探索页数据，videos 支持分页和分类筛选。"""
+    """获取探索页数据，videos 支持分页、分类和来源筛选。"""
     session_factory = _get_async_session()
     async with session_factory() as session:
         # 分类列表（通常很少，不分页）
         cat_result = await session.execute(select(Category).order_by(Category.id))
         categories = ["All"] + [c.name for c in cat_result.scalars().all()]
 
-        # 构建视频查询（支持分类筛选）
+        # 构建视频查询（支持分类和来源筛选）
         vid_query = select(Video)
         count_query = select(func.count(Video.id))
         if category and category != "All":
             vid_query = vid_query.where(Video.category == category)
             count_query = count_query.where(Video.category == category)
+        if source_type:
+            vid_query = vid_query.where(Video.source_type == source_type)
+            count_query = count_query.where(Video.source_type == source_type)
 
         # 视频总数
         total_result = await session.execute(count_query)
