@@ -101,7 +101,9 @@ const resources = {
         noSubtitle: "None",
         repeat: "Repeat",
         loop: "Loop",
-        practice: "Practice"
+        practice: "Practice",
+        normalMode: "Standard",
+        intensiveMode: "Intensive"
       },
       settings: {
         playbackSettings: "Playback Settings",
@@ -118,7 +120,8 @@ const resources = {
         sizeLarge: "Large",
         hideMask: "Mask Overlay",
         videoCaptions: "Video Captions",
-        vocabHighlight: "Vocab Highlight"
+        vocabHighlight: "Vocab Highlight",
+        intensiveRepeatCount: "Intensive Repeat Count"
       },
       library: {
         vip: "VIP Member",
@@ -299,7 +302,9 @@ const resources = {
         noSubtitle: "无字幕",
         repeat: "复读",
         loop: "循环",
-        practice: "练习"
+        practice: "练习",
+        normalMode: "普通模式",
+        intensiveMode: "精听模式"
       },
       settings: {
         playbackSettings: "播放设置",
@@ -316,7 +321,8 @@ const resources = {
         sizeLarge: "大号",
         hideMask: "遮罩板",
         videoCaptions: "视频字幕",
-        vocabHighlight: "生词标注"
+        vocabHighlight: "生词标注",
+        intensiveRepeatCount: "精听重复次数"
       },
       library: {
         vip: "VIP会员",

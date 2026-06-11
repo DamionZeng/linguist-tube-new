@@ -14,6 +14,8 @@ interface PlaybackSettingsModalProps {
   onDownloadSubtitles: () => void;
   isMaskActive: boolean;
   onToggleMask: () => void;
+  intensiveRepeatCount?: number;
+  onIntensiveRepeatCountChange?: (count: number) => void;
 }
 
 export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ 
@@ -27,7 +29,9 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
   onChangeSubtitleSize,
   onDownloadSubtitles,
   isMaskActive,
-  onToggleMask
+  onToggleMask,
+  intensiveRepeatCount = 4,
+  onIntensiveRepeatCountChange
 }) => {
   const { t } = useTranslation();
 
@@ -88,6 +92,23 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
                   <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${isMaskActive ? 'translate-x-5' : 'translate-x-0'}`} />
                </div>
             </div>
+
+            {onIntensiveRepeatCountChange && (
+            <div className="pt-3 border-t border-[#EAEAE0] dark:border-[#1E293B]">
+               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.intensiveRepeatCount') || '精听重复次数'}</div>
+               <div className="flex bg-[#F9F9F7] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#EAEAE0] dark:border-[#1E293B]">
+                  {[2, 3, 4, 5, 6].map(count => (
+                    <div 
+                      key={count}
+                      onClick={() => onIntensiveRepeatCountChange(count)}
+                      className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${intensiveRepeatCount === count ? 'bg-[#5A5A40] dark:bg-[#334155] text-white shadow-sm' : 'text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#151B25]'}`}
+                    >
+                      {count}
+                    </div>
+                  ))}
+               </div>
+            </div>
+            )}
 
             <div className="pt-3 border-t border-[#EAEAE0] dark:border-[#1E293B]">
                <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.subtitleSize') || '字幕大小'}</div>
