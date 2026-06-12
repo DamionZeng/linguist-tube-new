@@ -38,22 +38,14 @@ def _yt_cookies_opts() -> dict:
 
 
 def _yt_base_opts() -> dict:
-    """返回 yt-dlp 通用反反爬选项（http headers、代理、延迟等）"""
+    """返回 yt-dlp 通用选项（socket 超时、重试、代理等）"""
     settings = get_settings()
     opts = {
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-        },
         "socket_timeout": 30,
         "retries": 5,
         "fragment_retries": 5,
         "extractor_retries": 5,
         "file_access_retries": 5,
-        "sleep_requests": 1.0,
-        "sleep_interval": 2.0,
-        "max_sleep_interval": 5.0,
     }
     if settings.yt_proxy:
         opts["proxy"] = settings.yt_proxy
@@ -282,7 +274,6 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
     opts = {
         **_yt_base_opts(),
         "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
-        "format_sort": ["+size", "+br", "+res", "+fps"],
         "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
@@ -291,10 +282,11 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         }],
         "ffmpeg_location": ffmpeg_dir,
         "outtmpl": output_template,
-        "quiet": True,
-        "no_warnings": True,
         "extract_flat": False,
         "force_ipv4": True,
+        "geo_bypass": True,
+        "geo_bypass_country": "US",
+        "verbose": True,
         **_yt_cookies_opts(),
     }
 
