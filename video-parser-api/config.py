@@ -26,7 +26,11 @@ class Settings(BaseSettings):
     # 可选: ios, web, android, web_creator, tv, mweb
     yt_player_clients: str = "ios,web"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 @lru_cache()
