@@ -23,12 +23,6 @@ from typing import Optional
 from config import get_settings
 
 
-def _yt_player_clients() -> list[str]:
-    """返回 yt-dlp player_client 列表，支持通过环境变量 YT_PLAYER_CLIENTS 配置"""
-    settings = get_settings()
-    return [c.strip() for c in settings.yt_player_clients.split(",") if c.strip()]
-
-
 def _yt_cookies_opts() -> dict:
     """返回 yt-dlp cookies 选项（如果配置了 cookies 文件）"""
     settings = get_settings()
@@ -57,14 +51,6 @@ def _yt_base_opts() -> dict:
         path = (_shutil.which(exe)
                 or _shutil.which(exe, path="/usr/local/bin")
                 or _shutil.which(exe, path="/usr/bin"))
-        # node.js 特殊：还检查配置路径和 nvm 路径
-        if not path and name == "node":
-            if settings.yt_node_path and os.path.isfile(settings.yt_node_path):
-                path = settings.yt_node_path
-            elif os.path.isfile("/usr/local/bin/node"):
-                path = "/usr/local/bin/node"
-            elif os.path.isfile("/usr/bin/node"):
-                path = "/usr/bin/node"
         if path:
             js_runtimes[name] = {"path": path}
             print(f"  yt-dlp: 检测到 JS 运行时 {name} -> {path}")
@@ -238,63 +224,9 @@ def _validate_ffmpeg() -> Optional[str]:
         return None
 
 
-def _check_youtube_reachable():
-    """诊断网络连通性：测试 YouTube 是否可达"""
-    import urllib.request as _ur
-    import socket as _sock
-
-    print(f"  === 网络诊断 ===")
-
-    # 1. DNS 解析
-    try:
-        ip = _sock.gethostbyname("www.youtube.com")
-        print(f"  DNS 解析 www.youtube.com -> {ip}")
-    except Exception as e:
-        print(f"  DNS 解析失败: {e}")
-
-    # 2. 代理状态
-    settings = get_settings()
-    print(f"  代理配置: {'已设置' if settings.yt_proxy else '未设置'}")
-    if settings.yt_proxy:
-        print(f"  代理地址: {settings.yt_proxy[:50]}...")
-
-    # 3. HTTP 连通性测试
-    for test_url, label in [
-        ("https://www.youtube.com", "YouTube 主页"),
-        ("https://www.google.com", "Google 主页"),
-    ]:
-        try:
-            req = _ur.Request(test_url, headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0",
-            })
-            if settings.yt_proxy:
-                proxy_handler = _ur.ProxyHandler({
-                    "https": settings.yt_proxy,
-                    "http": settings.yt_proxy,
-                })
-                opener = _ur.build_opener(proxy_handler)
-                resp = opener.open(req, timeout=10)
-            else:
-                resp = _ur.urlopen(req, timeout=10)
-            print(f"  {label} 可达 (HTTP {resp.status})")
-        except Exception as e:
-            print(f"  {label} 不可达: {type(e).__name__}: {e}")
-
-    # 4. yt-dlp 提取测试（轻量级，不下载）
-    try:
-        import yt_dlp
-        print(f"  yt-dlp 版本: {yt_dlp.version.__version__}")
-    except Exception:
-        pass
-
-
 def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional[str]:
     """用 yt-dlp 下载最高音质音频并转为 WAV"""
     import yt_dlp
-    import traceback as _tb
-
-    # --- 诊断: 网络连通性预检 ---
-    _check_youtube_reachable()
 
     output_template = str(Path(tmpdir) / "audio")
     opts = {
@@ -312,14 +244,12 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         **_yt_cookies_opts(),
     }
 
-    last_error = None
     for attempt in range(3):
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
             break
         except Exception as e:
-            last_error = e
             if attempt < 2:
                 wait = (attempt + 1) * 3
                 print(f"  WhisperX: 下载失败 (尝试 {attempt+1}/3): {e}")
@@ -332,10 +262,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
                     except Exception:
                         pass
             else:
-                print(f"  WhisperX: yt-dlp 音频下载失败 (3次均失败)")
-                print(f"  WhisperX: 异常类型: {type(e).__name__}")
-                print(f"  WhisperX: 异常消息: {e}")
-                print(f"  WhisperX: 完整堆栈:\n{''.join(_tb.format_tb(e.__traceback__))}")
+                print(f"  WhisperX: yt-dlp 音频下载失败 (3次均失败): {e}")
                 return None
 
     for f in Path(tmpdir).glob("audio.*"):
@@ -460,8 +387,6 @@ def fetch_meta(url: str) -> dict:
         "quiet": True,
         "no_warnings": True,
         "extract_flat": False,
-        "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
-        "force_ipv4": True,
         **_yt_cookies_opts(),
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
@@ -530,8 +455,6 @@ def download_video(url: str, quality: Optional[str] = None) -> Optional[tuple[by
                 "outtmpl": outtmpl,
                 "format": fmt,
                 "no_warnings": True,
-                "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
-                "force_ipv4": True,
                 **_yt_cookies_opts(),
             }
             if need_merge:
