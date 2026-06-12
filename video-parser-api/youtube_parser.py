@@ -70,17 +70,10 @@ def _yt_base_opts() -> dict:
             print(f"  yt-dlp: 检测到 JS 运行时 {name} -> {path}")
     if js_runtimes:
         opts["js_runtimes"] = js_runtimes
+        # 允许 deno 下载 EJS 远程组件（JS challenge 求解必须，首次下载后缓存）
+        opts["remote_components"] = {"ejs:github", "ejs:npm"}
     else:
         print(f"  yt-dlp: WARNING 未检测到任何 JS 运行时 (node/deno/bun)，YouTube 将拒绝请求")
-
-    # ── TLS 指纹伪装 (需要 pip install curl_cffi) ──
-    try:
-        import curl_cffi  # noqa: F401
-        opts["impersonate"] = "chrome"
-        print(f"  yt-dlp: 启用 Chrome TLS 指纹伪装 (curl_cffi)")
-    except ImportError:
-        print(f"  yt-dlp: WARNING curl_cffi 未安装，PO Token 无法生成")
-        print(f"  yt-dlp: 请在服务器执行: pip install curl_cffi")
 
     return opts
 
