@@ -23,14 +23,6 @@ from typing import Optional
 from config import get_settings
 
 
-def _yt_cookies_opts() -> dict:
-    """返回 yt-dlp cookies 选项（如果配置了 cookies 文件）"""
-    settings = get_settings()
-    if settings.yt_cookies_file and os.path.isfile(settings.yt_cookies_file):
-        return {"cookiefile": settings.yt_cookies_file}
-    return {}
-
-
 def _yt_base_opts() -> dict:
     """返回 yt-dlp 通用选项（socket 超时、重试、代理、JS 运行时等）"""
     import shutil as _shutil
@@ -241,7 +233,6 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         "outtmpl": output_template,
         "extract_flat": False,
         "verbose": True,
-        **_yt_cookies_opts(),
     }
 
     for attempt in range(3):
@@ -387,7 +378,6 @@ def fetch_meta(url: str) -> dict:
         "quiet": True,
         "no_warnings": True,
         "extract_flat": False,
-        **_yt_cookies_opts(),
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -455,7 +445,6 @@ def download_video(url: str, quality: Optional[str] = None) -> Optional[tuple[by
                 "outtmpl": outtmpl,
                 "format": fmt,
                 "no_warnings": True,
-                **_yt_cookies_opts(),
             }
             if need_merge:
                 opts["merge_output_format"] = "mp4"
