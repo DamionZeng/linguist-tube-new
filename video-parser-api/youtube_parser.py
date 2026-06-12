@@ -22,6 +22,12 @@ from pathlib import Path
 from config import get_settings
 
 
+def _yt_player_clients() -> list[str]:
+    """返回 yt-dlp player_client 列表，支持通过环境变量 YT_PLAYER_CLIENTS 配置"""
+    settings = get_settings()
+    return [c.strip() for c in settings.yt_player_clients.split(",") if c.strip()]
+
+
 def _yt_cookies_opts() -> dict:
     """返回 yt-dlp cookies 选项（如果配置了 cookies 文件）"""
     settings = get_settings()
@@ -199,7 +205,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
     opts = {
         "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
         "format_sort": ["+size", "+br", "+res", "+fps"],
-        "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
+        "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "wav",
@@ -354,7 +360,13 @@ def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
 def fetch_meta(url: str) -> dict:
     import yt_dlp
 
-    opts = {"quiet": True, "no_warnings": True, "extract_flat": False, **_yt_cookies_opts()}
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": False,
+        "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
+        **_yt_cookies_opts(),
+    }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
@@ -416,7 +428,13 @@ def download_video(url: str, quality: Optional[str] = None) -> Optional[tuple[by
 
         for i, fmt in enumerate(formats_to_try):
             need_merge = "+" in fmt
-            opts = {"outtmpl": outtmpl, "format": fmt, "no_warnings": True, **_yt_cookies_opts()}
+            opts = {
+                "outtmpl": outtmpl,
+                "format": fmt,
+                "no_warnings": True,
+                "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
+                **_yt_cookies_opts(),
+            }
             if need_merge:
                 opts["merge_output_format"] = "mp4"
             if i > 0:

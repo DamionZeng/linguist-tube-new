@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # yt-dlp cookies 文件路径 (Netscape 格式)
     yt_cookies_file: str = ""
 
+    # yt-dlp YouTube player_client 类型，逗号分隔 (服务器环境推荐 ios,web)
+    # 可选: ios, web, android, web_creator, tv, mweb
+    yt_player_clients: str = "ios,web"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
