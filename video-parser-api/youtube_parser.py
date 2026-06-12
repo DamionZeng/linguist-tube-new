@@ -38,7 +38,8 @@ def _yt_cookies_opts() -> dict:
 
 
 def _yt_base_opts() -> dict:
-    """返回 yt-dlp 通用选项（socket 超时、重试、代理等）"""
+    """返回 yt-dlp 通用选项（socket 超时、重试、代理、JS 运行时等）"""
+    import shutil as _shutil
     settings = get_settings()
     opts = {
         "socket_timeout": 30,
@@ -49,6 +50,29 @@ def _yt_base_opts() -> dict:
     }
     if settings.yt_proxy:
         opts["proxy"] = settings.yt_proxy
+
+    # ── 自动检测 JS 运行时（yt-dlp 2025+ 必须） ──
+    js_runtimes = {}
+    for name, exe in [("node", "node"), ("deno", "deno"), ("bun", "bun")]:
+        path = (_shutil.which(exe)
+                or _shutil.which(exe, path="/usr/local/bin")
+                or _shutil.which(exe, path="/usr/bin"))
+        # node.js 特殊：还检查配置路径和 nvm 路径
+        if not path and name == "node":
+            if settings.yt_node_path and os.path.isfile(settings.yt_node_path):
+                path = settings.yt_node_path
+            elif os.path.isfile("/usr/local/bin/node"):
+                path = "/usr/local/bin/node"
+            elif os.path.isfile("/usr/bin/node"):
+                path = "/usr/bin/node"
+        if path:
+            js_runtimes[name] = {"path": path}
+            print(f"  yt-dlp: 检测到 JS 运行时 {name} -> {path}")
+    if js_runtimes:
+        opts["js_runtimes"] = js_runtimes
+    else:
+        print(f"  yt-dlp: WARNING 未检测到任何 JS 运行时 (node/deno/bun)，YouTube 将拒绝请求")
+
     return opts
 
 
