@@ -28,10 +28,16 @@ def _get_engine():
         if is_serverless:
             engine_kwargs["poolclass"] = NullPool
         else:
-            engine_kwargs["pool_size"] = 5
-            engine_kwargs["max_overflow"] = 10
+            engine_kwargs["connect_args"] = {
+                "ssl": "require",
+                "statement_cache_size": 0,
+                "command_timeout": 30,
+            }
+            engine_kwargs["pool_size"] = 4
+            engine_kwargs["max_overflow"] = 8
             engine_kwargs["pool_pre_ping"] = True
-            engine_kwargs["pool_recycle"] = 300
+            engine_kwargs["pool_recycle"] = 60
+            engine_kwargs["pool_timeout"] = 10
         _engine = create_async_engine(settings.database_url, **engine_kwargs)
     return _engine
 

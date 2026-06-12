@@ -19,7 +19,18 @@ class Settings(BaseSettings):
     ai_api_key: str = ""
     ai_model: str = "deepseek-chat"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    # yt-dlp cookies 文件路径 (Netscape 格式)
+    yt_cookies_file: str = ""
+
+    # yt-dlp HTTP 代理
+    # 格式: http://host:port 或 socks5://host:port
+    yt_proxy: str = ""
+
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 @lru_cache()

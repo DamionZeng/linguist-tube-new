@@ -20,6 +20,41 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
+from config import get_settings
+
+
+def _yt_base_opts() -> dict:
+    """返回 yt-dlp 通用选项（socket 超时、重试、代理、JS 运行时等）"""
+    import shutil as _shutil
+    settings = get_settings()
+    opts = {
+        "socket_timeout": 30,
+        "retries": 5,
+        "fragment_retries": 5,
+        "extractor_retries": 5,
+        "file_access_retries": 5,
+    }
+    if settings.yt_proxy:
+        opts["proxy"] = settings.yt_proxy
+
+    # ── 自动检测 JS 运行时（yt-dlp 2025+ 必须） ──
+    js_runtimes = {}
+    for name, exe in [("node", "node"), ("deno", "deno"), ("bun", "bun")]:
+        path = (_shutil.which(exe)
+                or _shutil.which(exe, path="/usr/local/bin")
+                or _shutil.which(exe, path="/usr/bin"))
+        if path:
+            js_runtimes[name] = {"path": path}
+            print(f"  yt-dlp: 检测到 JS 运行时 {name} -> {path}")
+    if js_runtimes:
+        opts["js_runtimes"] = js_runtimes
+        # 允许 deno 下载 EJS 远程组件（JS challenge 求解必须，首次下载后缓存）
+        opts["remote_components"] = {"ejs:github", "ejs:npm"}
+    else:
+        print(f"  yt-dlp: WARNING 未检测到任何 JS 运行时 (node/deno/bun)，YouTube 将拒绝请求")
+
+    return opts
+
 
 def extract_video_id(url: str) -> str:
     for pat in [
@@ -187,6 +222,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
 
     output_template = str(Path(tmpdir) / "audio")
     opts = {
+        **_yt_base_opts(),
         "format": "bestaudio/best",
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
@@ -195,12 +231,8 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         }],
         "ffmpeg_location": ffmpeg_dir,
         "outtmpl": output_template,
-        "quiet": True,
-        "no_warnings": True,
         "extract_flat": False,
-        "retries": 5,
-        "fragment_retries": 5,
-        "socket_timeout": 30,
+        "verbose": True,
     }
 
     for attempt in range(3):
@@ -221,7 +253,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
                     except Exception:
                         pass
             else:
-                print(f"  WhisperX: yt-dlp 音频下载失败: {e}")
+                print(f"  WhisperX: yt-dlp 音频下载失败 (3次均失败): {e}")
                 return None
 
     for f in Path(tmpdir).glob("audio.*"):
@@ -341,7 +373,12 @@ def translate_en_to_zh(en_segments: list[dict]) -> list[dict]:
 def fetch_meta(url: str) -> dict:
     import yt_dlp
 
-    opts = {"quiet": True, "no_warnings": True, "extract_flat": False}
+    opts = {
+        **_yt_base_opts(),
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": False,
+    }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
@@ -403,7 +440,12 @@ def download_video(url: str, quality: Optional[str] = None) -> Optional[tuple[by
 
         for i, fmt in enumerate(formats_to_try):
             need_merge = "+" in fmt
-            opts = {"outtmpl": outtmpl, "format": fmt, "no_warnings": True}
+            opts = {
+                **_yt_base_opts(),
+                "outtmpl": outtmpl,
+                "format": fmt,
+                "no_warnings": True,
+            }
             if need_merge:
                 opts["merge_output_format"] = "mp4"
             if i > 0:
