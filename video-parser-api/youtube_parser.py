@@ -299,8 +299,7 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
     output_template = str(Path(tmpdir) / "audio")
     opts = {
         **_yt_base_opts(),
-        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
-        "extractor_args": {"youtube": {"player_client": _yt_player_clients()}},
+        "format": "bestaudio/best",
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "wav",
@@ -309,9 +308,6 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
         "ffmpeg_location": ffmpeg_dir,
         "outtmpl": output_template,
         "extract_flat": False,
-        "force_ipv4": True,
-        "geo_bypass": True,
-        "geo_bypass_country": "US",
         "verbose": True,
         **_yt_cookies_opts(),
     }
