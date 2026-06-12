@@ -197,7 +197,9 @@ def _download_audio_wav(video_id: str, tmpdir: str, ffmpeg_dir: str) -> Optional
 
     output_template = str(Path(tmpdir) / "audio")
     opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
+        "format_sort": ["+size", "+br", "+res", "+fps"],
+        "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "wav",
