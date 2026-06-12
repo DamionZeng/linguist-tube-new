@@ -73,6 +73,15 @@ def _yt_base_opts() -> dict:
     else:
         print(f"  yt-dlp: WARNING 未检测到任何 JS 运行时 (node/deno/bun)，YouTube 将拒绝请求")
 
+    # ── TLS 指纹伪装 (需要 pip install curl_cffi) ──
+    try:
+        import curl_cffi  # noqa: F401
+        opts["impersonate"] = "chrome"
+        print(f"  yt-dlp: 启用 Chrome TLS 指纹伪装 (curl_cffi)")
+    except ImportError:
+        print(f"  yt-dlp: WARNING curl_cffi 未安装，PO Token 无法生成")
+        print(f"  yt-dlp: 请在服务器执行: pip install curl_cffi")
+
     return opts
 
 
