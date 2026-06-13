@@ -21,7 +21,7 @@ from typing import Optional
 
 from sqlalchemy import select, func
 
-from ai_generator import generate_video_metadata
+from ai_generator import generate_video_metadata, generate_subtitle_highlights
 from config import get_settings
 from database import _get_async_session, init_db
 from models import Video, Transcript
@@ -49,9 +49,10 @@ STEP_FETCH_META = 4
 STEP_AI_META = 5
 STEP_BUILD_ENTRIES = 6
 STEP_MEDIA = 7
-STEP_INSERT_DB = 8
+STEP_HIGHLIGHTS = 8
+STEP_INSERT_DB = 9
 
-TOTAL_STEPS = 8
+TOTAL_STEPS = 9
 
 
 async def _update_progress(task_id: Optional[str], progress: str, step: int = 0, step_data: Optional[dict] = None):
@@ -187,7 +188,17 @@ async def parse_and_import(
     else:
         logger.info(f"跳过 Step 7 (已缓存): video_url={video_url[:50]}...")
 
-    # ── Step 8: 入库 ──
+    # ── Step 8: AI 标注高亮词 ──
+    highlights_data = cache.get("highlights_data")
+    if resume_step < STEP_HIGHLIGHTS or not highlights_data:
+        await _update_progress(task_id, "AI 标注高亮词/短语...", STEP_HIGHLIGHTS, cache)
+        highlights_data = await generate_subtitle_highlights(entries)
+        cache["highlights_data"] = highlights_data
+        logger.info(f"高亮标注完成: {sum(1 for h in highlights_data if h)} 行有高亮")
+    else:
+        logger.info(f"跳过 Step 8 (已缓存): {sum(1 for h in highlights_data if h)} 行有高亮")
+
+    # ── Step 9: 入库 ──
     await _update_progress(task_id, "写入数据库...", STEP_INSERT_DB, cache)
     db_video_id = f"ext_{video_id}"
     result = await _insert_to_db(
@@ -204,6 +215,7 @@ async def parse_and_import(
         description_zh=ai_meta["description_zh"],
         youtube_video_id=video_id,
         entries=entries,
+        highlights_data=highlights_data,
         source_type="platform" if download else "external",
     )
 
@@ -230,6 +242,7 @@ async def _insert_to_db(
     description_zh: str,
     youtube_video_id: str,
     entries: list[dict],
+    highlights_data: list[list[dict]] | None = None,
     source_type: str = "external",
 ) -> dict:
     """插入视频和字幕到数据库"""
@@ -257,6 +270,7 @@ async def _insert_to_db(
 
             for i, entry in enumerate(entries, 1):
                 transcript_id = f"t{video_id}_{i}"
+                hl = highlights_data[i - 1] if highlights_data and i - 1 < len(highlights_data) else []
                 transcript = Transcript(
                     id=transcript_id,
                     video_id=video_id,
@@ -264,7 +278,7 @@ async def _insert_to_db(
                     end_time=entry["end"],
                     en_text=entry["en"],
                     zh_text=entry["zh"],
-                    highlights_json=json.dumps([]),
+                    highlights_json=json.dumps(hl, ensure_ascii=False),
                     words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                     sort_order=i,
                 )
@@ -306,6 +320,7 @@ async def _insert_to_db(
 
         for i, entry in enumerate(entries, 1):
             transcript_id = f"t{video_id}_{i}"
+            hl = highlights_data[i - 1] if highlights_data and i - 1 < len(highlights_data) else []
             transcript = Transcript(
                 id=transcript_id,
                 video_id=video_id,
@@ -313,7 +328,7 @@ async def _insert_to_db(
                 end_time=entry["end"],
                 en_text=entry["en"],
                 zh_text=entry["zh"],
-                highlights_json=json.dumps([]),
+                highlights_json=json.dumps(hl, ensure_ascii=False),
                 words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                 sort_order=i,
             )
