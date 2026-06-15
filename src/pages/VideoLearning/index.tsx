@@ -10,6 +10,7 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
+import { useLocalized } from '../../hooks/useLocalized';
 import { CelebrationModal } from './components/CelebrationModal';
 import { PracticeModeModal } from './components/PracticeModeModal';
 import { DisplayMode } from './components/ActionBar';
@@ -26,6 +27,7 @@ export const VideoLearningPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { title: locTitle } = useLocalized();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,8 +47,6 @@ export const VideoLearningPage: React.FC = () => {
   const [savedWords, setSavedWords] = useState<string[]>([]);
   const [savedPhrases, setSavedPhrases] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [listeningMode, setListeningMode] = useState<'normal' | 'intensive'>('normal');
-  const [intensiveRepeatCount, setIntensiveRepeatCount] = useState(4);
 
   const cycleDisplayMode = () => {
     setVideoDisplayMode(prev => prev === 'normal' ? 'hidden' : 'normal');
@@ -87,7 +87,7 @@ export const VideoLearningPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const videoContext = useVideoPlayer(transcripts, listeningMode, intensiveRepeatCount);
+  const videoContext = useVideoPlayer(transcripts);
 
   const activeTranscript = useMemo(() => {
     if (videoContext.activeIndex < 0 || videoContext.activeIndex >= transcripts.length) {
@@ -181,7 +181,7 @@ export const VideoLearningPage: React.FC = () => {
           setSavedPhrases([]);
         }
       } catch (err) {
-        setError('Failed to load learning materials.');
+        setError(t('error.loadLearningMaterials'));
       } finally {
         setLoading(false);
       }
@@ -255,7 +255,7 @@ export const VideoLearningPage: React.FC = () => {
   if (videoInfo.isVipOnly && (!user || user.role !== 'vip')) {
     return (
       <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
-         <Header title={videoInfo.title} rightNode={<></>} />
+         <Header title={locTitle(videoInfo)} rightNode={<></>} />
          <div className="flex-1 flex flex-col items-center justify-center p-8">
             <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
                <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
@@ -282,7 +282,7 @@ export const VideoLearningPage: React.FC = () => {
   return (
     <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
-        title={videoInfo.title} 
+        title={locTitle(videoInfo)} 
         rightNode={
           <>
             <button 
@@ -331,36 +331,7 @@ export const VideoLearningPage: React.FC = () => {
                 savedWords={savedWords}
                 savedPhrases={savedPhrases}
                 highlightColor={highlightColor}
-                listeningMode={listeningMode}
-                intensiveRepeatCount={intensiveRepeatCount}
-                intensiveRepeatCurrent={videoContext.intensiveRepeatCurrent}
               />
-            </div>
-
-            {/* Listening Mode Switch */}
-            <div className="flex justify-center px-3 md:px-5 pt-2">
-              <div className="inline-flex bg-[#EAEAE0] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#E0E0D5] dark:border-[#1E293B]">
-                <button
-                  onClick={() => setListeningMode('normal')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                    listeningMode === 'normal'
-                      ? 'bg-white dark:bg-[#334155] text-[#5A5A40] dark:text-[#F8FAFC] shadow-sm'
-                      : 'text-[#8A8A7A] dark:text-[#64748B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'
-                  }`}
-                >
-                  {t('video.normalMode')}
-                </button>
-                <button
-                  onClick={() => setListeningMode('intensive')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                    listeningMode === 'intensive'
-                      ? 'bg-[#D48166] text-white shadow-sm'
-                      : 'text-[#8A8A7A] dark:text-[#64748B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'
-                  }`}
-                >
-                  {t('video.intensiveMode')}
-                </button>
-              </div>
             </div>
 
             {/* Desktop Action Bar */}
@@ -387,9 +358,6 @@ export const VideoLearningPage: React.FC = () => {
                savedPhrases={savedPhrases}
                highlightColor={highlightColor}
                subtitleSize={subtitleSize}
-               listeningMode={listeningMode}
-               intensiveRepeatCurrent={videoContext.intensiveRepeatCurrent}
-               intensiveRepeatCount={intensiveRepeatCount}
              />
            </div>
          </div>
@@ -429,8 +397,6 @@ export const VideoLearningPage: React.FC = () => {
         onDownloadSubtitles={handleDownloadSubtitles}
         isMaskActive={isMaskActive}
         onToggleMask={() => setIsMaskActive(!isMaskActive)}
-        intensiveRepeatCount={intensiveRepeatCount}
-        onIntensiveRepeatCountChange={setIntensiveRepeatCount}
       />
 
       <CelebrationModal 

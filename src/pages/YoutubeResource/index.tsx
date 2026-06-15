@@ -2,6 +2,9 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Play, TrendingUp, Link, Download, ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
+import { FilterBar } from '../../components/FilterBar';
+import { useLocalized } from '../../hooks/useLocalized';
 import { fetchExploreData } from '@api/general';
 import { submitParseTask } from '@api/parser';
 import { useTranslation } from 'react-i18next';
@@ -12,10 +15,7 @@ export const YoutubeResourcePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
-
-  // 非会员不允许进入
-  const isMember = user?.role === 'vip' || user?.role === 'admin';
-  const isAdmin = user?.username === 'admin';
+  const { title: locTitle } = useLocalized();
 
   const [url, setUrl] = useState('');
   const [download, setDownload] = useState(false);
@@ -25,33 +25,67 @@ export const YoutubeResourcePage: React.FC = () => {
   const [videos, setVideos] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [activeLevel, setActiveLevel] = useState('All');
+  const [activeDuration, setActiveDuration] = useState('All');
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const isFirstLoad = useRef(true);
 
-  const loadExternalVideos = useCallback((offset: number = 0, category?: string) => {
-    const fn = offset === 0 ? setLoading : setLoadingMore;
-    fn(true);
+  const isMember = user?.role === 'vip' || user?.role === 'admin';
+  const isAdmin = user?.username === 'admin';
+
+  const loadExternalVideos = useCallback((offset: number = 0, isInitial: boolean = true, category?: string, level?: string, duration?: string) => {
+    if (offset === 0) {
+      if (isInitial) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+    } else {
+      setLoadingMore(true);
+    }
     const cat = category && category !== 'All' ? category : undefined;
-    fetchExploreData(offset, PAGE_SIZE, cat, 'external')
+    const lvl = level && level !== 'All' ? level : undefined;
+    const dur = duration && duration !== 'All' ? duration : undefined;
+    fetchExploreData(offset, PAGE_SIZE, cat, 'external', lvl, dur)
       .then((res) => {
         setVideos(prev => offset === 0 ? res.videos : [...prev, ...res.videos]);
-        if (offset === 0) setCategories(res.categories);
+        if (offset === 0 && isInitial) {
+          setCategories(res.categories);
+        }
         setHasMore(res.hasMore);
-        fn(false);
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
       })
-      .catch(() => fn(false));
+      .catch(() => {
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
+      });
   }, []);
 
   useEffect(() => {
-    loadExternalVideos(0, activeCategory);
-  }, [loadExternalVideos, activeCategory]);
+    if (!isMember) return;
+    loadExternalVideos(0, true, activeCategory, activeLevel, activeDuration);
+    isFirstLoad.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMember]);
+
+  // 筛选变化时只刷新视频列表（不清空已有数据）
+  useEffect(() => {
+    if (!isMember || isFirstLoad.current) return;
+    loadExternalVideos(0, false, activeCategory, activeLevel, activeDuration);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCategory, activeLevel, activeDuration]);
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
-    loadExternalVideos(videos.length, activeCategory);
-  }, [videos.length, loadingMore, hasMore, loadExternalVideos, activeCategory]);
+    loadExternalVideos(videos.length, false, activeCategory, activeLevel, activeDuration);
+  }, [videos.length, loadingMore, hasMore, loadExternalVideos, activeCategory, activeLevel, activeDuration]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -74,12 +108,18 @@ export const YoutubeResourcePage: React.FC = () => {
       setUrl('');
       navigate(`/parse-tasks?highlight=${result.task_id}`);
     } catch (e: any) {
-      setSubmitError(e.message || '提交失败');
+      setSubmitError(e.message || t('youtubeResource.submitFailed'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  // 未登录 → 显示登录组件
+  if (!user) {
+    return <LoginPrompt message={t('messages.loginResource')} />;
+  }
+
+  // 已登录但非会员 → 显示仅限会员
   if (!isMember) {
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 flex flex-col items-center justify-center min-h-[60vh]">
@@ -178,53 +218,35 @@ export const YoutubeResourcePage: React.FC = () => {
           </button>
         </div>
 
-        {/* 分类筛选 */}
-        {categories.length > 0 && (
-          <div
-            className="flex gap-2.5 overflow-x-auto pb-4 hide-scrollbar"
-            onMouseDown={(e) => {
-              const ele = e.currentTarget;
-              let isDown = true;
-              const startX = e.pageX - ele.offsetLeft;
-              const scrollLeft = ele.scrollLeft;
-              const onMouseMove = (x: MouseEvent) => {
-                if (!isDown) return;
-                const walk = (x.pageX - ele.offsetLeft - startX) * 2;
-                ele.scrollLeft = scrollLeft - walk;
-              };
-              const onMouseUp = () => {
-                isDown = false;
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
-              };
-              window.addEventListener('mousemove', onMouseMove);
-              window.addEventListener('mouseup', onMouseUp);
-            }}
-          >
-            {categories.map((cat, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveCategory(cat)}
-                className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer shrink-0 ${activeCategory === cat ? "bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm" : "bg-white dark:bg-[#1E293B] border-[#E0E0D5] dark:border-[#334155] text-[#6A6A5A] dark:text-[#94A3B8] hover:border-[#94A684] hover:text-[#4A4A40] dark:hover:text-[#F8FAFC]"}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* 多功能筛选栏 */}
+        <FilterBar
+          categories={categories}
+          activeCategory={activeCategory}
+          activeLevel={activeLevel}
+          activeDuration={activeDuration}
+          onCategoryChange={setActiveCategory}
+          onLevelChange={setActiveLevel}
+          onDurationChange={setActiveDuration}
+        />
 
         {loading ? (
           <div className="flex items-center justify-center p-8 min-h-[30vh]">
             <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
           </div>
-        ) : videos.length === 0 ? (
+        ) : videos.length === 0 && !refreshing ? (
           <div className="flex flex-col items-center justify-center p-12 min-h-[30vh] text-[#8A8A7A] dark:text-[#94A3B8]">
             <Play className="w-12 h-12 mb-4 opacity-30" />
             <p className="font-bold text-lg mb-1">{t('youtubeResource.noResources')}</p>
             <p className="text-sm">{t('youtubeResource.noResourcesDesc')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <>
+            {refreshing && (
+              <div className="flex items-center justify-center py-4">
+                <div className="w-5 h-5 rounded-full border-2 border-[#D48166] border-t-transparent animate-spin" />
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {videos.map((v) => (
               <div
                 key={v.id}
@@ -262,7 +284,7 @@ export const YoutubeResourcePage: React.FC = () => {
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-bold text-[17px] text-[#4A4A40] dark:text-[#F8FAFC] line-clamp-2 leading-tight mb-3 group-hover:text-[#D48166] transition-colors">
-                    {v.title}
+                    {locTitle(v)}
                   </h3>
                   <div className="mt-auto flex items-center justify-between text-xs text-[#8A8A7A] font-bold">
                     <span className="flex items-center gap-1.5 bg-[#F9F9F7] dark:bg-[#0B0E14] px-2.5 py-1 rounded-md border border-[#E0E0D5] dark:border-[#334155] text-[#6A6A5A] dark:text-[#94A3B8]">
@@ -274,6 +296,7 @@ export const YoutubeResourcePage: React.FC = () => {
               </div>
             ))}
           </div>
+          </>
         )}
 
         {hasMore && (

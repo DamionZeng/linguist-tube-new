@@ -53,8 +53,8 @@ async def delete_task(task_id: str, user: User = Depends(get_required_user)):
         raise HTTPException(status_code=404, detail="任务不存在")
     if user.role != "admin" and data["username"] != user.username:
         raise HTTPException(status_code=404, detail="任务不存在")
-    if data["status"] in ("pending", "processing"):
-        raise HTTPException(status_code=400, detail="无法删除正在处理或等待中的任务")
+    if data["status"] == "processing":
+        raise HTTPException(status_code=400, detail="无法删除正在处理中的任务")
 
     await delete_parse_task(task_id)
     return {"code": 200, "data": True, "message": "任务已删除"}

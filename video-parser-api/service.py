@@ -160,30 +160,47 @@ async def parse_and_import(
     # ── Step 7: 处理视频和缩略图 ──
     video_url = cache.get("video_url")
     thumb_url = cache.get("thumb_url")
+    is_platform = cache.get("is_platform", download)  # R2 成功上传才为 True
     if resume_step < STEP_MEDIA or not video_url:
         if download:
+            r2_success = False
             await _update_progress(task_id, "下载缩略图...", STEP_MEDIA, cache)
-            thumb_data = await asyncio.to_thread(download_thumbnail, meta["thumbnail_url"])
-            if thumb_data:
-                thumb_bytes, thumb_ext = thumb_data
-                thumb_url = await asyncio.to_thread(
-                    _upload_to_r2, f"thumbnails/ext_{video_id}.{thumb_ext}", thumb_bytes, thumb_ext
-                )
+            try:
+                thumb_data = await asyncio.to_thread(download_thumbnail, meta["thumbnail_url"])
+                if thumb_data:
+                    thumb_bytes, thumb_ext = thumb_data
+                    thumb_url = await asyncio.to_thread(
+                        _upload_to_r2, f"thumbnails/ext_{video_id}.{thumb_ext}", thumb_bytes, thumb_ext
+                    )
+            except Exception as e:
+                logger.warning(f"缩略图下载/上传失败: {e}")
 
             await _update_progress(task_id, "下载视频文件 (可能需要较长时间)...", STEP_MEDIA, cache)
-            video_data = await asyncio.to_thread(download_video, youtube_url, quality)
-            if video_data:
-                video_bytes, video_ext = video_data
-                await _update_progress(task_id, "上传视频到 R2...", STEP_MEDIA, cache)
-                video_url = await asyncio.to_thread(
-                    _upload_to_r2, f"videos/ext_{video_id}.{video_ext}", video_bytes, video_ext
-                )
+            try:
+                video_data = await asyncio.to_thread(download_video, youtube_url, quality)
+                if video_data:
+                    video_bytes, video_ext = video_data
+                    await _update_progress(task_id, "上传视频到 R2...", STEP_MEDIA, cache)
+                    video_url = await asyncio.to_thread(
+                        _upload_to_r2, f"videos/ext_{video_id}.{video_ext}", video_bytes, video_ext
+                    )
+                    r2_success = True
+            except Exception as e:
+                logger.warning(f"视频下载/上传失败: {e}")
+
+            # 下载失败时降级使用 YouTube 原始 URL，资源类型也改为外部资源
+            if not video_url:
+                logger.warning(f"视频 R2 下载失败，降级使用 YouTube URL，资源类型改为外部资源")
+                video_url = youtube_url
+            is_platform = r2_success
         else:
             video_url = youtube_url
             thumb_url = meta.get("thumbnail_url", "")
+            is_platform = False
 
         cache["video_url"] = video_url
         cache["thumb_url"] = thumb_url
+        cache["is_platform"] = is_platform
     else:
         logger.info(f"跳过 Step 7 (已缓存): video_url={video_url[:50]}...")
 
@@ -204,7 +221,7 @@ async def parse_and_import(
         description_zh=ai_meta["description_zh"],
         youtube_video_id=video_id,
         entries=entries,
-        source_type="platform" if download else "external",
+        source_type="platform" if is_platform else "external",
     )
 
     await _update_progress(task_id, "完成", TOTAL_STEPS, cache)
@@ -264,7 +281,7 @@ async def _insert_to_db(
                     end_time=entry["end"],
                     en_text=entry["en"],
                     zh_text=entry["zh"],
-                    highlights_json=json.dumps([]),
+                    highlights_json="[]",
                     words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                     sort_order=i,
                 )
@@ -313,7 +330,7 @@ async def _insert_to_db(
                 end_time=entry["end"],
                 en_text=entry["en"],
                 zh_text=entry["zh"],
-                highlights_json=json.dumps([]),
+                highlights_json="[]",
                 words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                 sort_order=i,
             )

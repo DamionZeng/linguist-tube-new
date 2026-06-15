@@ -14,8 +14,6 @@ interface PlaybackSettingsModalProps {
   onDownloadSubtitles: () => void;
   isMaskActive: boolean;
   onToggleMask: () => void;
-  intensiveRepeatCount?: number;
-  onIntensiveRepeatCountChange?: (count: number) => void;
 }
 
 export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({ 
@@ -30,8 +28,6 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
   onDownloadSubtitles,
   isMaskActive,
   onToggleMask,
-  intensiveRepeatCount = 4,
-  onIntensiveRepeatCountChange
 }) => {
   const { t } = useTranslation();
 
@@ -57,7 +53,7 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between py-1.5">
-               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.downloadSubtitles') || '下载字幕'}</span>
+               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.downloadSubtitles')}</span>
                <button onClick={onDownloadSubtitles} className="bg-[#D48166] text-white p-1.5 rounded-full hover:bg-[#C27055] transition-colors">
                  <Download className="w-4 h-4" />
                </button>
@@ -65,7 +61,7 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
             
             <div className="flex items-center justify-between py-1.5">
                <div className="flex items-center gap-3">
-                 <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.vocabHighlight', '生词标注')}</span>
+                 <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.vocabHighlight')}</span>
                  {showHighlights && (
                     <input 
                       type="color" 
@@ -84,7 +80,7 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
             </div>
 
             <div className="flex items-center justify-between py-1.5">
-               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.hideMask', '遮罩板')}</span>
+               <span className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm">{t('settings.hideMask')}</span>
                <div 
                  className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out cursor-pointer ${isMaskActive ? 'bg-[#94A684]' : 'bg-[#E0E0D5] dark:bg-[#334155]'}`}
                  onClick={onToggleMask}
@@ -93,30 +89,13 @@ export const PlaybackSettingsModal: React.FC<PlaybackSettingsModalProps> = ({
                </div>
             </div>
 
-            {onIntensiveRepeatCountChange && (
             <div className="pt-3 border-t border-[#EAEAE0] dark:border-[#1E293B]">
-               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.intensiveRepeatCount') || '精听重复次数'}</div>
+               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.subtitleSize')}</div>
                <div className="flex bg-[#F9F9F7] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#EAEAE0] dark:border-[#1E293B]">
-                  {[2, 3, 4, 5, 6].map(count => (
-                    <div 
-                      key={count}
-                      onClick={() => onIntensiveRepeatCountChange(count)}
-                      className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${intensiveRepeatCount === count ? 'bg-[#5A5A40] dark:bg-[#334155] text-white shadow-sm' : 'text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#151B25]'}`}
-                    >
-                      {count}
-                    </div>
-                  ))}
-               </div>
-            </div>
-            )}
-
-            <div className="pt-3 border-t border-[#EAEAE0] dark:border-[#1E293B]">
-               <div className="font-bold text-[#4A4A40] dark:text-[#E2E8F0] text-sm mb-2">{t('settings.subtitleSize') || '字幕大小'}</div>
-               <div className="flex bg-[#F9F9F7] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#EAEAE0] dark:border-[#1E293B]">
-                  <SizeOption label={t('settings.sizeSmall') || '小'} isActive={subtitleSize === 'small'} onClick={() => onChangeSubtitleSize('small')} />
-                  <SizeOption label={t('settings.sizeStandard') || '标准'} isActive={subtitleSize === 'standard'} onClick={() => onChangeSubtitleSize('standard')} />
-                  <SizeOption label={t('settings.sizeMedium') || '中'} isActive={subtitleSize === 'medium'} onClick={() => onChangeSubtitleSize('medium')} />
-                  <SizeOption label={t('settings.sizeLarge') || '大'} isActive={subtitleSize === 'large'} onClick={() => onChangeSubtitleSize('large')} />
+                  <SizeOption label={t('settings.sizeSmall')} isActive={subtitleSize === 'small'} onClick={() => onChangeSubtitleSize('small')} />
+                  <SizeOption label={t('settings.sizeStandard')} isActive={subtitleSize === 'standard'} onClick={() => onChangeSubtitleSize('standard')} />
+                  <SizeOption label={t('settings.sizeMedium')} isActive={subtitleSize === 'medium'} onClick={() => onChangeSubtitleSize('medium')} />
+                  <SizeOption label={t('settings.sizeLarge')} isActive={subtitleSize === 'large'} onClick={() => onChangeSubtitleSize('large')} />
                </div>
             </div>
           </div>

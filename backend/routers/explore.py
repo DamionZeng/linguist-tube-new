@@ -12,6 +12,15 @@ async def explore(
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=100),
     category: str | None = Query(None),
     source_type: str | None = Query(None),
+    level: str | None = Query(None),
+    duration_range: str | None = Query(None),
 ):
-    data = await get_explore_data(offset=offset, limit=limit, category=category, source_type=source_type)
+    data = await get_explore_data(
+        offset=offset,
+        limit=limit,
+        category=category,
+        source_type=source_type,
+        level=level,
+        duration_range=duration_range,
+    )
     return {"code": 200, "data": data, "message": "success"}

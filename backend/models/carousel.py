@@ -9,8 +9,10 @@ class CarouselItem(Base):
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    title_zh: Mapped[str] = mapped_column(String(255), nullable=True)
     subtitle: Mapped[str] = mapped_column(String(255), nullable=True)
     desc: Mapped[str] = mapped_column(Text, nullable=True)
+    desc_zh: Mapped[str] = mapped_column(Text, nullable=True)
     image: Mapped[str] = mapped_column(Text, nullable=True)
     tag: Mapped[str] = mapped_column(String(50), nullable=True)
     video_id: Mapped[str] = mapped_column(String(50), ForeignKey("videos.id"), nullable=True)

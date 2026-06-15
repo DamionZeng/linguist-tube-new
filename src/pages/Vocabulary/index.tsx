@@ -50,7 +50,7 @@ export const VocabularyPage: React.FC = () => {
       })
       .catch((err) => {
         console.error(err);
-        setError("Failed to load vocabulary.");
+        setError(t('error.loadVocabulary'));
         setLoading(false);
       });
   }, [user]);
@@ -232,7 +232,7 @@ export const VocabularyPage: React.FC = () => {
             <span className="text-sm text-[#8A8A7A] font-medium mt-1">{vocab.length}</span>
             {isRecommendedMode && recommendedIds && (
               <span className="text-xs font-bold text-[#7A8A54] bg-[#7A8A54]/10 px-2 py-0.5 rounded-full mt-1">
-                推荐 {recommendedIds.length} 个
+                {t('vocab.recommended')} {recommendedIds.length} {t('vocab.wordCount', { count: recommendedIds.length })}
               </span>
             )}
          </div>
@@ -241,14 +241,14 @@ export const VocabularyPage: React.FC = () => {
               onClick={handleSmartRecommend}
               disabled={isRecommending}
               className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex items-center gap-1.5 ${isRecommendedMode ? 'bg-[#7A8A54] text-white shadow-sm' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
-              title={isRecommendedMode ? '显示全部' : '智能推荐复习'}
+              title={isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}
             >
               {isRecommending ? (
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-[#E0E0D5] border-t-current animate-spin" />
               ) : (
                 <Brain className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">{isRecommendedMode ? '全部' : '智能'}</span>
+              <span className="hidden sm:inline">{isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}</span>
             </button>
             <button 
               onClick={() => setShowFilters(!showFilters)}
@@ -260,7 +260,7 @@ export const VocabularyPage: React.FC = () => {
               onClick={() => setIsEditing(!isEditing)}
               className="text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all text-[#D48166] hover:bg-[#EAEAE0]"
             >
-              {isEditing ? 'Done' : 'Edit'}
+              {isEditing ? t('vocab.done') : t('vocab.edit')}
             </button>
          </div>
       </header>
@@ -323,7 +323,7 @@ export const VocabularyPage: React.FC = () => {
                    ) : (
                      <Trash2 className="w-4 h-4" />
                    )}
-                   {isDeleting ? '删除中...' : t('vocab.deleteSelected')}
+                   {isDeleting ? t('vocab.deleting') : t('vocab.deleteSelected')}
                </button>
             </div>
          </div>
@@ -334,13 +334,13 @@ export const VocabularyPage: React.FC = () => {
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
           <div className="bg-white rounded-3xl p-8 text-center max-w-sm w-full border border-[#E0E0D5] shadow-sm">
             <BookOpen className="w-12 h-12 text-[#D48166] mx-auto mb-4" />
-            <h2 className="text-xl font-serif font-bold text-[#5A5A40] mb-2">{t('vocab.emptyTitle', '生词本是空的')}</h2>
-            <p className="text-sm text-[#8A8A7A] mb-6 leading-relaxed">{t('vocab.emptyDesc', '在看视频时点击单词即可加入生词本，开始你的词汇积累之旅吧！')}</p>
+            <h2 className="text-xl font-serif font-bold text-[#5A5A40] mb-2">{t('vocab.emptyTitle')}</h2>
+            <p className="text-sm text-[#8A8A7A] mb-6 leading-relaxed">{t('vocab.emptyDesc')}</p>
             <button
               onClick={() => navigate('/')}
               className="bg-[#5A5A40] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#4A4A40] transition-colors active:scale-95"
             >
-              {t('vocab.goLearn', '去学习')}
+              {t('vocab.goLearn')}
             </button>
           </div>
         </div>
@@ -350,7 +350,7 @@ export const VocabularyPage: React.FC = () => {
       {vocab.length > 0 && filteredVocab.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
           <Search className="w-10 h-10 text-[#E0E0D5] mb-3" />
-          <p className="text-[#8A8A7A] text-sm">{t('vocab.noResults', '没有找到匹配的单词')}</p>
+          <p className="text-[#8A8A7A] text-sm">{t('vocab.noResults')}</p>
         </div>
       )}
 
@@ -364,7 +364,7 @@ export const VocabularyPage: React.FC = () => {
             <div key={item.id} className={`flex items-center gap-3 group ${isRecommendedMode && !isRecommended ? 'opacity-40' : ''}`}>
                {/* Recommended mode: toggle checkbox */}
                {isRecommendedMode && recommendedIds && (
-                  <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 transition-all active:scale-90" title={isRecommended ? '取消推荐' : '加入推荐'}>
+                  <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 transition-all active:scale-90" title={isRecommended ? t('vocab.removeFromRecommended') : t('vocab.addToRecommended')}>
                      <div className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#C0C0B5] hover:border-[#7A8A54]/60'}`}>
                         {isRecommended && <CheckSquare className="w-[11px] h-[11px] text-white" />}
                      </div>
@@ -384,7 +384,7 @@ export const VocabularyPage: React.FC = () => {
                >
                    {isRecommended && (
                      <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold text-white bg-[#7A8A54] px-1.5 py-[1px] rounded-full shadow-sm">
-                      推荐
+                      {t('vocab.recommended')}
                      </span>
                    )}
                    <div className="flex flex-col gap-1 w-full">
@@ -433,7 +433,7 @@ export const VocabularyPage: React.FC = () => {
             className="w-full py-3 rounded-2xl bg-[#7A8A54] text-white font-bold text-base shadow-md shadow-[#7A8A54]/20 hover:bg-[#6A7A44] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <Brain className="w-5 h-5" />
-            开始复习 ({recommendedIds.length} 个单词)
+            {t('vocab.startReview', { count: recommendedIds.length })}
           </button>
         </div>
       )}
@@ -447,22 +447,22 @@ export const VocabularyPage: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-[#FCF0EC] flex items-center justify-center mb-4">
                 <Trash2 className="w-6 h-6 text-[#D48166]" />
               </div>
-              <h3 className="text-base font-bold text-[#4A4A40] mb-1">确认删除？</h3>
+              <h3 className="text-base font-bold text-[#4A4A40] mb-1">{t('vocab.confirmDelete')}</h3>
               <p className="text-sm text-[#8A8A7A] leading-relaxed mb-5">
-                将删除选中的 <span className="text-[#D48166] font-semibold">{selectedWords.size}</span> 个单词
+                {t('vocab.deleteConfirmDesc')}
               </p>
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="flex-1 py-2.5 px-4 text-sm font-bold text-[#6A6A5A] bg-[#F5F5F0] rounded-xl hover:bg-[#EAEAE0] transition-colors active:scale-95"
                 >
-                  取消
+                  {t('vocab.cancelDelete')}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="flex-1 py-2.5 px-4 text-sm font-bold text-white bg-[#D48166] rounded-xl hover:bg-[#C07050] transition-colors active:scale-95"
                 >
-                  确认删除
+                  {t('vocab.confirmDelete')}
                 </button>
               </div>
             </div>

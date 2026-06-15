@@ -37,7 +37,7 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
             <div className="p-6 pb-safe">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold font-serif text-[#4A4A40] dark:text-[#E2E8F0]">
-                  {t('practice.title') || '选择练习模式'}
+                  {t('practice.title')}
                 </h2>
                 <button 
                   onClick={onClose} 
@@ -59,9 +59,9 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
                     <ListMusic className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.sentenceTitle') || '跟读模式'}</h3>
+                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.sentenceTitle')}</h3>
                     <p className="text-[#8A8A7A] dark:text-[#94A3B8] text-sm leading-relaxed">
-                      {t('practice.sentenceDesc') || '精准打磨每个发音。通过听、读、评的单句闭环，不断提升发音细节。'}
+                      {t('practice.sentenceDesc')}
                     </p>
                   </div>
                 </button>
@@ -78,9 +78,9 @@ export const PracticeModeModal: React.FC<PracticeModeModalProps> = ({ isOpen, on
                     <Zap className="w-6 h-6 relative z-10" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.fullTitle') || '全文挑战'}</h3>
+                    <h3 className="text-base font-bold mb-1 text-[#4A4A40] dark:text-[#E2E8F0]">{t('practice.fullTitle')}</h3>
                     <p className="text-[#8A8A7A] dark:text-[#94A3B8] text-sm leading-relaxed">
-                      {t('practice.fullDesc') || '流利度影子跟读测试。不间断跟读原音，最终生成全面的发音报告分析。'}
+                      {t('practice.fullDesc')}
                     </p>
                   </div>
                 </button>

@@ -21,6 +21,8 @@ export interface Transcript {
 export interface VideoInfo {
   id: string;
   title: string;
+  titleZh?: string | null;
+  descZh?: string | null;
   thumbnail: string;
   videoUrl: string;
   duration: string;

@@ -334,7 +334,7 @@ export const SentenceMode: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-[#F5F8FA] dark:bg-[#0B0E14] text-[#333] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
-      <Header title={t('practice.startReading') || '开始朗读'} onBack={() => navigate(`/video/${id!}`)} />
+      <Header title={t('practice.startReading')} onBack={() => navigate(`/video/${id!}`)} />
 
       <div className="shrink-0 px-4 md:px-8 pt-2 pb-1">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
@@ -471,7 +471,7 @@ export const SentenceMode: React.FC = () => {
                       <div className="flex flex-col items-center gap-3 animate-in fade-in zoom-in duration-300">
                         <Loader2 className="w-8 h-8 text-[#D48166] animate-spin" />
                         <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-                          {t('practice.scoring') || '正在评分…'}
+                          {t('practice.scoring')}
                         </span>
                       </div>
                     ) : state.status !== 'recording' ? (

@@ -16,7 +16,7 @@ class Video(Base):
     thumb: Mapped[str] = mapped_column(Text, nullable=True)
     tag: Mapped[str] = mapped_column(String(255), nullable=True)
     is_vip_only: Mapped[bool] = mapped_column(Boolean, default=False)
-    video_url: Mapped[str] = mapped_column(Text, nullable=True)
+    video_url: Mapped[str] = mapped_column(Text, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     video_id: Mapped[str] = mapped_column(String(50), nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
@@ -68,3 +68,4 @@ class ParseTask(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    heartbeat_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)

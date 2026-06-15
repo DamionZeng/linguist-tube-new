@@ -37,9 +37,6 @@ interface VideoPlayerProps {
   savedWords?: string[];
   savedPhrases?: string[];
   highlightColor?: string;
-  listeningMode?: 'normal' | 'intensive';
-  intensiveRepeatCount?: number;
-  intensiveRepeatCurrent?: number;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -74,9 +71,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   savedWords = [],
   savedPhrases = [],
   highlightColor = '#2182c1',
-  listeningMode = 'normal',
-  intensiveRepeatCount = 4,
-  intensiveRepeatCurrent = 0
 }) => {
   const [maskHeight, setMaskHeight] = useState(60);
   const [showControls, setShowControls] = useState(false);
@@ -149,12 +143,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
   const isYoutube = videoInfo.videoUrl.includes('youtube.com') || videoInfo.videoUrl.includes('youtu.be');
 
-  // Compute effective lang mode for intensive listening
-  const isIntensiveLastRepeat = listeningMode === 'intensive' && intensiveRepeatCurrent >= intensiveRepeatCount - 1;
-  const effectiveLangMode: string = listeningMode === 'intensive'
-    ? (isIntensiveLastRepeat ? 'bilingual' : 'none')
-    : langMode;
-
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!duration || !playerRef?.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -214,11 +202,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
            }}
            onError={(e) => console.error("ReactPlayer Error:", e)}
            onEnded={() => {
-             if (listeningMode === 'intensive') {
-               // Intensive mode handles its own looping, just pause
-               setIsPlaying?.(false);
-               return;
-             }
              if (isLooping && playerRef?.current) {
                playerRef.current.seekTo(0, 'seconds');
                setIsPlaying?.(true);
@@ -300,10 +283,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       />
 
       {/* Video Captions Overlay */}
-      {effectiveLangMode !== 'none' && (activeTranscriptEn || activeTranscriptZh) && (
+      {langMode !== 'none' && (activeTranscriptEn || activeTranscriptZh) && (
         <div className="absolute bottom-0 left-0 right-0 z-25 flex flex-col items-center justify-end pb-1 px-4 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl px-5 py-1 max-w-[95%] w-full text-center pointer-events-auto">
-            {(effectiveLangMode === 'bilingual' || effectiveLangMode === 'en') && activeTranscriptEn && (
+            {(langMode === 'bilingual' || langMode === 'en') && activeTranscriptEn && (
               <p className="text-white text-[12px] font-bold leading-snug tracking-tight drop-shadow-md">
                 {activeTranscriptWords?.en && activeTranscriptWords.en.length > 0
                   ? renderTimedWords(activeTranscriptWords.en, currentTime, onWordClick, savedWords, highlightColor, true, activeTranscriptEn, savedPhrases)
@@ -311,7 +294,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 }
               </p>
             )}
-            {(effectiveLangMode === 'bilingual' || effectiveLangMode === 'zh') && activeTranscriptZh && (
+            {(langMode === 'bilingual' || langMode === 'zh') && activeTranscriptZh && (
               <p className="text-white/75 text-[10px] leading-snug mt-0.5 drop-shadow-md">{activeTranscriptZh}</p>
             )}
           </div>

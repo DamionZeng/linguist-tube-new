@@ -21,6 +21,7 @@ class VocabItem(BaseModel):
 class HistoryItem(BaseModel):
     id: str
     title: str
+    titleZh: str | None = None
     duration: str | None = None
     level: str | None = None
     thumb: str | None = None
@@ -119,6 +120,7 @@ class CheckInRequest(BaseModel):
 class CheckInVideoItem(BaseModel):
     id: str
     title: str
+    titleZh: str | None = None
     duration: str | None = None
     level: str | None = None
     thumb: str | None = None

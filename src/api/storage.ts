@@ -60,6 +60,7 @@ export interface CheckInItem {
 interface CheckInVideoItem {
   id: string;
   title: string;
+  titleZh: string | null;
   duration: string | null;
   level: string | null;
   thumb: string | null;
@@ -203,6 +204,7 @@ export const getCheckInVideosByDate = async (date: string): Promise<CheckInVideo
     return {
       id: vid,
       title: hist?.title || '',
+      titleZh: hist?.titleZh || null,
       duration: hist?.duration || null,
       level: hist?.level || null,
       thumb: hist?.thumb || null,

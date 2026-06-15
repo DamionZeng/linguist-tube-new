@@ -61,7 +61,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] dark:bg-[#D48166] text-white shadow-md" : "text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B]"}`
               }
             >
-              {t('nav.youtubeResource')}
+              {t('nav.external')}
             </NavLink>
             <NavLink
               to="/favorites"
@@ -102,7 +102,7 @@ export const Layout: React.FC = () => {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#D48166] transition-colors cursor-pointer"
-            title={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            title={theme === 'light' ? t('nav.darkMode') : t('nav.lightMode')}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
@@ -142,7 +142,7 @@ export const Layout: React.FC = () => {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full text-[#4A4A40] dark:text-[#F8FAFC] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] active:bg-[#EAEAE0] transition-colors"
-            title={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            title={theme === 'light' ? t('nav.darkMode') : t('nav.lightMode')}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>

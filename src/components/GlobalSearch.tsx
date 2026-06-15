@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Play, Clock, Video, BookText, Quote } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { searchExplore, searchHistory, searchFavorites, searchVocab, SearchResult } from '@api/search';
+import { useLocalized } from '../hooks/useLocalized';
 import { useTranslation } from 'react-i18next';
 
 interface GlobalSearchProps {
@@ -17,6 +18,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { title: locTitle } = useLocalized();
 
   useEffect(() => {
     if (isOpen) {
@@ -170,7 +172,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
                       ) : (
                         <span className="text-[10px] uppercase font-bold bg-[#8B5CF6] text-white px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0"><BookText className="w-3 h-3" /> VOCAB</span>
                       )}
-                      <h4 className="font-bold text-[#4A4A40] truncate text-sm md:text-base">{r.title}</h4>
+                      <h4 className="font-bold text-[#4A4A40] truncate text-sm md:text-base">{locTitle(r)}</h4>
                     </div>
                     {r.subtitle && <p className="text-xs md:text-sm text-[#8A8A7A] truncate">{r.subtitle}</p>}
                   </div>

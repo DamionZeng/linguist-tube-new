@@ -17,6 +17,7 @@ class ParseTaskItem(BaseModel):
     created_at: Optional[str] = None
     started_at: Optional[str] = None
     finished_at: Optional[str] = None
+    queue_position: Optional[int] = None
 
 
 class ParseTaskListData(BaseModel):

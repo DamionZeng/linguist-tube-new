@@ -78,13 +78,16 @@ async def seed_data():
                       video_url="https://www.youtube.com/watch?v=4E9YkJKiRTc", sort_order=1),
                 Video(id="v2", title="Coffee Shop Conversations", duration="08:20", level="Beginner",
                       thumb="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80",
-                      tag="Daily Life", is_vip_only=False, sort_order=2),
+                      tag="Daily Life", is_vip_only=False,
+                      video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", sort_order=2),
                 Video(id="v3", title="Tech Interview Power Words", duration="15:10", level="Advanced",
                       thumb="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
-                      tag="Business", is_vip_only=True, sort_order=3),
+                      tag="Business", is_vip_only=True,
+                      video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", sort_order=3),
                 Video(id="v4", title="Airport & Customs Vocabulary", duration="10:05", level="Beginner",
                       thumb="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80",
-                      tag="Travel", is_vip_only=True, sort_order=4),
+                      tag="Travel", is_vip_only=True,
+                      video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", sort_order=4),
             ]
             session.add_all(videos)
             print("  videos seeded")

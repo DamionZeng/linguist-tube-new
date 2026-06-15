@@ -11,7 +11,7 @@ AI 内容生成模块。
 通过环境变量配置供应商和模型:
   AI_BASE_URL  - API 基础地址 (如 https://api.deepseek.com/v1)
   AI_API_KEY   - API Key
-  AI_MODEL     - 模型名称 (如 deepseek-chat, agnes, Qwen/Qwen2.5-7B-Instruct)
+  AI_MODEL     - 模型名称 (如 deepseek-chat)
 """
 
 import json

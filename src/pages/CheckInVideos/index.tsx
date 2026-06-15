@@ -5,12 +5,14 @@ import { Header } from '../../components/Header';
 import { getCheckInVideosByDate } from '@api/storage';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useLocalized } from '../../hooks/useLocalized';
 import { useTranslation } from 'react-i18next';
 
 export const CheckInVideosPage: React.FC = () => {
   const { date } = useParams<{ date: string }>();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { title: locTitle } = useLocalized();
   const navigate = useNavigate();
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export const CheckInVideosPage: React.FC = () => {
     return <LoginPrompt message={t('messages.loginHistory')} />;
   }
 
-  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('default', {
+  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US', {
     month: 'long',
     day: 'numeric',
   }) : '';
@@ -100,7 +102,7 @@ export const CheckInVideosPage: React.FC = () => {
 
                 <div className="flex flex-col flex-1 min-w-0 justify-center gap-2 py-0.5">
                   <h3 className="text-sm md:text-[15px] font-bold text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">
-                    {v.title}
+                    {locTitle(v)}
                   </h3>
                   {tagList.length > 0 && (
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
