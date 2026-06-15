@@ -12,22 +12,16 @@ export const parseTime = (timeStr: string) => {
   return 0;
 };
 
-export const useVideoPlayer = (transcripts: Transcript[] = [], listeningMode: 'normal' | 'intensive' = 'normal', intensiveRepeatCount: number = 4) => {
+export const useVideoPlayer = (transcripts: Transcript[] = []) => {
   const playerRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [isLooping, setIsLooping] = useState(true);
+  const [isLooping, setIsLooping] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [buffered, setBuffered] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
-
-  // Intensive listening state
-  const [intensiveRepeatCurrent, setIntensiveRepeatCurrent] = useState(0);
-  const intensiveRepeatCurrentRef = useRef(0);
-  const intensiveSentenceRef = useRef<number>(-1); // activeIndex we're looping on
-  const hasLoopedRef = useRef(false); // prevent double-trigger during seek
 
   // Keep track of the current active transcript index
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -95,64 +89,6 @@ export const useVideoPlayer = (transcripts: Transcript[] = [], listeningMode: 'n
     }
 
   }, [currentTime, transcripts]);
-
-  // Intensive listening: auto-loop per sentence
-  useEffect(() => {
-    if (listeningMode !== 'intensive' || !isPlaying || transcripts.length === 0) return;
-
-    const currentActive = activeIndexRef.current;
-    if (currentActive === -1 || currentActive >= transcripts.length) return;
-
-    const transcript = transcripts[currentActive];
-    const startTime = parseTime(transcript.startTime);
-    const endTime = parseTime(transcript.endTime);
-
-    // Reset loop guard when currentTime is safely inside the sentence (seek has taken effect)
-    if (currentTime >= startTime && currentTime < endTime - 0.1) {
-      hasLoopedRef.current = false;
-      return;
-    }
-
-    if (currentTime >= endTime) {
-      if (hasLoopedRef.current) return; // already handled this boundary
-      hasLoopedRef.current = true;
-
-      const currentRepeat = intensiveRepeatCurrentRef.current;
-
-      if (currentRepeat < intensiveRepeatCount - 1) {
-        // Not last round: seek back to start, increment repeat
-        playerRef.current?.seekTo(startTime, 'seconds');
-        const nextRepeat = currentRepeat + 1;
-        intensiveRepeatCurrentRef.current = nextRepeat;
-        setIntensiveRepeatCurrent(nextRepeat);
-      } else {
-        // Last round done: jump to next sentence
-        const nextIndex = currentActive + 1;
-        if (nextIndex < transcripts.length) {
-          const nextStart = parseTime(transcripts[nextIndex].startTime);
-          playerRef.current?.seekTo(nextStart, 'seconds');
-          activeIndexRef.current = nextIndex;
-          setActiveIndex(nextIndex);
-        } else {
-          // End of all transcripts
-          setIsPlaying(false);
-        }
-        intensiveRepeatCurrentRef.current = 0;
-        setIntensiveRepeatCurrent(0);
-        intensiveSentenceRef.current = -1;
-      }
-    }
-  }, [currentTime, listeningMode, isPlaying, transcripts, intensiveRepeatCount]);
-
-  // Reset intensive state when activeIndex changes (user jumped to different sentence)
-  useEffect(() => {
-    if (listeningMode === 'intensive' && activeIndex !== -1 && activeIndex !== intensiveSentenceRef.current) {
-      intensiveSentenceRef.current = activeIndex;
-      intensiveRepeatCurrentRef.current = 0;
-      setIntensiveRepeatCurrent(0);
-      hasLoopedRef.current = false;
-    }
-  }, [activeIndex, listeningMode]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
@@ -294,6 +230,5 @@ export const useVideoPlayer = (transcripts: Transcript[] = [], listeningMode: 'n
     cyclePlaybackRate,
     toggleMute,
     activeIndex,
-    intensiveRepeatCurrent
   };
 };

@@ -45,8 +45,6 @@ export const VideoLearningPage: React.FC = () => {
   const [savedWords, setSavedWords] = useState<string[]>([]);
   const [savedPhrases, setSavedPhrases] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [listeningMode, setListeningMode] = useState<'normal' | 'intensive'>('normal');
-  const [intensiveRepeatCount, setIntensiveRepeatCount] = useState(4);
 
   const cycleDisplayMode = () => {
     setVideoDisplayMode(prev => prev === 'normal' ? 'hidden' : 'normal');
@@ -87,7 +85,7 @@ export const VideoLearningPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const videoContext = useVideoPlayer(transcripts, listeningMode, intensiveRepeatCount);
+  const videoContext = useVideoPlayer(transcripts);
 
   const activeTranscript = useMemo(() => {
     if (videoContext.activeIndex < 0 || videoContext.activeIndex >= transcripts.length) {
@@ -331,36 +329,7 @@ export const VideoLearningPage: React.FC = () => {
                 savedWords={savedWords}
                 savedPhrases={savedPhrases}
                 highlightColor={highlightColor}
-                listeningMode={listeningMode}
-                intensiveRepeatCount={intensiveRepeatCount}
-                intensiveRepeatCurrent={videoContext.intensiveRepeatCurrent}
               />
-            </div>
-
-            {/* Listening Mode Switch */}
-            <div className="flex justify-center px-3 md:px-5 pt-2">
-              <div className="inline-flex bg-[#EAEAE0] dark:bg-[#1C222C] rounded-xl p-1 gap-1 border border-[#E0E0D5] dark:border-[#1E293B]">
-                <button
-                  onClick={() => setListeningMode('normal')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                    listeningMode === 'normal'
-                      ? 'bg-white dark:bg-[#334155] text-[#5A5A40] dark:text-[#F8FAFC] shadow-sm'
-                      : 'text-[#8A8A7A] dark:text-[#64748B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'
-                  }`}
-                >
-                  {t('video.normalMode')}
-                </button>
-                <button
-                  onClick={() => setListeningMode('intensive')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                    listeningMode === 'intensive'
-                      ? 'bg-[#D48166] text-white shadow-sm'
-                      : 'text-[#8A8A7A] dark:text-[#64748B] hover:text-[#5A5A40] dark:hover:text-[#E2E8F0]'
-                  }`}
-                >
-                  {t('video.intensiveMode')}
-                </button>
-              </div>
             </div>
 
             {/* Desktop Action Bar */}
@@ -387,9 +356,6 @@ export const VideoLearningPage: React.FC = () => {
                savedPhrases={savedPhrases}
                highlightColor={highlightColor}
                subtitleSize={subtitleSize}
-               listeningMode={listeningMode}
-               intensiveRepeatCurrent={videoContext.intensiveRepeatCurrent}
-               intensiveRepeatCount={intensiveRepeatCount}
              />
            </div>
          </div>
@@ -429,8 +395,6 @@ export const VideoLearningPage: React.FC = () => {
         onDownloadSubtitles={handleDownloadSubtitles}
         isMaskActive={isMaskActive}
         onToggleMask={() => setIsMaskActive(!isMaskActive)}
-        intensiveRepeatCount={intensiveRepeatCount}
-        onIntensiveRepeatCountChange={setIntensiveRepeatCount}
       />
 
       <CelebrationModal 

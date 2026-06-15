@@ -18,7 +18,6 @@ const simplifyProgress = (progress: string): string => {
     '下载缩略图': '处理媒体',
     '下载视频文件': '处理媒体',
     '上传视频到 R2': '处理媒体',
-    'AI 标注高亮词': 'AI标注',
     '写入数据库': '入库',
     '完成': '完成',
     '等待处理': '等待中',
@@ -32,7 +31,7 @@ const simplifyProgress = (progress: string): string => {
 const PROGRESS_STEPS = [
   '提取视频 ID', 'WhisperX 转写', '翻译字幕', '获取视频元信息',
   'AI 生成元数据', '构建字幕条目', '下载缩略图', '下载视频',
-  '上传视频到 R2', 'AI 标注高亮词', '写入数据库', '完成',
+  '上传视频到 R2', '写入数据库', '完成',
 ];
 
 export const ParseTasksPage: React.FC = () => {

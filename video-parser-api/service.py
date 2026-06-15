@@ -21,7 +21,7 @@ from typing import Optional
 
 from sqlalchemy import select, func
 
-from ai_generator import generate_video_metadata, generate_subtitle_highlights
+from ai_generator import generate_video_metadata
 from config import get_settings
 from database import _get_async_session, init_db
 from models import Video, Transcript
@@ -49,10 +49,9 @@ STEP_FETCH_META = 4
 STEP_AI_META = 5
 STEP_BUILD_ENTRIES = 6
 STEP_MEDIA = 7
-STEP_HIGHLIGHTS = 8
-STEP_INSERT_DB = 9
+STEP_INSERT_DB = 8
 
-TOTAL_STEPS = 9
+TOTAL_STEPS = 8
 
 
 async def _update_progress(task_id: Optional[str], progress: str, step: int = 0, step_data: Optional[dict] = None):
@@ -161,44 +160,51 @@ async def parse_and_import(
     # ── Step 7: 处理视频和缩略图 ──
     video_url = cache.get("video_url")
     thumb_url = cache.get("thumb_url")
+    is_platform = cache.get("is_platform", download)  # R2 成功上传才为 True
     if resume_step < STEP_MEDIA or not video_url:
         if download:
+            r2_success = False
             await _update_progress(task_id, "下载缩略图...", STEP_MEDIA, cache)
-            thumb_data = await asyncio.to_thread(download_thumbnail, meta["thumbnail_url"])
-            if thumb_data:
-                thumb_bytes, thumb_ext = thumb_data
-                thumb_url = await asyncio.to_thread(
-                    _upload_to_r2, f"thumbnails/ext_{video_id}.{thumb_ext}", thumb_bytes, thumb_ext
-                )
+            try:
+                thumb_data = await asyncio.to_thread(download_thumbnail, meta["thumbnail_url"])
+                if thumb_data:
+                    thumb_bytes, thumb_ext = thumb_data
+                    thumb_url = await asyncio.to_thread(
+                        _upload_to_r2, f"thumbnails/ext_{video_id}.{thumb_ext}", thumb_bytes, thumb_ext
+                    )
+            except Exception as e:
+                logger.warning(f"缩略图下载/上传失败: {e}")
 
             await _update_progress(task_id, "下载视频文件 (可能需要较长时间)...", STEP_MEDIA, cache)
-            video_data = await asyncio.to_thread(download_video, youtube_url, quality)
-            if video_data:
-                video_bytes, video_ext = video_data
-                await _update_progress(task_id, "上传视频到 R2...", STEP_MEDIA, cache)
-                video_url = await asyncio.to_thread(
-                    _upload_to_r2, f"videos/ext_{video_id}.{video_ext}", video_bytes, video_ext
-                )
+            try:
+                video_data = await asyncio.to_thread(download_video, youtube_url, quality)
+                if video_data:
+                    video_bytes, video_ext = video_data
+                    await _update_progress(task_id, "上传视频到 R2...", STEP_MEDIA, cache)
+                    video_url = await asyncio.to_thread(
+                        _upload_to_r2, f"videos/ext_{video_id}.{video_ext}", video_bytes, video_ext
+                    )
+                    r2_success = True
+            except Exception as e:
+                logger.warning(f"视频下载/上传失败: {e}")
+
+            # 下载失败时降级使用 YouTube 原始 URL，资源类型也改为外部资源
+            if not video_url:
+                logger.warning(f"视频 R2 下载失败，降级使用 YouTube URL，资源类型改为外部资源")
+                video_url = youtube_url
+            is_platform = r2_success
         else:
             video_url = youtube_url
             thumb_url = meta.get("thumbnail_url", "")
+            is_platform = False
 
         cache["video_url"] = video_url
         cache["thumb_url"] = thumb_url
+        cache["is_platform"] = is_platform
     else:
         logger.info(f"跳过 Step 7 (已缓存): video_url={video_url[:50]}...")
 
-    # ── Step 8: AI 标注高亮词 ──
-    highlights_data = cache.get("highlights_data")
-    if resume_step < STEP_HIGHLIGHTS or not highlights_data:
-        await _update_progress(task_id, "AI 标注高亮词/短语...", STEP_HIGHLIGHTS, cache)
-        highlights_data = await generate_subtitle_highlights(entries)
-        cache["highlights_data"] = highlights_data
-        logger.info(f"高亮标注完成: {sum(1 for h in highlights_data if h)} 行有高亮")
-    else:
-        logger.info(f"跳过 Step 8 (已缓存): {sum(1 for h in highlights_data if h)} 行有高亮")
-
-    # ── Step 9: 入库 ──
+    # ── Step 8: 入库 ──
     await _update_progress(task_id, "写入数据库...", STEP_INSERT_DB, cache)
     db_video_id = f"ext_{video_id}"
     result = await _insert_to_db(
@@ -215,8 +221,7 @@ async def parse_and_import(
         description_zh=ai_meta["description_zh"],
         youtube_video_id=video_id,
         entries=entries,
-        highlights_data=highlights_data,
-        source_type="platform" if download else "external",
+        source_type="platform" if is_platform else "external",
     )
 
     await _update_progress(task_id, "完成", TOTAL_STEPS, cache)
@@ -242,7 +247,6 @@ async def _insert_to_db(
     description_zh: str,
     youtube_video_id: str,
     entries: list[dict],
-    highlights_data: list[list[dict]] | None = None,
     source_type: str = "external",
 ) -> dict:
     """插入视频和字幕到数据库"""
@@ -270,7 +274,6 @@ async def _insert_to_db(
 
             for i, entry in enumerate(entries, 1):
                 transcript_id = f"t{video_id}_{i}"
-                hl = highlights_data[i - 1] if highlights_data and i - 1 < len(highlights_data) else []
                 transcript = Transcript(
                     id=transcript_id,
                     video_id=video_id,
@@ -278,7 +281,7 @@ async def _insert_to_db(
                     end_time=entry["end"],
                     en_text=entry["en"],
                     zh_text=entry["zh"],
-                    highlights_json=json.dumps(hl, ensure_ascii=False),
+                    highlights_json="[]",
                     words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                     sort_order=i,
                 )
@@ -320,7 +323,6 @@ async def _insert_to_db(
 
         for i, entry in enumerate(entries, 1):
             transcript_id = f"t{video_id}_{i}"
-            hl = highlights_data[i - 1] if highlights_data and i - 1 < len(highlights_data) else []
             transcript = Transcript(
                 id=transcript_id,
                 video_id=video_id,
@@ -328,7 +330,7 @@ async def _insert_to_db(
                 end_time=entry["end"],
                 en_text=entry["en"],
                 zh_text=entry["zh"],
-                highlights_json=json.dumps(hl, ensure_ascii=False),
+                highlights_json="[]",
                 words_json=json.dumps(entry.get("words", {}), ensure_ascii=False) if entry.get("words") else None,
                 sort_order=i,
             )
