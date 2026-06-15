@@ -61,7 +61,7 @@ export const Layout: React.FC = () => {
                 `px-4 py-2 rounded-full transition-all ${isActive ? "bg-[#4A4A40] dark:bg-[#D48166] text-white shadow-md" : "text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B]"}`
               }
             >
-              {t('nav.youtubeResource')}
+              {t('nav.external')}
             </NavLink>
             <NavLink
               to="/favorites"

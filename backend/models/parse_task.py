@@ -22,3 +22,4 @@ class ParseTask(Base):
     created_at: Mapped[str] = mapped_column(DateTime, nullable=True)
     started_at: Mapped[str] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[str] = mapped_column(DateTime, nullable=True)
+    heartbeat_at: Mapped[str] = mapped_column(DateTime, nullable=True)

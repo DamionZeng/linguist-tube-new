@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     siliconflow_api_key: str = ""
 
+    # 任务超时时间 (分钟)，超过此时间仍为 processing 的任务会被标记为失败
+    task_timeout_minutes: int = 30
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

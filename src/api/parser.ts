@@ -84,6 +84,7 @@ export interface ParseTask {
   created_at?: string;
   started_at?: string;
   finished_at?: string;
+  queue_position?: number | null;
 }
 
 export interface TaskListData {

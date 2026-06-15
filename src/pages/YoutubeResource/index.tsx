@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Play, TrendingUp, Link, Download, ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LoginPrompt } from '../../components/LoginPrompt';
 import { fetchExploreData } from '@api/general';
 import { submitParseTask } from '@api/parser';
 import { useTranslation } from 'react-i18next';
@@ -12,10 +13,6 @@ export const YoutubeResourcePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
-
-  // 非会员不允许进入
-  const isMember = user?.role === 'vip' || user?.role === 'admin';
-  const isAdmin = user?.username === 'admin';
 
   const [url, setUrl] = useState('');
   const [download, setDownload] = useState(false);
@@ -29,6 +26,9 @@ export const YoutubeResourcePage: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const isMember = user?.role === 'vip' || user?.role === 'admin';
+  const isAdmin = user?.username === 'admin';
 
   const loadExternalVideos = useCallback((offset: number = 0, category?: string) => {
     const fn = offset === 0 ? setLoading : setLoadingMore;
@@ -45,8 +45,9 @@ export const YoutubeResourcePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!isMember) return;
     loadExternalVideos(0, activeCategory);
-  }, [loadExternalVideos, activeCategory]);
+  }, [loadExternalVideos, activeCategory, isMember]);
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
@@ -80,6 +81,12 @@ export const YoutubeResourcePage: React.FC = () => {
     }
   };
 
+  // 未登录 → 显示登录组件
+  if (!user) {
+    return <LoginPrompt message={t('messages.loginResource')} />;
+  }
+
+  // 已登录但非会员 → 显示仅限会员
   if (!isMember) {
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 flex flex-col items-center justify-center min-h-[60vh]">

@@ -58,13 +58,24 @@ export const ParseTasksPage: React.FC = () => {
     }
   }, [activeFilter]);
 
+  // 轻量轮询：只查询 pending/processing 任务，合并到现有列表
+  const pollActiveTasks = useCallback(async () => {
+    try {
+      const data = await getTaskList('pending,processing', 50, 0);
+      const activeMap = new Map(data.items.map(t => [t.task_id, t]));
+      setTasks(prev => prev.map(t => activeMap.get(t.task_id) || t));
+    } catch (e) {
+      console.error('Failed to poll active tasks', e);
+    }
+  }, []);
+
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   useEffect(() => {
     const hasActive = tasks.some(t => t.status === 'pending' || t.status === 'processing');
-    if (hasActive) pollRef.current = setInterval(fetchTasks, POLL_INTERVAL);
+    if (hasActive) pollRef.current = setInterval(pollActiveTasks, POLL_INTERVAL);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [tasks, fetchTasks]);
+  }, [tasks, pollActiveTasks]);
 
   const handleDelete = async (taskId: string) => {
     try { await deleteTask(taskId); setTasks(prev => prev.filter(t => t.task_id !== taskId)); }
@@ -166,7 +177,8 @@ export const ParseTasksPage: React.FC = () => {
               {tasks.map(task => {
                 const ytId = extractYoutubeId(task.youtube_url);
                 const percent = getProgressPercent(task);
-                const isActive = task.status === 'pending' || task.status === 'processing';
+                const isPending = task.status === 'pending';
+                const isProcessing = task.status === 'processing';
                 const isDone = task.status === 'completed';
                 const isFailed = task.status === 'failed';
                 const statusColor = getStatusColor(task.status);
@@ -199,36 +211,66 @@ export const ParseTasksPage: React.FC = () => {
 
                       {/* Info column */}
                       <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-                        {/* Status + URL */}
+                        {/* Status + queue position + URL */}
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1 shrink-0 ${statusColor}`}>
                             {getStatusIcon(task.status)}
                             <span className="text-xs font-semibold">
-                              {isDone ? t('parseTasks.completed') : isFailed ? t('parseTasks.failed') : isActive ? t('parseTasks.processing') : t('parseTasks.pending')}
+                              {isPending ? t('parseTasks.pending') : isProcessing ? t('parseTasks.processing') : isDone ? t('parseTasks.completed') : t('parseTasks.failed')}
                             </span>
                           </span>
+                          {isPending && task.queue_position != null && task.queue_position > 0 && (
+                            <span className="text-[11px] text-[#A0A090] bg-[#F5F5F0] dark:bg-[#0B0E14] px-1.5 py-0.5 rounded-md shrink-0">
+                              {t('parseTasks.queuePosition', { position: task.queue_position })}
+                            </span>
+                          )}
                           <span className="text-xs text-[#8A8A7A] truncate font-mono">
                             {task.youtube_url}
                           </span>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-[#A0A090] shrink-0 min-w-[3rem]">
-                            {simplifyProgress(task.progress)}
-                          </span>
-                          <div className="flex-1 bg-[#EAEAE0] dark:bg-[#334155] rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ease-out ${
-                                isDone ? 'bg-[#22c55e]' : isFailed ? 'bg-[#ef4444]' : 'bg-[#D48166]'
-                              }`}
-                              style={{ width: `${percent}%` }}
-                            />
+                        {/* Progress bar — only for processing */}
+                        {isProcessing && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-[#A0A090] shrink-0 min-w-[3rem]">
+                              {simplifyProgress(task.progress)}
+                            </span>
+                            <div className="flex-1 bg-[#EAEAE0] dark:bg-[#334155] rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-[#D48166] transition-all duration-500 ease-out"
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] text-[#A0A090] tabular-nums w-8 text-right shrink-0">
+                              {percent}%
+                            </span>
                           </div>
-                          <span className="text-[11px] text-[#A0A090] tabular-nums w-8 text-right shrink-0">
-                            {percent}%
-                          </span>
-                        </div>
+                        )}
+
+                        {/* Completed progress bar */}
+                        {isDone && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-[#22c55e] shrink-0 min-w-[3rem]">
+                              {simplifyProgress(task.progress)}
+                            </span>
+                            <div className="flex-1 bg-[#EAEAE0] dark:bg-[#334155] rounded-full h-1.5 overflow-hidden">
+                              <div className="h-full rounded-full bg-[#22c55e]" style={{ width: '100%' }} />
+                            </div>
+                            <span className="text-[11px] text-[#22c55e] tabular-nums w-8 text-right shrink-0">100%</span>
+                          </div>
+                        )}
+
+                        {/* Failed progress bar */}
+                        {isFailed && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-[#ef4444] shrink-0 min-w-[3rem]">
+                              {simplifyProgress(task.progress)}
+                            </span>
+                            <div className="flex-1 bg-[#EAEAE0] dark:bg-[#334155] rounded-full h-1.5 overflow-hidden">
+                              <div className="h-full rounded-full bg-[#ef4444]" style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Time */}
                         <div className="flex items-center gap-3 text-[11px] text-[#A0A090]">
@@ -284,11 +326,22 @@ export const ParseTasksPage: React.FC = () => {
                         </>
                       )}
 
-                      {/* Delete button (non-active tasks) */}
-                      {!isActive && !isDone && !isFailed && (
-                        <span className="flex-1" />
+                      {/* Pending: cancel/delete */}
+                      {isPending && (
+                        <>
+                          <span className="flex-1" />
+                          <button
+                            onClick={() => handleDelete(task.task_id)}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A8A7A] hover:text-[#ef4444] hover:bg-[#ef4444]/5 rounded-md transition-colors"
+                            title={t('parseTasks.delete')}
+                          >
+                            <Trash2 className="w-3 h-3" />{t('parseTasks.delete')}
+                          </button>
+                        </>
                       )}
-                      {!isActive && (
+
+                      {/* Completed/Failed: delete */}
+                      {(isDone || isFailed) && (
                         <button
                           onClick={() => handleDelete(task.task_id)}
                           className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A8A7A] hover:text-[#ef4444] hover:bg-[#ef4444]/5 rounded-md transition-colors"

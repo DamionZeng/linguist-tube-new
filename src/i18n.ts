@@ -57,7 +57,8 @@ const resources = {
         noTasksDesc: "Submit a YouTube video from the YouTube Resources page",
         createdAt: "Created",
         finishedAt: "Finished",
-        resumeHint: "Retry will resume from Step {{step}}"
+        resumeHint: "Retry will resume from Step {{step}}",
+        queuePosition: "{{position}} ahead"
       },
       auth: {
         authentication: "Authentication",
@@ -85,6 +86,7 @@ const resources = {
         loginHistory: "Please login to view your watch history.",
         loginFavorites: "Please login to view your favorites.",
         loginVocab: "Please login to access the Vocabulary Book.",
+        loginResource: "Please login to access External Resources.",
         loginLibrary: "Please login to view your personal library and statistics.",
         vipVocab: "Vocabulary Book is exclusively available for VIP members.",
         membersOnly: "Members Only"
@@ -295,7 +297,8 @@ const resources = {
         noTasksDesc: "从 YouTube 资源页提交视频解析",
         createdAt: "创建于",
         finishedAt: "完成于",
-        resumeHint: "重试将从第 {{step}} 步继续"
+        resumeHint: "重试将从第 {{step}} 步继续",
+        queuePosition: "前方 {{position}} 个"
       },
       auth: {
         authentication: "身份认证",
@@ -323,6 +326,7 @@ const resources = {
         loginHistory: "请登录以查看您的历史记录。",
         loginFavorites: "请登录以查看您的收藏。",
         loginVocab: "请登录以访问生词本。",
+        loginResource: "请登录以访问外部资源。",
         loginLibrary: "请登录以查看您的专属页面与学习统计。",
         vipVocab: "生词本为 VIP 会员专享记录，请开通会员或登录会员账号使用。",
         membersOnly: "会员专属"
