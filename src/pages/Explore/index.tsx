@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Play, TrendingUp, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchExploreData } from "@api/general";
+import { FilterBar } from "../../components/FilterBar";
+import { useLocalized } from "../../hooks/useLocalized";
 import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 50;
@@ -9,49 +11,69 @@ const PAGE_SIZE = 50;
 export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { title: locTitle, desc: locDesc } = useLocalized();
   const [categories, setCategories] = useState<string[]>([]);
   const [videos, setVideos] = useState<any[]>([]);
   const [carousel, setCarousel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeLevel, setActiveLevel] = useState("All");
+  const [activeDuration, setActiveDuration] = useState("All");
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // 首次加载 / 切换分类时重新加载
-  const loadData = useCallback((category: string) => {
-    setLoading(true);
+  // 首次加载 / 切换筛选时重新加载
+  const loadData = useCallback((category: string, level: string, duration: string, isInitial: boolean) => {
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
-    setVideos([]);
     setHasMore(false);
-    fetchExploreData(0, PAGE_SIZE, category, 'platform')
+    fetchExploreData(0, PAGE_SIZE, category, 'platform', level, duration)
       .then((res) => {
-        setCategories(res.categories);
+        if (isInitial) {
+          setCategories(res.categories);
+          setCarousel(res.carousel);
+        }
         setVideos(res.videos);
-        setCarousel(res.carousel);
         setTotal(res.total);
         setHasMore(res.hasMore);
         setLoading(false);
+        setRefreshing(false);
       })
       .catch((err) => {
         console.error(err);
         setError("Failed to load explore data.");
         setLoading(false);
+        setRefreshing(false);
       });
   }, []);
 
   useEffect(() => {
-    loadData(activeCategory);
-  }, [activeCategory, loadData]);
+    loadData(activeCategory, activeLevel, activeDuration, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 筛选变化时刷新（不触发全页 loading）
+  useEffect(() => {
+    if (!loading) {
+      loadData(activeCategory, activeLevel, activeDuration, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCategory, activeLevel, activeDuration]);
 
   // 滚动加载更多
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    fetchExploreData(videos.length, PAGE_SIZE, activeCategory, 'platform')
+    fetchExploreData(videos.length, PAGE_SIZE, activeCategory, 'platform', activeLevel, activeDuration)
       .then((res) => {
         setVideos(prev => [...prev, ...res.videos]);
         setTotal(res.total);
@@ -61,7 +83,7 @@ export const ExplorePage: React.FC = () => {
       .catch(() => {
         setLoadingMore(false);
       });
-  }, [videos.length, activeCategory, loadingMore, hasMore]);
+  }, [videos.length, activeCategory, activeLevel, activeDuration, loadingMore, hasMore]);
 
   // IntersectionObserver 触发加载更多
   useEffect(() => {
@@ -101,7 +123,7 @@ export const ExplorePage: React.FC = () => {
       (prev) => carousel.length > 0 ? (prev - 1 + carousel.length) % carousel.length : 0,
     );
 
-  if (loading) {
+  if (loading && carousel.length === 0 && videos.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
         <div className="w-8 h-8 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
@@ -109,12 +131,12 @@ export const ExplorePage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && videos.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh] gap-4">
         <div className="text-[#D48166] font-bold">{error}</div>
         <button 
-          onClick={() => loadData(activeCategory)}
+          onClick={() => loadData(activeCategory, activeLevel, activeDuration)}
           className="bg-[#D48166] hover:bg-[#C27055] text-white px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95"
         >
           {t('common.retry', '重试')}
@@ -148,13 +170,13 @@ export const ExplorePage: React.FC = () => {
                 ))}
               </div>
               <h3 className="text-xl md:text-3xl font-serif font-bold mb-1.5 md:mb-2 leading-tight drop-shadow-md">
-                {item.title}{" "}
+                {locTitle(item)}{" "}
                 <span className="font-sans text-white/80 font-normal text-sm md:text-xl ml-1">
                   ({item.subtitle})
                 </span>
               </h3>
               <p className="text-white/80 text-xs md:text-sm mb-4 md:mb-5 max-w-md font-medium leading-relaxed drop-shadow line-clamp-3">
-                {item.desc}
+                {locDesc(item)}
               </p>
               <button
                 onClick={(e) => {
@@ -209,45 +231,23 @@ export const ExplorePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Categories */}
-        <div 
-          className="flex gap-2.5 overflow-x-auto pb-4 hide-scrollbar cursor-grab active:cursor-grabbing"
-          onMouseDown={(e) => {
-            const ele = e.currentTarget;
-            let isDown = true;
-            let startX = e.pageX - ele.offsetLeft;
-            let scrollLeft = ele.scrollLeft;
-
-            const onMouseMove = (e: MouseEvent) => {
-              if (!isDown) return;
-              e.preventDefault();
-              const x = e.pageX - ele.offsetLeft;
-              const walk = (x - startX) * 2; // scroll-fast
-              ele.scrollLeft = scrollLeft - walk;
-            };
-
-            const onMouseUp = () => {
-              isDown = false;
-              window.removeEventListener('mousemove', onMouseMove);
-              window.removeEventListener('mouseup', onMouseUp);
-            };
-
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-          }}
-        >
-          {categories.map((cat, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer shrink-0 ${activeCategory === cat ? "bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm" : "bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#94A684] hover:text-[#4A4A40]"}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* Multi-function Filter Bar */}
+        <FilterBar
+          categories={categories}
+          activeCategory={activeCategory}
+          activeLevel={activeLevel}
+          activeDuration={activeDuration}
+          onCategoryChange={setActiveCategory}
+          onLevelChange={setActiveLevel}
+          onDurationChange={setActiveDuration}
+        />
 
         {/* Videos Grid */}
+        {refreshing && (
+          <div className="flex items-center justify-center py-4">
+            <div className="w-5 h-5 rounded-full border-2 border-[#D48166] border-t-transparent animate-spin" />
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
           {videos.map((v) => (
             <div
@@ -289,7 +289,7 @@ export const ExplorePage: React.FC = () => {
               </div>
               <div className="p-5 flex flex-col flex-1">
                 <h3 className="font-bold text-[17px] text-[#4A4A40] line-clamp-2 leading-tight mb-3 group-hover:text-[#D48166] transition-colors">
-                  {v.title}
+                  {locTitle(v)}
                 </h3>
                 <div className="mt-auto flex items-center justify-between text-xs text-[#8A8A7A] font-bold">
                   <span className="flex items-center gap-1.5 bg-[#F9F9F7] px-2.5 py-1 rounded-md border border-[#E0E0D5] text-[#6A6A5A]">

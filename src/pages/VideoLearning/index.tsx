@@ -10,6 +10,7 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
+import { useLocalized } from '../../hooks/useLocalized';
 import { CelebrationModal } from './components/CelebrationModal';
 import { PracticeModeModal } from './components/PracticeModeModal';
 import { DisplayMode } from './components/ActionBar';
@@ -26,6 +27,7 @@ export const VideoLearningPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { title: locTitle } = useLocalized();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -253,7 +255,7 @@ export const VideoLearningPage: React.FC = () => {
   if (videoInfo.isVipOnly && (!user || user.role !== 'vip')) {
     return (
       <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
-         <Header title={videoInfo.title} rightNode={<></>} />
+         <Header title={locTitle(videoInfo)} rightNode={<></>} />
          <div className="flex-1 flex flex-col items-center justify-center p-8">
             <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
                <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
@@ -280,7 +282,7 @@ export const VideoLearningPage: React.FC = () => {
   return (
     <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
-        title={videoInfo.title} 
+        title={locTitle(videoInfo)} 
         rightNode={
           <>
             <button 

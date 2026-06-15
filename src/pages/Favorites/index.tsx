@@ -5,11 +5,13 @@ import { getFavoriteVideos, toggleFavoriteVideoStorage } from '@api/storage';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useLocalized } from '../../hooks/useLocalized';
 import { useTranslation } from 'react-i18next';
 
 export const FavoritesPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { title: locTitle } = useLocalized();
   const [data, setData] = useState<{videos: any[], sentences: any[]}>({ videos: [], sentences: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export const FavoritesPage: React.FC = () => {
                      </button>
                   </div>
                   <div className="p-3">
-                     <h3 className="font-bold text-sm line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">{v.title}</h3>
+                     <h3 className="font-bold text-sm line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">{locTitle(v)}</h3>
                   </div>
                 </div>
               ))}

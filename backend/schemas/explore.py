@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class ExploreVideoItem(BaseModel):
     id: str
     title: str
+    titleZh: str | None = None
     duration: str | None = None
     level: str | None = None
     thumb: str | None = None
@@ -15,8 +16,10 @@ class ExploreVideoItem(BaseModel):
 class ExploreCarouselItem(BaseModel):
     id: str
     title: str
+    titleZh: str | None = None
     subtitle: str | None = None
     desc: str | None = None
+    descZh: str | None = None
     image: str | None = None
     tag: str | None = None
 

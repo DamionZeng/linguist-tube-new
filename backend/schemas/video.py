@@ -31,6 +31,8 @@ class TranscriptItem(BaseModel):
 class VideoInfoData(BaseModel):
     id: str
     title: str
+    titleZh: str | None = None
+    descZh: str | None = None
     thumbnail: str | None = None
     videoUrl: str | None = None
     duration: str | None = None

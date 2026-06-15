@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Play, TrendingUp, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLocalized } from '../../hooks/useLocalized';
 
 interface NewsItem {
   id: string;
   title: string;
+  titleZh?: string | null;
   thumb: string;
   duration: string;
   level: string;
@@ -13,6 +15,7 @@ interface NewsItem {
 
 export const YoutubeNewsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { title: locTitle } = useLocalized();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +129,7 @@ export const YoutubeNewsPage: React.FC = () => {
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-bold text-[17px] text-[#4A4A40] line-clamp-2 leading-tight mb-3 group-hover:text-[#D48166] transition-colors">
-                    {v.title}
+                    {locTitle(v)}
                   </h3>
                   <div className="mt-auto flex items-center justify-between text-xs text-[#8A8A7A] font-bold">
                     <span className="flex items-center gap-1.5 bg-[#F9F9F7] px-2.5 py-1 rounded-md border border-[#E0E0D5] text-[#6A6A5A]">

@@ -69,6 +69,8 @@ async def get_video_info(video_id: str) -> dict | None:
         return {
             "id": video.id,
             "title": video.title,
+            "titleZh": video.title_zh or None,
+            "descZh": video.description_zh or None,
             "thumbnail": video.thumb,
             "videoUrl": video.video_url,
             "duration": video.duration,

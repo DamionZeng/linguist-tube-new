@@ -64,11 +64,19 @@ async function apiDelete<T>(path: string): Promise<T> {
   return json.data;
 }
 
-export const fetchExploreData = async (offset: number = 0, limit: number = 20, category?: string, sourceType?: string): Promise<{
+export const fetchExploreData = async (
+  offset: number = 0,
+  limit: number = 20,
+  category?: string,
+  sourceType?: string,
+  level?: string,
+  durationRange?: string,
+): Promise<{
   categories: string[];
   videos: Array<{
     id: string;
     title: string;
+    titleZh: string | null;
     duration: string | null;
     level: string | null;
     thumb: string | null;
@@ -79,8 +87,10 @@ export const fetchExploreData = async (offset: number = 0, limit: number = 20, c
   carousel: Array<{
     id: string;
     title: string;
+    titleZh: string | null;
     subtitle: string | null;
     desc: string | null;
+    descZh: string | null;
     image: string | null;
     tag: string | null;
   }>;
@@ -93,6 +103,12 @@ export const fetchExploreData = async (offset: number = 0, limit: number = 20, c
   }
   if (sourceType) {
     params.set('source_type', sourceType);
+  }
+  if (level && level !== 'All') {
+    params.set('level', level);
+  }
+  if (durationRange && durationRange !== 'All') {
+    params.set('duration_range', durationRange);
   }
   return apiGet(`/api/explore?${params.toString()}`);
 };

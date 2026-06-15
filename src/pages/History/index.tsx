@@ -3,12 +3,14 @@ import { Play, TrendingUp, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPrompt } from '../../components/LoginPrompt';
+import { useLocalized } from '../../hooks/useLocalized';
 import { useTranslation } from 'react-i18next';
 import { getVideoHistory, initHistoryFromServer } from '@api/storage';
 
 export const HistoryPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { title: locTitle } = useLocalized();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -61,7 +63,7 @@ export const HistoryPage: React.FC = () => {
                </div>
                
                <div className="flex flex-col flex-1 py-1 min-w-0">
-                  <h3 className="font-bold text-[15px] md:text-[17px] text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors mb-2">{v.title}</h3>
+                  <h3 className="font-bold text-[15px] md:text-[17px] text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors mb-2">{locTitle(v)}</h3>
                   <div className="flex flex-col gap-1 text-xs text-[#8A8A7A] font-medium mt-auto">
                      <span className="text-[10px] uppercase tracking-widest font-bold bg-[#F5F5F0] text-[#6A6A5A] px-2 py-0.5 rounded-md border border-[#E0E0D5] w-fit">{((v.tag || '') as string).split(',')[0] || 'VIDEO'}</span>
                      <div className="flex items-center gap-2">

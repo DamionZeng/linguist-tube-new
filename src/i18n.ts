@@ -109,6 +109,18 @@ const resources = {
         notePlaceholder: "Add a note...",
         save: "Save"
       },
+      filter: {
+        all: "All",
+        title: "Filters",
+        collapse: "Hide",
+        category: "Category",
+        level: "Level",
+        duration: "Duration",
+        short: "< 5min",
+        medium: "5-15min",
+        long: "15-30min",
+        extended: "> 30min",
+      },
       video: {
         highlights: "Highlights",
         checkIn: "Check In",
@@ -345,6 +357,18 @@ const resources = {
         deleteSelected: "删除选中项",
         notePlaceholder: "添加笔记...",
         save: "保存"
+      },
+      filter: {
+        all: "全部",
+        title: "筛选",
+        collapse: "收起",
+        category: "分类",
+        level: "等级",
+        duration: "时长",
+        short: "< 5分钟",
+        medium: "5-15分钟",
+        long: "15-30分钟",
+        extended: "> 30分钟",
       },
       video: {
         highlights: "高亮句型",

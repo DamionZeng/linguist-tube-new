@@ -4,9 +4,22 @@ import {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const fetchExploreData = async () => {
+export const fetchExploreData = async (
+  _offset: number = 0,
+  _limit: number = 20,
+  _category?: string,
+  _sourceType?: string,
+  _level?: string,
+  _durationRange?: string,
+) => {
   await delay(500);
-  return { categories: MOCK_CATEGORIES, videos: MOCK_EXPLORE_VIDEOS, carousel: MOCK_CAROUSEL_ITEMS };
+  return {
+     categories: MOCK_CATEGORIES,
+     videos: MOCK_EXPLORE_VIDEOS,
+     carousel: MOCK_CAROUSEL_ITEMS,
+     total: MOCK_EXPLORE_VIDEOS.length,
+     hasMore: false,
+   };
 };
 
 export const fetchLibraryData = async () => {

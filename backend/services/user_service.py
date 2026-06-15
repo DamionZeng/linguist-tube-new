@@ -66,6 +66,7 @@ async def get_library_data(user_id: int) -> dict:
             history.append({
                 "id": v.id,
                 "title": v.title,
+                "titleZh": v.title_zh or None,
                 "duration": v.duration,
                 "level": v.level,
                 "thumb": v.thumb,
@@ -125,6 +126,7 @@ async def get_history(user_id: int) -> list[dict]:
             history.append({
                 "id": v.id,
                 "title": v.title,
+                "titleZh": v.title_zh or None,
                 "duration": v.duration,
                 "level": v.level,
                 "thumb": v.thumb,
@@ -470,6 +472,7 @@ async def get_checkins_by_date(user_id: int, date_str: str) -> list[dict]:
             videos.append({
                 "id": v.id,
                 "title": v.title,
+                "titleZh": v.title_zh or None,
                 "duration": v.duration,
                 "level": v.level,
                 "thumb": v.thumb,
