@@ -5,6 +5,9 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+      common: {
+        retry: "Retry"
+      },
       nav: {
         explore: "Explore",
         external: "External",
@@ -18,7 +21,9 @@ const resources = {
         exitFullscreen: "Exit Fullscreen",
         pullToRefresh: "Pull to Refresh",
         releaseToRefresh: "Release to Refresh",
-        refreshing: "Refreshing..."
+        refreshing: "Refreshing...",
+        darkMode: "Dark Mode",
+        lightMode: "Light Mode"
       },
       explore: {
         recommended: "Recommended for You",
@@ -40,7 +45,8 @@ const resources = {
         noResourcesDesc: "Paste a YouTube link above to start parsing",
         vipOnly: "VIP Only",
         vipOnlyDesc: "YouTube resource parsing is available for VIP members only. Upgrade to unlock this feature.",
-        backToExplore: "Back to Explore"
+        backToExplore: "Back to Explore",
+        submitFailed: "Submission failed"
       },
       parseTasks: {
         title: "Parse Tasks",
@@ -107,7 +113,25 @@ const resources = {
         unselectAll: "Unselect All",
         deleteSelected: "Delete Selected",
         notePlaceholder: "Add a note...",
-        save: "Save"
+        save: "Save",
+        emptyTitle: "Your vocabulary book is empty",
+        emptyDesc: "Tap on any word while watching videos to add it to your vocabulary book.",
+        goLearn: "Start Learning",
+        noResults: "No matching words found",
+        smartRecommend: "Smart Review",
+        showAll: "Show All",
+        edit: "Edit",
+        done: "Done",
+        deleting: "Deleting...",
+        recommended: "Recommended",
+        startReview: "Start Review ({{count}} words)",
+        addToRecommended: "Add to recommended",
+        removeFromRecommended: "Remove from recommended",
+        confirmDelete: "Confirm delete?",
+        cancelDelete: "Cancel",
+        deleteConfirmDesc: "This action cannot be undone. Are you sure you want to delete the selected items?",
+        wordCount: "{{count}} words",
+        tapToReveal: "Tap anywhere to reveal meaning"
       },
       filter: {
         all: "All",
@@ -200,7 +224,19 @@ const resources = {
         vipType: "VIP Type",
         genLoading: "Generating...",
         doGen: "Generate Key",
-        generatedKey: "Generated Key"
+        generatedKey: "Generated Key",
+        copied: "Copied",
+        copy: "Copy",
+        daysUnit: "days",
+        genFailed: "Generation failed",
+        validDays: "Please enter a valid number of days",
+        vipLifetime: "Lifetime",
+        vip7Days: "7 Days",
+        vip30Days: "30 Days",
+        vip90Days: "90 Days",
+        vip180Days: "180 Days",
+        vip365Days: "365 Days",
+        custom: "Custom"
       },
       checkin: {
         title: "Check-in Records",
@@ -225,7 +261,8 @@ const resources = {
         performance: "Pronunciation Performance",
         weaknessAnalysis: "Weakness Analysis",
         refine: "Refine",
-        retry: "Retry Challenge"
+        retry: "Retry Challenge",
+        scoring: "Scoring..."
       },
       getKey: {
         title: "Get Invitation Key",
@@ -249,7 +286,24 @@ const resources = {
         img2Alt: "App Feature Preview 2",
         img3Alt: "App Feature Preview 3",
         backToRegister: "Back to Register"
-      }
+      },
+      error: {
+        loadLearningMaterials: "Failed to load learning materials.",
+        unexpectedError: "An unexpected error occurred",
+        loadFavorites: "Failed to load favorites data.",
+        loadVocabulary: "Failed to load vocabulary.",
+        loadLibrary: "Failed to load library data.",
+        loadExplore: "Failed to load explore data."
+      },
+      history: {
+        noHistory: "No watch history yet"
+      },
+      transcript: {
+        cancelLoop: "Cancel loop",
+        loopLine: "Loop this line",
+        hideSubtitle: "Hide subtitle",
+        showSubtitle: "Show subtitle"
+      },
     }
   },
   zh: {
@@ -267,7 +321,9 @@ const resources = {
         exitFullscreen: "退出全屏",
         pullToRefresh: "下拉刷新",
         releaseToRefresh: "松开刷新",
-        refreshing: "刷新中..."
+        refreshing: "刷新中...",
+        darkMode: "深色模式",
+        lightMode: "浅色模式"
       },
       explore: {
         recommended: "推荐",
@@ -289,7 +345,8 @@ const resources = {
         noResourcesDesc: "在上方粘贴 YouTube 链接开始解析",
         vipOnly: "仅限会员",
         vipOnlyDesc: "YouTube 资源解析功能仅对会员开放，升级会员即可解锁。",
-        backToExplore: "返回探索"
+        backToExplore: "返回探索",
+        submitFailed: "提交失败"
       },
       parseTasks: {
         title: "字幕解析",
@@ -356,7 +413,25 @@ const resources = {
         unselectAll: "取消全选",
         deleteSelected: "删除选中项",
         notePlaceholder: "添加笔记...",
-        save: "保存"
+        save: "保存",
+        emptyTitle: "生词本是空的",
+        emptyDesc: "在看视频时点击单词即可加入生词本，开始你的词汇积累之旅吧！",
+        goLearn: "去学习",
+        noResults: "没有找到匹配的单词",
+        smartRecommend: "智能推荐",
+        showAll: "全部",
+        edit: "编辑",
+        done: "完成",
+        deleting: "删除中...",
+        recommended: "推荐",
+        startReview: "开始复习（{{count}} 个单词）",
+        addToRecommended: "加入推荐",
+        removeFromRecommended: "取消推荐",
+        confirmDelete: "确认删除？",
+        cancelDelete: "取消",
+        deleteConfirmDesc: "此操作无法撤销，确定要删除选中的项目吗？",
+        wordCount: "{{count}} 个",
+        tapToReveal: "点击任意位置查看释义"
       },
       filter: {
         all: "全部",
@@ -449,7 +524,19 @@ const resources = {
         vipType: "VIP类型",
         genLoading: "生成中...",
         doGen: "生成卡密",
-        generatedKey: "已生成卡密"
+        generatedKey: "已生成卡密",
+        copied: "已复制",
+        copy: "复制",
+        daysUnit: "天",
+        genFailed: "生成失败",
+        validDays: "请输入有效的天数",
+        vipLifetime: "终生",
+        vip7Days: "7天",
+        vip30Days: "30天",
+        vip90Days: "90天",
+        vip180Days: "180天",
+        vip365Days: "365天",
+        custom: "自定义"
       },
       checkin: {
         title: "打卡记录",
@@ -474,7 +561,8 @@ const resources = {
         performance: "发音多维表现",
         weaknessAnalysis: "发音攻坚（最低评分）",
         refine: "去精修",
-        retry: "重新挑战"
+        retry: "重新挑战",
+        scoring: "正在评分…"
       },
       getKey: {
         title: "获取邀请卡密",
@@ -498,6 +586,26 @@ const resources = {
         img2Alt: "应用功能预览图2",
         img3Alt: "应用功能预览图3",
         backToRegister: "返回注册"
+      },
+      common: {
+        retry: "重试"
+      },
+      error: {
+        loadLearningMaterials: "加载学习材料失败。",
+        unexpectedError: "发生了意外错误",
+        loadFavorites: "加载收藏数据失败。",
+        loadVocabulary: "加载生词本失败。",
+        loadLibrary: "加载个人数据失败。",
+        loadExplore: "加载探索数据失败。"
+      },
+      history: {
+        noHistory: "暂无观看记录"
+      },
+      transcript: {
+        cancelLoop: "取消循环",
+        loopLine: "循环播放该行",
+        hideSubtitle: "隐藏字幕",
+        showSubtitle: "显示字幕"
       }
     }
   }

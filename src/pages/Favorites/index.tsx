@@ -41,7 +41,7 @@ export const FavoritesPage: React.FC = () => {
       })
       .catch((err) => {
         console.error(err);
-        setError("Failed to load favorites data.");
+        setError(t('error.loadFavorites'));
         setLoading(false);
       });
 

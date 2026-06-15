@@ -3,6 +3,7 @@ import { Heart, Eye, EyeOff, RefreshCcw } from 'lucide-react';
 import { Transcript } from '../../../types';
 import { renderHighlightedText, renderTimedWords } from '../../../utils/highlight';
 import { LangMode } from '../index';
+import { useTranslation } from 'react-i18next';
 
 interface TranscriptItemProps {
   transcript: Transcript;
@@ -21,6 +22,7 @@ interface TranscriptItemProps {
 }
 
 export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+  const { t } = useTranslation();
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [looping, setLooping] = useState(false);
 
@@ -87,7 +89,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
             <button
               onClick={(e) => { e.stopPropagation(); setLooping(v => !v); }}
               className={`p-1 transition-all ${looping ? 'text-[#D48166]' : 'text-[#D0D0CE] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
-              title={looping ? '取消循环' : '循环播放该行'}
+              title={looping ? t('transcript.cancelLoop') : t('transcript.loopLine')}
             >
               <RefreshCcw className={`w-4 h-4 ${looping ? 'text-[#D48166]' : ''}`} />
             </button>
@@ -97,7 +99,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
             <button
               onClick={(e) => { e.stopPropagation(); setShowSubtitle(v => !v); }}
               className={`p-1 transition-all text-[#D0D0CE] hover:text-[#7A8A54] dark:text-[#475569] dark:hover:text-[#7A8A54]`}
-              title={showSubtitle ? '隐藏字幕' : '显示字幕'}
+              title={showSubtitle ? t('transcript.hideSubtitle') : t('transcript.showSubtitle')}
             >
               {showSubtitle ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>

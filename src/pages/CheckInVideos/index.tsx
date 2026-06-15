@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 export const CheckInVideosPage: React.FC = () => {
   const { date } = useParams<{ date: string }>();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { title: locTitle } = useLocalized();
   const navigate = useNavigate();
   const [videos, setVideos] = useState<any[]>([]);
@@ -43,7 +43,7 @@ export const CheckInVideosPage: React.FC = () => {
     return <LoginPrompt message={t('messages.loginHistory')} />;
   }
 
-  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('default', {
+  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US', {
     month: 'long',
     day: 'numeric',
   }) : '';

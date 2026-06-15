@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, Star, Trash2, Volume1 } from 'lucide-react';
 import { useWordLookup } from '../../hooks/useWordLookup';
+import { useTranslation } from 'react-i18next';
 
 interface WordScreenProps {
   word: string;
@@ -24,6 +25,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
     speakSentence,
   } = useWordLookup({ word, enabled: isPreloaded });
 
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('examples');
   const [revealed, setRevealed] = useState(false);
 
@@ -121,7 +123,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
           {/* Memory mode: show hint to tap */}
           {hideContent && (
             <div className="mt-8 animate-pulse">
-              <p className="text-[#A0A090] text-sm font-medium">点击任意位置查看释义</p>
+              <p className="text-[#A0A090] text-sm font-medium">{t('vocab.tapToReveal')}</p>
             </div>
           )}
 

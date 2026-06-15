@@ -327,7 +327,7 @@ export const FullMode: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-[#F5F8FA] dark:bg-[#0B0E14] text-[#333] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
-      <Header title={t('practice.fullMode') || '全文挑战'} onBack={() => navigate(`/video/${id}`)} />
+      <Header title={t('practice.fullMode')} onBack={() => navigate(`/video/${id}`)} />
 
       <main className="flex-1 overflow-y-auto py-6 px-4 md:px-8 custom-scrollbar">
         <style>{`
@@ -367,7 +367,7 @@ export const FullMode: React.FC = () => {
           <div className="max-w-3xl mx-auto mb-6 flex items-center justify-center gap-3 p-4 bg-white dark:bg-[#151B25] rounded-2xl shadow-sm border border-[#E0E0E0] dark:border-[#1E293B]">
             <Loader2 className="w-5 h-5 text-[#D48166] animate-spin" />
             <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-              {t('practice.scoring') || '正在评分…'}
+              {t('practice.scoring')}
             </span>
           </div>
         )}
@@ -445,7 +445,7 @@ export const FullMode: React.FC = () => {
       <div className="shrink-0 p-6 bg-white dark:bg-[#151B25] border-t border-[#E0E0E0] dark:border-[#1E293B] flex flex-col items-center justify-center pb-safe z-20">
         {status === 'done' && overallScore > 0 && (
           <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#151B25] rounded-full shadow-sm border border-[#E0E0E0] dark:border-[#1E293B]">
-            <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">{t('practice.performance') || '综合评分'}:</span>
+            <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">{t('practice.performance')}:</span>
             <span className={`text-lg font-bold ${
               overallScore >= 80
                 ? 'text-green-600 dark:text-green-400'
@@ -506,7 +506,7 @@ export const FullMode: React.FC = () => {
                 )}
               </div>
               <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-                {status === 'done' ? t('practice.rerecord') || '重新录音' : t('practice.tapToRecord') || '点击录音'}
+                {status === 'done' ? t('practice.rerecord') : t('practice.tapToRecord')}
               </span>
             </div>
           ) : status === 'recording' ? (
@@ -538,7 +538,7 @@ export const FullMode: React.FC = () => {
             <div className="flex flex-col items-center gap-3 animate-in fade-in zoom-in duration-300">
               <Loader2 className="w-8 h-8 text-[#D48166] animate-spin" />
               <span className="text-sm text-[#9CA3AF] dark:text-[#64748B]">
-                {t('practice.scoring') || '正在评分…'}
+                {t('practice.scoring')}
               </span>
             </div>
           )}

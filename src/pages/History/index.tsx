@@ -46,7 +46,7 @@ export const HistoryPage: React.FC = () => {
       ) : history.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center text-[#8A8A7A]">
           <Clock className="w-12 h-12 mb-4 opacity-50" />
-          <p className="font-bold">No watch history yet</p>
+          <p className="font-bold">{t('history.noHistory')}</p>
         </div>
       ) : (
       <div className="space-y-4">

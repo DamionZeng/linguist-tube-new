@@ -28,7 +28,7 @@ export const LibraryPage: React.FC = () => {
 
   // Admin: 卡密生成状态
   const [showGenKey, setShowGenKey] = useState(false);
-  const [vipType, setVipType] = useState<string>('终生');
+  const [vipType, setVipType] = useState<string>('lifetime');
   const [vipCustomDays, setVipCustomDays] = useState('');
   const [genLoading, setGenLoading] = useState(false);
   const [genKeyResult, setGenKeyResult] = useState<{ key: string; vipLabel: string } | null>(null);
@@ -61,20 +61,20 @@ export const LibraryPage: React.FC = () => {
     setGenKeyResult(null);
     try {
       let vipDays: number | null = null;
-      if (vipType === '终生') {
+      if (vipType === 'lifetime') {
         vipDays = null;
-      } else if (vipType === '自定义') {
+      } else if (vipType === 'custom') {
         const d = parseInt(vipCustomDays, 10);
-        if (!d || d < 1) { setGenError('请输入有效的天数'); setGenLoading(false); return; }
+        if (!d || d < 1) { setGenError(t('library.validDays')); setGenLoading(false); return; }
         vipDays = d;
       } else {
-        vipDays = parseInt(vipType.replace('天', ''), 10);
+        vipDays = parseInt(vipType, 10);
       }
       const result = await generateKeyApi(vipDays);
-      const label = vipDays === null ? t('library.lifetime') : `${vipDays}${i18n.language === 'zh' ? '天' : ' days'}`;
+      const label = vipDays === null ? t('library.lifetime') : `${vipDays} ${t('library.daysUnit')}`;
       setGenKeyResult({ key: result.key, vipLabel: label });
     } catch (err: any) {
-      setGenError(err.message || '生成失败');
+      setGenError(err.message || t('library.genFailed'));
     } finally {
       setGenLoading(false);
     }
@@ -115,7 +115,7 @@ export const LibraryPage: React.FC = () => {
       })
       .catch((err) => {
         console.error(err);
-        setError("Failed to load library data.");
+        setError(t('error.loadLibrary'));
         setLoading(false);
       });
   }, [user]);
@@ -243,28 +243,36 @@ export const LibraryPage: React.FC = () => {
 
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-[#5A5A40] dark:text-gray-300">{t('library.vipType')}:</span>
-                {(['终生', '7天', '30天', '90天', '180天', '365天', '自定义'] as const).map((opt) => (
+                {([
+                  { key: 'lifetime', label: t('library.vipLifetime') },
+                  { key: '7', label: t('library.vip7Days') },
+                  { key: '30', label: t('library.vip30Days') },
+                  { key: '90', label: t('library.vip90Days') },
+                  { key: '180', label: t('library.vip180Days') },
+                  { key: '365', label: t('library.vip365Days') },
+                  { key: 'custom', label: t('library.custom') }
+                ]).map((opt) => (
                   <button
-                    key={opt}
+                    key={opt.key}
                     type="button"
-                    onClick={() => setVipType(opt)}
+                    onClick={() => setVipType(opt.key)}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors ${
-                      vipType === opt
+                      vipType === opt.key
                         ? 'bg-[#D48166] text-white border-[#D48166]'
                         : 'bg-[#F5F5F0] dark:bg-[#1E293B] text-[#6A6A5A] dark:text-gray-400 border-[#E0E0D5] dark:border-gray-700 hover:border-[#D48166]/30'
                     }`}
                   >
-                    {opt}
+                    {opt.label}
                   </button>
                 ))}
-                {vipType === '自定义' && (
+                {vipType === 'custom' && (
                   <input
                     type="number"
                     min={1}
                     className="w-16 border border-[#E0E0D5] bg-[#F5F5F0] dark:bg-[#1E293B] dark:border-[#2a323f] rounded-lg px-2 py-1.5 outline-none focus:border-[#D48166] transition-colors text-xs"
                     value={vipCustomDays}
                     onChange={e => setVipCustomDays(e.target.value)}
-                    placeholder={i18n.language === 'zh' ? '天数' : 'days'}
+                    placeholder={t('library.daysUnit')}
                   />
                 )}
               </div>
@@ -292,7 +300,7 @@ export const LibraryPage: React.FC = () => {
                           ? 'bg-green-50 border-green-200 text-green-600'
                           : 'bg-white border-[#E0E0D5] text-[#6A6A5A] hover:border-[#D48166] hover:text-[#D48166]'
                       }`}
-                      title={copied ? (i18n.language === 'zh' ? '已复制' : 'Copied') : (i18n.language === 'zh' ? '复制' : 'Copy')}
+                      title={copied ? t('library.copied') : t('library.copy')}
                     >
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </button>

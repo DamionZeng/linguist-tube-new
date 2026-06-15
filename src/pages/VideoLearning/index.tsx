@@ -181,7 +181,7 @@ export const VideoLearningPage: React.FC = () => {
           setSavedPhrases([]);
         }
       } catch (err) {
-        setError('Failed to load learning materials.');
+        setError(t('error.loadLearningMaterials'));
       } finally {
         setLoading(false);
       }

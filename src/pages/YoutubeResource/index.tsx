@@ -108,7 +108,7 @@ export const YoutubeResourcePage: React.FC = () => {
       setUrl('');
       navigate(`/parse-tasks?highlight=${result.task_id}`);
     } catch (e: any) {
-      setSubmitError(e.message || '提交失败');
+      setSubmitError(e.message || t('youtubeResource.submitFailed'));
     } finally {
       setSubmitting(false);
     }

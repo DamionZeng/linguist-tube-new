@@ -60,7 +60,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({ isOpen, onCl
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-1.5 text-[#8A8A7A] dark:text-[#64748B] hover:text-[#4A4A40] dark:hover:text-[#E2E8F0] hover:bg-[#F9F9F7] dark:hover:bg-[#1E293B] rounded-full transition-colors"
-                aria-label={t('video.close') || '关闭'}
+                aria-label={t('video.close')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -76,18 +76,18 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({ isOpen, onCl
               </div>
 
               <h2 className="text-xl font-serif font-bold text-[#5A5A40] dark:text-[#F8FAFC] mb-3 tracking-tight">
-                {t('video.checkInSuccess') || '打卡成功'}
+                {t('video.checkInSuccess')}
               </h2>
 
               <p className="text-[#848464] dark:text-[#94A3B8] text-sm mb-8 leading-relaxed">
-                {t('video.checkInSuccessDesc') || '太棒了！今日的学习目标已经达成，继续保持。'}
+                {t('video.checkInSuccessDesc')}
               </p>
 
               <button
                 onClick={onClose}
                 className="w-full bg-[#D48166] text-white rounded-xl py-3.5 font-bold hover:bg-[#C27055] transition-colors active:scale-[0.98]"
               >
-                {t('video.continue') || '继续学习'}
+                {t('video.continue')}
               </button>
             </div>
           </motion.div>

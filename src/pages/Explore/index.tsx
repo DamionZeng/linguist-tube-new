@@ -139,7 +139,7 @@ export const ExplorePage: React.FC = () => {
           onClick={() => loadData(activeCategory, activeLevel, activeDuration)}
           className="bg-[#D48166] hover:bg-[#C27055] text-white px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95"
         >
-          {t('common.retry', '重试')}
+          {t('common.retry')}
         </button>
       </div>
     );
