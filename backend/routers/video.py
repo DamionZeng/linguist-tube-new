@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas.video import VideoInfoResponse, TranscriptListResponse, ToggleResponse
 from services.video_service import get_video_info, get_transcripts, toggle_favorite_transcript
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/video", tags=["video"])
 async def video_info(video_id: str):
     data = await get_video_info(video_id)
     if data is None:
-        return {"code": 404, "data": None, "message": "Video not found"}
+        raise HTTPException(status_code=404, detail="Video not found")
     return {"code": 200, "data": data, "message": "success"}
 
 
