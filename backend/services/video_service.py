@@ -39,32 +39,38 @@ async def get_video_info(video_id: str) -> dict | None:
         if video is None:
             return None
 
-        # 用 COUNT 获取总数（不再加载全表）
-        total_result = await session.execute(select(func.count(Video.id)))
-        total = total_result.scalar_one()
-
-        # 用 COUNT 计算当前视频在排序中的位置
+        # 单条 SQL 同时获取：总数、当前视频位置、下一个视频 id
+        # 相比原先 3 次串行查询，节省 2 次数据库往返
         sort_order = video.sort_order or 0
-        index_result = await session.execute(
-            select(func.count(Video.id)).where(
-                or_(
-                    Video.sort_order < sort_order,
-                    and_(Video.sort_order == sort_order, Video.id < video_id),
-                )
-            )
-        )
-        vid_index = index_result.scalar_one() + 1
-
-        # 用 LIMIT 1 获取下一个视频
-        next_result = await session.execute(
-            select(Video.id).where(
+        # 用 subquery 拿下一个视频 id（限制 1 条）
+        next_subq = (
+            select(Video.id)
+            .where(
                 or_(
                     Video.sort_order > sort_order,
                     and_(Video.sort_order == sort_order, Video.id > video_id),
                 )
-            ).order_by(Video.sort_order, Video.id).limit(1)
+            )
+            .order_by(Video.sort_order, Video.id)
+            .limit(1)
+            .scalar_subquery()
         )
-        next_video_id = next_result.scalar_one_or_none()
+        agg_result = await session.execute(
+            select(
+                func.count(Video.id).label("total"),
+                func.count(Video.id).filter(
+                    or_(
+                        Video.sort_order < sort_order,
+                        and_(Video.sort_order == sort_order, Video.id < video_id),
+                    )
+                ).label("vid_index_base"),
+                next_subq.label("next_video_id"),
+            )
+        )
+        row = agg_result.one()
+        total = row.total
+        vid_index = (row.vid_index_base or 0) + 1
+        next_video_id = row.next_video_id
 
         return {
             "id": video.id,
