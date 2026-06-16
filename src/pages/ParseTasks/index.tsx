@@ -219,7 +219,7 @@ export const ParseTasksPage: React.FC = () => {
                             </span>
                           </span>
                           {isPending && task.queue_position != null && task.queue_position > 0 && (
-                            <span className="text-[11px] text-[#A0A090] bg-[#F5F5F0] dark:bg-[#0B0E14] px-1.5 py-0.5 rounded-md shrink-0">
+                            <span className="text-[11px] text-[#7A7A6A] bg-[#F5F5F0] dark:bg-[#0B0E14] px-1.5 py-0.5 rounded-md shrink-0">
                               {t('parseTasks.queuePosition', { position: task.queue_position })}
                             </span>
                           )}
@@ -231,7 +231,7 @@ export const ParseTasksPage: React.FC = () => {
                         {/* Progress bar — only for processing */}
                         {isProcessing && (
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-[#A0A090] shrink-0 min-w-[3rem]">
+                            <span className="text-[11px] text-[#7A7A6A] shrink-0 min-w-[3rem]">
                               {simplifyProgress(task.progress)}
                             </span>
                             <div className="flex-1 bg-[#EAEAE0] dark:bg-[#334155] rounded-full h-1.5 overflow-hidden">
@@ -240,7 +240,7 @@ export const ParseTasksPage: React.FC = () => {
                                 style={{ width: `${percent}%` }}
                               />
                             </div>
-                            <span className="text-[11px] text-[#A0A090] tabular-nums w-8 text-right shrink-0">
+                            <span className="text-[11px] text-[#7A7A6A] tabular-nums w-8 text-right shrink-0">
                               {percent}%
                             </span>
                           </div>
@@ -272,7 +272,7 @@ export const ParseTasksPage: React.FC = () => {
                         )}
 
                         {/* Time */}
-                        <div className="flex items-center gap-3 text-[11px] text-[#A0A090]">
+                        <div className="flex items-center gap-3 text-[11px] text-[#7A7A6A]">
                           {task.created_at && (
                             <span>{t('parseTasks.createdAt')} {new Date(task.created_at).toLocaleString()}</span>
                           )}

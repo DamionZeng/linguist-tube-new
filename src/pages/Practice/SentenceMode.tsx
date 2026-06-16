@@ -401,8 +401,8 @@ export const SentenceMode: React.FC = () => {
                   ${isActive ? 'opacity-100 shadow-md' : 'opacity-40 cursor-pointer hover:opacity-60'}
                   ${isPlayingOriginal ? 'highlight-playing' : ''}`}
               >
-                <div className="text-xl md:text-2xl font-serif leading-relaxed mb-6">
-                  <span 
+                <div className="text-xl md:text-2xl font-serif leading-relaxed mb-6 text-[#2A2A20] dark:text-[#F1F5F9]" style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}>
+                  <span
                     className={`inline transition-all duration-300`}
                   >
                     {isPlayingOriginal && sentence.words?.en && sentence.words.en.length > 0

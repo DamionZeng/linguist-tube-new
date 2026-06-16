@@ -131,7 +131,8 @@ const resources = {
         cancelDelete: "Cancel",
         deleteConfirmDesc: "This action cannot be undone. Are you sure you want to delete the selected items?",
         wordCount: "{{count}} words",
-        tapToReveal: "Tap anywhere to reveal meaning"
+        tapToReveal: "Tap anywhere to reveal meaning",
+        recommendedHint: "Tap checkboxes to adjust selection"
       },
       filter: {
         all: "All",
@@ -431,7 +432,8 @@ const resources = {
         cancelDelete: "取消",
         deleteConfirmDesc: "此操作无法撤销，确定要删除选中的项目吗？",
         wordCount: "{{count}} 个",
-        tapToReveal: "点击任意位置查看释义"
+        tapToReveal: "点击任意位置查看释义",
+        recommendedHint: "点击复选框调整推荐列表"
       },
       filter: {
         all: "全部",

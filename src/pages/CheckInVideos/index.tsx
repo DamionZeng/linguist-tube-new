@@ -49,13 +49,13 @@ export const CheckInVideosPage: React.FC = () => {
   }) : '';
 
   return (
-    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
+    <div className="w-full h-screen bg-[#F5F5F0] dark:bg-[#0B0E14] text-[#4A4A40] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
         title={formattedDate ? `${t('checkin.title')} · ${formattedDate}` : t('checkin.title')} 
         rightNode={
           <button 
             onClick={toggleFullScreen} 
-            className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#F8FAFC] rounded-full transition-colors cursor-pointer"
           >
             <Maximize className="w-[22px] h-[22px]" />
           </button>
@@ -68,7 +68,7 @@ export const CheckInVideosPage: React.FC = () => {
             <div className="w-6 h-6 rounded-full border-[3px] border-[#E0E0D5] border-t-[#D48166] animate-spin" />
           </div>
         ) : videos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-[#8A8A7A]">
+          <div className="flex flex-col items-center justify-center py-12 text-center text-[#8A8A7A] dark:text-[#94A3B8]">
             <CalendarCheck className="w-10 h-10 mb-3 opacity-50" />
             <p className="text-sm font-bold">{t('checkin.noVideos')}</p>
           </div>
@@ -82,9 +82,9 @@ export const CheckInVideosPage: React.FC = () => {
               <div
                 key={v.id}
                 onClick={() => navigate(`/video/${v.id}`)}
-                className="flex gap-3 py-3.5 px-3 bg-white rounded-xl border border-[#E0E0D5] cursor-pointer hover:border-[#94A684] hover:shadow-sm transition-all group"
+                className="flex gap-3 py-3.5 px-3 bg-white dark:bg-[#1E293B] rounded-xl border border-[#E0E0D5] dark:border-[#334155] cursor-pointer hover:border-[#94A684] hover:shadow-sm transition-all group"
               >
-                <div className="w-24 md:w-36 aspect-video bg-[#EAEAE0] rounded-lg overflow-hidden shrink-0 relative self-center">
+                <div className="w-24 md:w-36 aspect-video bg-[#EAEAE0] dark:bg-[#0B0E14] rounded-lg overflow-hidden shrink-0 relative self-center">
                   <img
                     src={v.thumb || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -101,13 +101,13 @@ export const CheckInVideosPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col flex-1 min-w-0 justify-center gap-2 py-0.5">
-                  <h3 className="text-sm md:text-[15px] font-bold text-[#4A4A40] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">
+                  <h3 className="text-sm md:text-[15px] font-bold text-[#4A4A40] dark:text-[#E2E8F0] line-clamp-2 leading-snug group-hover:text-[#D48166] transition-colors">
                     {locTitle(v)}
                   </h3>
                   {tagList.length > 0 && (
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                       {tagList.map((tg, i) => (
-                        <span key={i} className="text-[8px] uppercase tracking-wider font-bold bg-[#F5F5F0] text-[#6A6A5A] px-1.5 py-0.5 rounded border border-[#E0E0D5]">
+                        <span key={i} className="text-[8px] uppercase tracking-wider font-bold bg-[#F5F5F0] dark:bg-[#0B0E14] text-[#6A6A5A] dark:text-[#94A3B8] px-1.5 py-0.5 rounded border border-[#E0E0D5] dark:border-[#334155]">
                           {tg}
                         </span>
                       ))}
@@ -119,7 +119,7 @@ export const CheckInVideosPage: React.FC = () => {
                       {t('checkin.checkedIn')}
                     </span>
                     {v.level && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#6A6A5A] bg-[#F9F9F7] px-2 py-0.5 rounded-md border border-[#E0E0D5]">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#6A6A5A] dark:text-[#94A3B8] bg-[#F9F9F7] dark:bg-[#1C222C] px-2 py-0.5 rounded-md border border-[#E0E0D5] dark:border-[#334155]">
                         <TrendingUp className="w-3 h-3 text-[#94A684]" />
                         {v.level}
                       </span>

@@ -131,21 +131,21 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
   return (
     <>
       <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60] transition-opacity" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 max-w-3xl mx-auto bg-white rounded-t-[24px] z-[70] shadow-2xl transform transition-transform animate-in slide-in-from-bottom-full overflow-hidden flex flex-col max-h-[75vh]">
+      <div className="fixed bottom-0 left-0 right-0 max-w-3xl mx-auto bg-white dark:bg-[#151B25] rounded-t-[24px] z-[70] shadow-2xl transform transition-transform animate-in slide-in-from-bottom-full overflow-hidden flex flex-col max-h-[75vh]">
         <div className="flex justify-center pt-1.5 pb-1 cursor-pointer" onClick={onClose}>
-          <div className="w-10 h-1 bg-[#E0E0D5] rounded-full" />
+          <div className="w-10 h-1 bg-[#E0E0D5] dark:bg-[#334155] rounded-full" />
         </div>
 
-        <button onClick={onClose} className="absolute top-2.5 right-3 p-1 text-[#8A8A7A] hover:bg-[#F5F5F0] rounded-full transition-colors z-10">
+        <button onClick={onClose} className="absolute top-2.5 right-3 p-1 text-[#8A8A7A] dark:text-[#64748B] hover:bg-[#F5F5F0] dark:hover:bg-[#1E293B] rounded-full transition-colors z-10">
           <X className="w-4 h-4" />
         </button>
 
         {/* Phrase selector - show when sentence context is available */}
         {sentence && sentenceWords.length > 0 && (
           <div className="px-4 pb-2">
-            <div className="bg-[#F9F9F7] rounded-xl p-3">
+            <div className="bg-[#F9F9F7] dark:bg-[#1C222C] rounded-xl p-3">
               <div className="flex items-center gap-1 mb-1.5">
-                <span className="text-[11px] text-[#8A8A7A] font-medium">
+                <span className="text-[11px] text-[#8A8A7A] dark:text-[#94A3B8] font-medium">
                   {isPhrase ? '点击单词调整短语范围' : '点击相邻单词扩展为短语'}
                 </span>
                 {isPhrase && (
@@ -164,7 +164,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
               </div>
               <div className="flex flex-wrap gap-x-0.5 gap-y-1 items-center">
                 {visibleRange.start > 0 && (
-                  <span className="text-[#C0C0B8] text-sm px-0.5 select-none">…</span>
+                  <span className="text-[#9CA390] dark:text-[#64748B] text-sm px-0.5 select-none">…</span>
                 )}
                 {sentenceWords.slice(visibleRange.start, visibleRange.end).map((w, i) => {
                   const globalIndex = visibleRange.start + i;
@@ -181,7 +181,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
                           ? isPhrase
                             ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-300'
                             : 'bg-[#D48166]/15 text-[#D48166] ring-1 ring-[#D48166]/30'
-                          : 'text-[#6A6A5A] hover:bg-[#E0E0D5]/50'
+                          : 'text-[#6A6A5A] dark:text-[#94A3B8] hover:bg-[#E0E0D5]/50 dark:hover:bg-[#334155]/50'
                       }`}
                     >
                       {w.text}
@@ -189,7 +189,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
                   );
                 })}
                 {visibleRange.end < sentenceWords.length && (
-                  <span className="text-[#C0C0B8] text-sm px-0.5 select-none">…</span>
+                  <span className="text-[#9CA390] text-sm px-0.5 select-none">…</span>
                 )}
               </div>
               {isPhrase && (
@@ -209,11 +209,11 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
             </div>
           ) : notFound ? (
             <div className="flex flex-col items-center justify-center min-h-[25vh] text-center">
-              <div className="w-12 h-12 rounded-full bg-[#F5F5F0] flex items-center justify-center mb-3">
-                <BookOpen className="w-6 h-6 text-[#8A8A7A]" />
+              <div className="w-12 h-12 rounded-full bg-[#F5F5F0] dark:bg-[#1E293B] flex items-center justify-center mb-3">
+                <BookOpen className="w-6 h-6 text-[#8A8A7A] dark:text-[#64748B]" />
               </div>
-              <h3 className="text-lg font-bold text-[#4A4A40] mb-1">{phraseWord}</h3>
-              <p className="text-sm text-[#8A8A7A]">未找到该{isPhrase ? '短语' : '单词'}的释义</p>
+              <h3 className="text-lg font-bold text-[#4A4A40] dark:text-[#F8FAFC] mb-1">{phraseWord}</h3>
+              <p className="text-sm text-[#8A8A7A] dark:text-[#94A3B8]">未找到该{isPhrase ? '短语' : '单词'}的释义</p>
             </div>
           ) : !details ? (
             <div className="flex items-center justify-center min-h-[25vh]">

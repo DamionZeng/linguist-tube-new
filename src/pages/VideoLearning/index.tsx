@@ -244,8 +244,8 @@ export const VideoLearningPage: React.FC = () => {
 
   if (error || !videoInfo) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-gray-50">
-         <div className="bg-red-50 text-red-600 px-6 py-4 rounded-xl border border-red-100 shadow-sm font-medium">
+      <div className="w-full h-screen flex items-center justify-center bg-[#F5F5F0] dark:bg-[#0B0E14]">
+         <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-6 py-4 rounded-xl border border-red-100 dark:border-red-800 shadow-sm font-medium">
             {error || 'An unexpected error occurred'}
          </div>
       </div>
@@ -254,22 +254,22 @@ export const VideoLearningPage: React.FC = () => {
 
   if (videoInfo.isVipOnly && (!user || user.role !== 'vip')) {
     return (
-      <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
+      <div className="w-full h-screen bg-[#F5F5F0] dark:bg-[#0B0E14] text-[#4A4A40] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans relative">
          <Header title={locTitle(videoInfo)} rightNode={<></>} />
          <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
-               <div className="w-16 h-16 bg-[#F5F5F0] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
+            <div className="bg-white dark:bg-[#151B25] p-8 rounded-[32px] shadow-sm border border-[#E0E0D5] dark:border-[#1E293B] text-center max-w-md w-full">
+               <div className="w-16 h-16 bg-[#F5F5F0] dark:bg-[#1E293B] rounded-full flex items-center justify-center mx-auto mb-6 text-[#E1B12C]">
                   <Lock className="w-8 h-8" />
                </div>
-               <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('video.vipContent')}</h2>
-               <p className="text-[#848464] mb-8">{t('video.vipDesc')}</p>
+               <h2 className="text-2xl font-serif font-bold text-[#5A5A40] dark:text-[#F8FAFC] mb-2">{t('video.vipContent')}</h2>
+               <p className="text-[#6A6A5A] dark:text-[#94A3B8] mb-8">{t('video.vipDesc')}</p>
                
                {!user ? (
                  <button onClick={() => navigate('/library')} className="bg-[#D48166] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#C27055] transition-colors">
                    {t('video.loginNow')}
                  </button>
                ) : (
-                 <button onClick={() => navigate(-1)} className="bg-[#EAEAE0] text-[#5A5A40] px-8 py-3 rounded-xl font-bold hover:bg-[#E0E0D5] transition-colors">
+                 <button onClick={() => navigate(-1)} className="bg-[#EAEAE0] dark:bg-[#1E293B] text-[#5A5A40] dark:text-[#F8FAFC] px-8 py-3 rounded-xl font-bold hover:bg-[#E0E0D5] dark:hover:bg-[#334155] transition-colors">
                    {t('video.goBack')}
                  </button>
                )}
@@ -280,26 +280,26 @@ export const VideoLearningPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-screen bg-[#F5F5F0] text-[#4A4A40] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
+    <div className="w-full h-screen bg-[#F5F5F0] dark:bg-[#0B0E14] text-[#4A4A40] dark:text-[#F8FAFC] flex flex-col overflow-hidden max-w-[1920px] mx-auto font-sans" style={{ height: '100dvh' }}>
       <Header 
         title={locTitle(videoInfo)} 
         rightNode={
           <>
             <button 
               onClick={handleCheckIn} 
-              className={`p-1.5 rounded-full transition-colors cursor-pointer ${isCheckedIn ? 'text-[#94A684] bg-[#F4F6F1]' : 'hover:bg-[#EAEAE0] hover:text-[#5A5A40]'}`}
+              className={`p-1.5 rounded-full transition-colors cursor-pointer ${isCheckedIn ? 'text-[#94A684] bg-[#F4F6F1] dark:bg-[#1E293B]' : 'hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#F8FAFC]'}`}
             >
               <CalendarCheck className="w-[22px] h-[22px]" />
             </button>
             <button 
               onClick={toggleFullScreen} 
-              className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#F8FAFC] rounded-full transition-colors cursor-pointer"
             >
               <Maximize className="w-[22px] h-[22px]" />
             </button>
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-1.5 hover:bg-[#EAEAE0] hover:text-[#5A5A40] rounded-full transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-[#EAEAE0] dark:hover:bg-[#1E293B] hover:text-[#5A5A40] dark:hover:text-[#F8FAFC] rounded-full transition-colors cursor-pointer"
             >
               <SlidersHorizontal className="w-[22px] h-[22px]" />
             </button>
@@ -336,14 +336,14 @@ export const VideoLearningPage: React.FC = () => {
 
             {/* Desktop Action Bar */}
             {videoDisplayMode === 'normal' && (
-            <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] shadow-sm bg-white shrink-0">
+            <div className="hidden lg:flex w-full mt-auto rounded-[32px] overflow-hidden border border-[#E0E0D5] dark:border-[#1E293B] shadow-sm bg-white dark:bg-[#151B25] shrink-0">
               <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} isFavorite={isFavorite} onToggleFavorite={handleToggleVideoFavorite} onPractice={() => setIsPracticeModalOpen(true)} />
             </div>
             )}
          </div>
 
          {/* Transcript Column - Scrollable */}
-         <div className={`${videoDisplayMode === 'hidden' ? 'flex-1 w-full' : 'flex-1 lg:flex-none lg:w-1/2'} lg:h-full lg:overflow-hidden relative lg:bg-white rounded-2xl lg:rounded-[32px] lg:m-6 lg:ml-0 lg:shadow-sm lg:border border-[#E0E0D5]`}>
+         <div className={`${videoDisplayMode === 'hidden' ? 'flex-1 w-full' : 'flex-1 lg:flex-none lg:w-1/2'} lg:h-full lg:overflow-hidden relative lg:bg-white dark:lg:bg-[#151B25] rounded-2xl lg:rounded-[32px] lg:m-6 lg:ml-0 lg:shadow-sm lg:border border-[#E0E0D5] dark:border-[#1E293B]`}>
            <div className="h-full absolute inset-0 lg:rounded-[32px] overflow-hidden">
              <TranscriptList 
                transcripts={transcripts} 
@@ -364,7 +364,7 @@ export const VideoLearningPage: React.FC = () => {
       </main>
 
       {/* Mobile Action Bar Fixed Bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white" style={{ bottom: 0, paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#151B25]" style={{ bottom: 0, paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
          <ActionBar {...videoContext} langMode={langMode} cycleLangMode={cycleLangMode} videoDisplayMode={videoDisplayMode} onCycleDisplayMode={cycleDisplayMode} isFavorite={isFavorite} onToggleFavorite={handleToggleVideoFavorite} onPractice={() => setIsPracticeModalOpen(true)} />
       </div>
 

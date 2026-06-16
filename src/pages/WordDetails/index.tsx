@@ -60,19 +60,19 @@ const BottomActions: React.FC<{
       {showConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 animate-in fade-in duration-150 pointer-events-auto">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={handleCancel} />
-          <div className="relative bg-white rounded-2xl px-6 pt-6 pb-5 max-w-[320px] w-full shadow-xl animate-in zoom-in-95 fade-in duration-200">
+          <div className="relative bg-white dark:bg-[#1C222C] rounded-2xl px-6 pt-6 pb-5 max-w-[320px] w-full shadow-xl animate-in zoom-in-95 fade-in duration-200">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-[#FCF0EC] flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-[#FCF0EC] dark:bg-[#2A1515] flex items-center justify-center mb-4">
                 <Trash2 className="w-6 h-6 text-[#D48166]" />
               </div>
-              <h3 className="text-base font-bold text-[#4A4A40] mb-1">确定删除？</h3>
-              <p className="text-sm text-[#8A8A7A] leading-relaxed mb-5">
+              <h3 className="text-base font-bold text-[#4A4A40] dark:text-[#E2E8F0] mb-1">确定删除？</h3>
+              <p className="text-sm text-[#8A8A7A] dark:text-[#64748B] leading-relaxed mb-5">
                 将从生词本中移除 <span className="text-[#D48166] font-semibold">"{currentWord}"</span>
               </p>
               <div className="flex gap-3 w-full">
                 <button
                   onClick={handleCancel}
-                  className="flex-1 py-2.5 px-4 text-sm font-bold text-[#6A6A5A] bg-[#F5F5F0] rounded-xl hover:bg-[#EAEAE0] transition-colors active:scale-95"
+                  className="flex-1 py-2.5 px-4 text-sm font-bold text-[#6A6A5A] dark:text-[#94A3B8] bg-[#F5F5F0] dark:bg-[#1C222C] rounded-xl hover:bg-[#EAEAE0] dark:hover:bg-[#334155] transition-colors active:scale-95"
                 >
                   取消
                 </button>
@@ -88,7 +88,7 @@ const BottomActions: React.FC<{
         </div>
       )}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center items-center gap-4 z-50 pointer-events-none">
-         <div className="bg-[#F4F5EF]/95 backdrop-blur-md px-5 py-3 rounded-full flex items-center gap-4 shadow-lg shadow-black/5 border border-white/50 pointer-events-auto">
+         <div className="bg-[#F4F5EF]/95 dark:bg-[#151B25]/95 backdrop-blur-md px-5 py-3 rounded-full flex items-center gap-4 shadow-lg shadow-black/5 border border-white/50 dark:border-[#1E293B]/50 pointer-events-auto">
            {/* 陌生按钮 */}
            <button
              onClick={() => {
@@ -97,12 +97,12 @@ const BottomActions: React.FC<{
                }
              }}
              disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
-             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
+             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-[#1C222C] border active:scale-95
                ${lastMasteryClick === -1
-                 ? 'bg-red-100 border-red-300 text-[#E74C3C] shadow-sm shadow-red-200'
+                 ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-[#E74C3C] shadow-sm shadow-red-200'
                  : lastMasteryClick === 1
-                   ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
-                   : 'border-[#E0E0D5] hover:bg-red-50 hover:border-red-200 text-[#E74C3C]'}
+                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#9CA390] opacity-50'
+                   : 'border-[#E0E0D5] dark:border-[#334155] hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-700 text-[#E74C3C]'}
                ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="不熟悉"
            >
@@ -113,10 +113,10 @@ const BottomActions: React.FC<{
            <button
              onClick={handleDeleteClick}
              disabled={isDeleting}
-             className="w-10 h-10 rounded-full flex items-center justify-center bg-white hover:bg-[#F9F9F7] active:scale-95 transition-all text-[#D48166] border border-[#E0E0D5]"
+             className="w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-[#1C222C] hover:bg-[#F9F9F7] dark:hover:bg-[#334155] active:scale-95 transition-all text-[#D48166] border border-[#E0E0D5] dark:border-[#334155]"
            >
              {isDeleting ? (
-               <div className="w-4 h-4 rounded-full border-2 border-[#E0E0D5] border-t-[#D48166] animate-spin" />
+               <div className="w-4 h-4 rounded-full border-2 border-[#E0E0D5] dark:border-[#334155] border-t-[#D48166] animate-spin" />
              ) : (
                <Trash2 className="w-4 h-4" />
              )}
@@ -130,12 +130,12 @@ const BottomActions: React.FC<{
                }
              }}
              disabled={isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined}
-             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border active:scale-95
+             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-[#1C222C] border active:scale-95
                ${lastMasteryClick === 1
-                 ? 'bg-green-100 border-green-300 text-[#2ECC71] shadow-sm shadow-green-200'
+                 ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-[#2ECC71] shadow-sm shadow-green-200'
                  : lastMasteryClick === -1
-                   ? 'border-[#E0E0D5] text-[#C0C0B5] opacity-50'
-                   : 'border-[#E0E0D5] hover:bg-green-50 hover:border-green-200 text-[#2ECC71]'}
+                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#9CA390] opacity-50'
+                   : 'border-[#E0E0D5] dark:border-[#334155] hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-700 text-[#2ECC71]'}
                ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="熟悉"
            >
@@ -409,8 +409,8 @@ export const WordDetailsPage: React.FC = () => {
 
   if (loadingList) {
     return (
-      <div className="w-full h-[100dvh] flex flex-col items-center justify-center p-12 relative bg-[#F4F5EF]">
-        <div className="w-10 h-10 rounded-full border-4 border-[#E0E0D5] border-t-[#D48166] animate-spin mb-4" />
+      <div className="w-full h-[100dvh] flex flex-col items-center justify-center p-12 relative bg-[#F4F5EF] dark:bg-[#0B0E14]">
+        <div className="w-10 h-10 rounded-full border-4 border-[#E0E0D5] dark:border-[#334155] border-t-[#D48166] animate-spin mb-4" />
       </div>
     );
   }
@@ -422,7 +422,7 @@ export const WordDetailsPage: React.FC = () => {
   // All reviewed — congratulations page
   if (allReviewed) {
     return (
-      <div className="w-full h-[100dvh] bg-[#F4F5EF] flex flex-col items-center justify-center px-6">
+      <div className="w-full h-[100dvh] bg-[#F4F5EF] dark:bg-[#0B0E14] flex flex-col items-center justify-center px-6">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -432,10 +432,10 @@ export const WordDetailsPage: React.FC = () => {
           <div className="w-20 h-20 rounded-full bg-[#7A8A54]/10 flex items-center justify-center mb-6">
             <PartyPopper className="w-10 h-10 text-[#7A8A54]" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#4A4A40] mb-3">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#4A4A40] dark:text-[#E2E8F0] mb-3">
             🎉 太棒了！
           </h1>
-          <p className="text-[#8A8A7A] text-base leading-relaxed max-w-xs mb-8">
+          <p className="text-[#8A8A7A] dark:text-[#64748B] text-base leading-relaxed max-w-xs mb-8">
             所有单词已复习完毕，继续保持学习的好习惯！
           </p>
           <button
@@ -452,23 +452,23 @@ export const WordDetailsPage: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="w-full h-[100dvh] bg-[#F4F5EF] relative flex font-sans overflow-hidden"
+      className="w-full h-[100dvh] bg-[#F4F5EF] dark:bg-[#0B0E14] relative flex font-sans overflow-hidden"
     >
        {/* Top Navigation (Fixed) */}
        <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50 safe-area-pt pointer-events-none">
-         <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border border-white/40 shadow-sm pointer-events-auto">
-           <ArrowLeft className="w-5 h-5 text-[#3A3A30]" />
+         <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-white/40 dark:bg-[#1C222C]/40 backdrop-blur hover:bg-white/60 dark:hover:bg-[#1C222C]/60 active:scale-95 transition-all outline-none border border-white/40 dark:border-[#334155]/40 shadow-sm pointer-events-auto">
+           <ArrowLeft className="w-5 h-5 text-[#3A3A30] dark:text-[#E2E8F0]" />
          </button>
          <div className="flex gap-2 pointer-events-auto">
            <button
              onClick={() => setMemoryMode(!memoryMode)}
-             className={`p-2.5 rounded-full backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border shadow-sm ${memoryMode ? 'bg-[#7A8A54]/60 text-white border-[#7A8A54]/30' : 'bg-white/40 border-white/40 text-[#3A3A30]'}`}
+             className={`p-2.5 rounded-full backdrop-blur hover:bg-white/60 dark:hover:bg-[#1C222C]/60 active:scale-95 transition-all outline-none border shadow-sm ${memoryMode ? 'bg-[#7A8A54]/60 text-white border-[#7A8A54]/30' : 'bg-white/40 dark:bg-[#1C222C]/40 border-white/40 dark:border-[#334155]/40 text-[#3A3A30] dark:text-[#E2E8F0]'}`}
              title={memoryMode ? '关闭记忆模式' : '开启记忆模式'}
            >
              {memoryMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
            </button>
-           <button className="p-2.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 active:scale-95 transition-all outline-none border border-white/40 shadow-sm">
-              <Maximize className="w-4 h-4 text-[#3A3A30]" />
+           <button className="p-2.5 rounded-full bg-white/40 dark:bg-[#1C222C]/40 backdrop-blur hover:bg-white/60 dark:hover:bg-[#1C222C]/60 active:scale-95 transition-all outline-none border border-white/40 dark:border-[#334155]/40 shadow-sm">
+             <Maximize className="w-4 h-4 text-[#3A3A30] dark:text-[#E2E8F0]" />
            </button>
          </div>
        </div>
@@ -488,7 +488,7 @@ export const WordDetailsPage: React.FC = () => {
                 y: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.25 },
               }}
-              className="absolute inset-0 w-full h-full bg-[#F4F5EF] pointer-events-none"
+              className="absolute inset-0 w-full h-full bg-[#F4F5EF] dark:bg-[#0B0E14] pointer-events-none"
               style={{ transformStyle: "preserve-3d" }}
             >
               <div className="w-full h-full pointer-events-auto">

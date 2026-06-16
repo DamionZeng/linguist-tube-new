@@ -79,7 +79,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({ isOpen, onCl
                 {t('video.checkInSuccess')}
               </h2>
 
-              <p className="text-[#848464] dark:text-[#94A3B8] text-sm mb-8 leading-relaxed">
+              <p className="text-[#6A6A5A] dark:text-[#94A3B8] text-sm mb-8 leading-relaxed">
                 {t('video.checkInSuccessDesc')}
               </p>
 

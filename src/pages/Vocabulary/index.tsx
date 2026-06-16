@@ -198,7 +198,7 @@ export const VocabularyPage: React.FC = () => {
       <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative pt-20 px-4 items-center flex-1">
          <div className="bg-white p-8 rounded-[24px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
             <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('messages.membersOnly')}</h2>
-            <p className="text-[#848464] mb-6">{t('messages.vipVocab')}</p>
+            <p className="text-[#6A6A5A] mb-6">{t('messages.vipVocab')}</p>
             <button className="bg-[#E1B12C] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#C29828] transition-colors" onClick={() => navigate(-1)}>
                {t('video.goBack')}
             </button>
@@ -226,43 +226,49 @@ export const VocabularyPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative overflow-y-auto">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 pt-6 pb-4 shrink-0">
-         <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-serif font-bold text-[#5A5A40] tracking-tight">{t('vocab.title')}</h1>
-            <span className="text-sm text-[#8A8A7A] font-medium mt-1">{vocab.length}</span>
-            {isRecommendedMode && recommendedIds && (
-              <span className="text-xs font-bold text-[#7A8A54] bg-[#7A8A54]/10 px-2 py-0.5 rounded-full mt-1">
-                {t('vocab.recommended')} {recommendedIds.length} {t('vocab.wordCount', { count: recommendedIds.length })}
-              </span>
-            )}
+      <header className="flex flex-col px-4 pt-6 pb-2 shrink-0">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+               <h1 className="text-3xl font-serif font-bold text-[#5A5A40] tracking-tight shrink-0">{t('vocab.title')}</h1>
+               <span className="text-sm text-[#8A8A7A] font-medium mt-1 shrink-0">{vocab.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+               <button 
+                 onClick={handleSmartRecommend}
+                 disabled={isRecommending}
+                 className={`text-sm font-bold px-2.5 py-1.5 rounded-lg active:scale-95 transition-all flex items-center gap-1 ${isRecommendedMode ? 'bg-[#7A8A54] text-white shadow-sm' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+                 title={isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}
+               >
+                 {isRecommending ? (
+                   <div className="w-3.5 h-3.5 rounded-full border-2 border-[#E0E0D5] border-t-current animate-spin" />
+                 ) : (
+                   <Brain className="w-4 h-4" />
+                 )}
+                 <span className="hidden sm:inline text-xs">{isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}</span>
+               </button>
+               <button 
+                 onClick={() => setShowFilters(!showFilters)}
+                 className={`text-sm font-bold p-1.5 rounded-lg active:scale-95 transition-all ${showFilters ? 'bg-[#5A5A40] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
+               >
+                 <SlidersHorizontal className="w-4 h-4" />
+               </button>
+               <button 
+                 onClick={() => setIsEditing(!isEditing)}
+                 className="text-sm font-bold px-2.5 py-1.5 rounded-lg active:scale-95 transition-all text-[#D48166] hover:bg-[#EAEAE0]"
+               >
+                 {isEditing ? t('vocab.done') : t('vocab.edit')}
+               </button>
+            </div>
          </div>
-         <div className="flex gap-2">
-            <button 
-              onClick={handleSmartRecommend}
-              disabled={isRecommending}
-              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex items-center gap-1.5 ${isRecommendedMode ? 'bg-[#7A8A54] text-white shadow-sm' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
-              title={isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}
-            >
-              {isRecommending ? (
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#E0E0D5] border-t-current animate-spin" />
-              ) : (
-                <Brain className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">{isRecommendedMode ? t('vocab.showAll') : t('vocab.smartRecommend')}</span>
-            </button>
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all ${showFilters ? 'bg-[#5A5A40] text-white' : 'text-[#6A6A5A] hover:bg-[#EAEAE0]'}`}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setIsEditing(!isEditing)}
-              className="text-sm font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all text-[#D48166] hover:bg-[#EAEAE0]"
-            >
-              {isEditing ? t('vocab.done') : t('vocab.edit')}
-            </button>
-         </div>
+         {/* Recommended mode sub-header */}
+         {isRecommendedMode && recommendedIds && (
+           <div className="flex items-center gap-2 mt-2 ml-1">
+             <span className="text-xs font-bold text-[#7A8A54] bg-[#7A8A54]/10 px-2 py-0.5 rounded-full">
+               {t('vocab.recommended')} {recommendedIds.length} {t('vocab.wordCount', { count: recommendedIds.length })}
+             </span>
+             <span className="text-[10px] text-[#7A7A6A]">{t('vocab.recommendedHint')}</span>
+           </div>
+         )}
       </header>
 
       {/* Filter & Sort Bar */}
@@ -355,40 +361,35 @@ export const VocabularyPage: React.FC = () => {
       )}
 
       {/* Vocabulary List */}
-      <div className="px-4 py-2 space-y-2">
+      <div className={`px-4 py-2 space-y-2 ${isRecommendedMode && recommendedIds ? 'pb-20' : ''}`}>
          {filteredVocab.map(item => {
            const displayMean = truncateMean(item.mean || item.trans || '');
            const isRecommended = isRecommendedMode && recommendedIds?.includes(item.id);
 
            return (
-            <div key={item.id} className={`flex items-center gap-3 group ${isRecommendedMode && !isRecommended ? 'opacity-40' : ''}`}>
+            <div key={item.id} className={`flex items-center gap-2.5 group ${isRecommendedMode && !isRecommended ? 'opacity-40' : ''}`}>
                {/* Recommended mode: toggle checkbox */}
                {isRecommendedMode && recommendedIds && (
-                  <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 transition-all active:scale-90" title={isRecommended ? t('vocab.removeFromRecommended') : t('vocab.addToRecommended')}>
-                     <div className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#C0C0B5] hover:border-[#7A8A54]/60'}`}>
-                        {isRecommended && <CheckSquare className="w-[11px] h-[11px] text-white" />}
+                  <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 w-5 h-5 flex items-center justify-center transition-all active:scale-90" title={isRecommended ? t('vocab.removeFromRecommended') : t('vocab.addToRecommended')}>
+                     <div className={`w-[16px] h-[16px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#9CA390] hover:border-[#7A8A54]/60 bg-white'}`}>
+                        {isRecommended && <CheckSquare className="w-[10px] h-[10px] text-white" />}
                      </div>
                   </button>
                )}
                {isEditing && (
-                  <button onClick={() => toggleSelect(item.id)} className="shrink-0 transition-all">
-                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#C0C0B5]'}`}>
+                  <button onClick={() => toggleSelect(item.id)} className="shrink-0 w-5 h-5 flex items-center justify-center transition-all">
+                     <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#9CA390]'}`}>
                         {selectedWords.has(item.id) && <CheckSquare className="w-3 h-3 text-white" />}
                      </div>
                   </button>
                )}
-               
+
                <div
                  className={`flex-1 min-w-0 bg-white rounded-2xl border ${isRecommended ? 'border-[#7A8A54]/60 shadow-[#7A8A54]/10' : 'border-[#E0E0D5]'} shadow-sm px-4 py-3 transition-all relative ${isEditing ? '' : 'cursor-pointer hover:border-[#D48166]/40 active:scale-[0.99]'}`}
                  onClick={() => isEditing ? undefined : navigate(`/vocab/${item.word}${isRecommendedMode && recommendedIds ? `?ids=${recommendedIds.join(',')}` : ''}`)}
                >
-                   {isRecommended && (
-                     <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold text-white bg-[#7A8A54] px-1.5 py-[1px] rounded-full shadow-sm">
-                      {t('vocab.recommended')}
-                     </span>
-                   )}
                    <div className="flex flex-col gap-1 w-full">
-                     {/* Row 1: word + audio + mastery + arrow */}
+                     {/* Row 1: word + audio + recommended tag + mastery + arrow */}
                      <div className="flex items-center gap-2 min-w-0">
                        <span className="font-bold text-base text-[#4A4A40] truncate" title={item.word}>{item.word}</span>
                        <button
@@ -397,10 +398,15 @@ export const VocabularyPage: React.FC = () => {
                        >
                          <Volume2 className="w-3.5 h-3.5" />
                        </button>
+                       {isRecommended && (
+                         <span className="text-[9px] font-bold text-white bg-[#7A8A54] px-1.5 py-[1px] rounded-full shrink-0">
+                           {t('vocab.recommended')}
+                         </span>
+                       )}
                        <div className="ml-auto flex items-center gap-1.5 shrink-0">
                          <MasteryBar mastery={item.mastery ?? 1} />
                          {!isEditing && (
-                           <ChevronRight className="w-3.5 h-3.5 text-[#C0C0B5] group-hover:text-[#D48166] transition-colors" />
+                           <ChevronRight className="w-3.5 h-3.5 text-[#9CA390] group-hover:text-[#D48166] transition-colors" />
                          )}
                        </div>
                      </div>
@@ -419,9 +425,9 @@ export const VocabularyPage: React.FC = () => {
          })}
       </div>
 
-      {/* Recommended mode: start review button */}
+      {/* Recommended mode: start review button - floating above tab bar */}
       {isRecommendedMode && recommendedIds && recommendedIds.length > 0 && (
-        <div className="px-4 pb-4 pt-2 shrink-0">
+        <div className="fixed left-0 right-0 z-[45] px-4 pb-safe pointer-events-none" style={{ bottom: 'calc(68px + 12px + env(safe-area-inset-bottom, 0px))' }}>
           <button
             onClick={() => {
               const firstRecId = recommendedIds[0];
@@ -430,7 +436,7 @@ export const VocabularyPage: React.FC = () => {
                 navigate(`/vocab/${firstWord}?ids=${recommendedIds.join(',')}`);
               }
             }}
-            className="w-full py-3 rounded-2xl bg-[#7A8A54] text-white font-bold text-base shadow-md shadow-[#7A8A54]/20 hover:bg-[#6A7A44] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-2xl bg-[#7A8A54] text-white font-bold text-base shadow-lg shadow-[#7A8A54]/25 hover:bg-[#6A7A44] active:scale-[0.98] transition-all flex items-center justify-center gap-2 pointer-events-auto"
           >
             <Brain className="w-5 h-5" />
             {t('vocab.startReview', { count: recommendedIds.length })}
