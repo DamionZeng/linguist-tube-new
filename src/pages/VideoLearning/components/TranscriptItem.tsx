@@ -76,8 +76,8 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
       onClick={onSeek}
       className={`p-4 mb-2 transition-all duration-300 cursor-pointer group border rounded-xl ${
       isActive 
-        ? 'bg-[#E0E0D5] border-[#D48166] dark:bg-[#1E293B] dark:border-[#D48166]' 
-        : 'bg-white border-[#E0E0D5] hover:border-[#D48166]/30 hover:bg-[#F9F9F7] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B] dark:hover:bg-[#1C222C]'
+        ? 'bg-[#E0E0D5]/80 border-[#D48166] dark:bg-[#1C222C] dark:border-[#D48166]' 
+        : 'bg-white/90 border-[#E0E0D5]/60 hover:border-[#D48166]/30 hover:bg-[#F9F9F7]/80 shadow-sm dark:bg-[#151B25]/70 dark:border-[#1E293B]/50 dark:hover:bg-[#1C222C]'
     }`}>
       <div className="flex justify-between items-center mb-1.5">
         <span className={`text-[11px] font-mono font-bold tracking-wider ${isActive ? 'text-[#D48166]' : 'text-[#D0D0CE] dark:text-[#475569]'}`}>
@@ -115,7 +115,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
       
       <div className="flex flex-col gap-2 transition-all duration-300">
         {langMode !== 'none' && (langMode === 'bilingual' || langMode === 'en') && (
-          <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-black dark:text-[#F8FAFC]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
+          <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight ${isActive ? 'text-[#2A2A20] dark:text-[#F1F5F9]' : 'text-[#111111] dark:text-[#94A3B8]'}`}>
             {isActive && transcript.words?.en && transcript.words.en.length > 0
               ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true, transcript.en, savedPhrases)
               : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, transcript.en, savedPhrases)
@@ -131,7 +131,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         {langMode === 'none' && isActive && showSubtitle && (
           <>
             {transcript.en && (
-              <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight text-black dark:text-[#F8FAFC] animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+              <p className={`${getEnSizeClass()} font-bold leading-snug tracking-tight text-[#2A2A20] dark:text-[#F1F5F9] animate-in fade-in slide-in-from-bottom-2 duration-200`}>
                 {isActive && transcript.words?.en && transcript.words.en.length > 0
                   ? renderTimedWords(transcript.words.en, currentTime, onWordClick, savedWords, highlightColor, true, transcript.en, savedPhrases)
                   : renderHighlightedText(transcript.en, transcript.highlights, onWordClick, showHighlights, savedWords, highlightColor, transcript.en, savedPhrases)

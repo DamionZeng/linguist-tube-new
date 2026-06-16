@@ -11,30 +11,70 @@
   }
 
   /* Custom dark mode implementation mapping explicit colors */
-  html.dark body { background-color: #0B0E14; }
+  html.dark body {
+  background-color: #0B0E14;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
   
   html.dark .bg-\[\#F5F5F0\] { background-color: #0B0E14 !important; }
+  html.dark .bg-\[\#F5F8FA\] { background-color: #0B0E14 !important; }
+  html.dark .bg-\[\#F5F8FA\]\/50 { background-color: rgba(11, 14, 20, 0.5) !important; }
+  html.dark .bg-\[\#E0E0D5\] { background-color: #1E293B !important; }
+  html.dark .bg-\[\#E0E0D5\]\/80 { background-color: rgba(30, 41, 59, 0.8) !important; }
   html.dark .bg-\[\#EAEAE0\] { background-color: #151B25 !important; }
+  html.dark .bg-\[\#151B25\] { background-color: #151B25 !important; }
+  html.dark .bg-\[\#151B25\]\/70 { background-color: rgba(21, 27, 37, 0.7) !important; }
   html.dark .bg-\[\#F9F9F7\] { background-color: #1C222C !important; }
+  html.dark .bg-\[\#F9F9F7\]\/80 { background-color: rgba(28, 34, 44, 0.8) !important; }
+  html.dark .bg-\[\#F4F5EF\] { background-color: #0B0E14 !important; }
+  html.dark .bg-\[\#FCF5F3\] { background-color: #2A1A15 !important; }
+  html.dark .bg-\[\#F2F5F0\] { background-color: #1A2218 !important; }
+  html.dark .bg-\[\#FCF0EC\] { background-color: #2A1515 !important; }
+  html.dark .hover\:bg-\[\#F2E5E1\]\:hover { background-color: #3A201A !important; }
   html.dark .bg-white { background-color: #151B25 !important; }
-  html.dark .bg-white\/50 { background-color: rgba(21, 27, 37, 0.8) !important; }
   html.dark .bg-white\/90 { background-color: rgba(21, 27, 37, 0.9) !important; }
+  html.dark .bg-white\/80 { background-color: rgba(21, 27, 37, 0.8) !important; }
+  html.dark .bg-white\/50 { background-color: rgba(21, 27, 37, 0.5) !important; }
+  html.dark .bg-white\/40 { background-color: rgba(21, 27, 37, 0.4) !important; }
   
   html.dark .text-\[\#4A4A40\] { color: #E2E8F0 !important; }
   html.dark .text-\[\#5A5A40\] { color: #F8FAFC !important; }
   html.dark .text-\[\#6A6A5A\] { color: #94A3B8 !important; }
   html.dark .text-\[\#8A8A7A\] { color: #64748B !important; }
   html.dark .text-\[\#848464\] { color: #64748B !important; }
+  html.dark .text-\[\#2A2A20\] { color: #F8FAFC !important; }
+  html.dark .text-\[\#3A3A30\] { color: #E2E8F0 !important; }
+  html.dark .text-\[\#7A7A6A\] { color: #94A3B8 !important; }
+  html.dark .text-\[\#A0A090\] { color: #94A3B8 !important; }
+  html.dark .text-\[\#C0C0B5\] { color: #64748B !important; }
+  html.dark .text-\[\#94A684\] { color: #86EFAC !important; }
+  html.dark .text-\[\#111111\] { color: #94A3B8 !important; }
+  html.dark .text-\[\#333\] { color: #F1F5F9 !important; }
+  html.dark .text-black { color: #F1F5F9 !important; }
+  html.dark .text-\[\#D0D0CE\] { color: #475569 !important; }
   html.dark .text-white { color: #F8FAFC !important; }
   
-  /* Retain some primary colors but slightly adjust for dark mode if needed, though default might be fine */
+  /* Fix spinner visibility in dark mode - only override non-top borders */
+  html.dark .border-\[\#E0E0D5\] {
+    border-right-color: #334155 !important;
+    border-bottom-color: #334155 !important;
+    border-left-color: #334155 !important;
+  }
   html.dark .border-\[\#E0E0D5\] { border-color: #1E293B !important; }
-  html.dark .border-\[\#EAEAE0\] { border-color: #1E293B !important; }
+  html.dark .border-\[\#E0E0D5\]\/60 { border-color: rgba(30, 41, 59, 0.6) !important; }
+  html.dark .border-\[\#E0E0E0\] { border-color: #1E293B !important; }
+  html.dark .border-\[\#E0E0D5\]\/50 { border-color: rgba(51, 65, 85, 0.5) !important; }
   html.dark .border-white { border-color: #1E293B !important; }
   
   html.dark .hover\:bg-\[\#EAEAE0\]:hover { background-color: #1E293B !important; }
+  html.dark .hover\:bg-\[\#E0E0D5\]\:hover { background-color: #334155 !important; }
+  html.dark .hover\:bg-\[\#E0E0D5\]\/50\:hover { background-color: rgba(51, 65, 85, 0.5) !important; }
   html.dark .hover\:bg-\[\#F5F5F0\]:hover { background-color: #0B0E14 !important; }
   html.dark .hover\:bg-\[\#F9F9F7\]:hover { background-color: #334155 !important; }
+  html.dark .hover\:border-\[\#94A684\]:hover { border-color: #86EFAC !important; }
+  html.dark .hover\:text-\[\#D48166\]:hover { color: #D48166 !important; }
   
   /* Fix some specific text over dark backgrounds */
   html.dark .bg-\[\#4A4A40\] { background-color: #334155 !important; color: #F8FAFC !important; }

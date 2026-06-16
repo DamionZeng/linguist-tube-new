@@ -373,7 +373,7 @@ export const FullMode: React.FC = () => {
         )}
 
         <div className="max-w-3xl mx-auto bg-white dark:bg-[#151B25] rounded-3xl p-6 md:p-10 shadow-sm border border-[#E0E0E0] dark:border-[#1E293B]">
-          <div ref={textContainerRef} className="text-base md:text-lg font-serif text-[#333] dark:text-[#E2E8F0] leading-relaxed">
+          <div ref={textContainerRef} className="text-base md:text-lg font-serif text-[#333] dark:text-[#F1F5F9] leading-relaxed" style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}>
             {transcripts.map((sentence, idx) => {
               const isPlayingCurrent = playingSegmentIndex === idx;
               const sentenceScore = scores[idx];
