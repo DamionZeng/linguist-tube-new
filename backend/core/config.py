@@ -5,7 +5,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     database_url: str
     jwt_secret_key: str
-    jwt_expire_minutes: int = 1440
+    jwt_expire_minutes: int = 10080  # 7 days
     port: int = 8000
 
     r2_endpoint_url: str = ""
