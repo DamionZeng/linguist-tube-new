@@ -101,7 +101,7 @@ const BottomActions: React.FC<{
                ${lastMasteryClick === -1
                  ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-[#E74C3C] shadow-sm shadow-red-200'
                  : lastMasteryClick === 1
-                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#C0C0B5] opacity-50'
+                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#9CA390] opacity-50'
                    : 'border-[#E0E0D5] dark:border-[#334155] hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-700 text-[#E74C3C]'}
                ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="不熟悉"
@@ -134,7 +134,7 @@ const BottomActions: React.FC<{
                ${lastMasteryClick === 1
                  ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-[#2ECC71] shadow-sm shadow-green-200'
                  : lastMasteryClick === -1
-                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#C0C0B5] opacity-50'
+                   ? 'border-[#E0E0D5] dark:border-[#334155] text-[#9CA390] opacity-50'
                    : 'border-[#E0E0D5] dark:border-[#334155] hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-700 text-[#2ECC71]'}
                ${isUpdatingMastery || currentVocabId === 'direct' || lastMasteryClick !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="熟悉"

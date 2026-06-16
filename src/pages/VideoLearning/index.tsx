@@ -262,7 +262,7 @@ export const VideoLearningPage: React.FC = () => {
                   <Lock className="w-8 h-8" />
                </div>
                <h2 className="text-2xl font-serif font-bold text-[#5A5A40] dark:text-[#F8FAFC] mb-2">{t('video.vipContent')}</h2>
-               <p className="text-[#848464] dark:text-[#94A3B8] mb-8">{t('video.vipDesc')}</p>
+               <p className="text-[#6A6A5A] dark:text-[#94A3B8] mb-8">{t('video.vipDesc')}</p>
                
                {!user ? (
                  <button onClick={() => navigate('/library')} className="bg-[#D48166] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#C27055] transition-colors">

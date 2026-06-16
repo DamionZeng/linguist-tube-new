@@ -89,7 +89,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
           <div className="flex flex-col items-center gap-1.5 mb-6">
             {details.ukphone && (
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#A0A090] dark:text-[#94A3B8] bg-[#EAEAE0] dark:bg-[#1E293B] px-2 py-0.5 rounded">UK</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A7A6A] dark:text-[#94A3B8] bg-[#EAEAE0] dark:bg-[#1E293B] px-2 py-0.5 rounded">UK</span>
                 <span className="text-sm font-mono text-[#7A7A6A] dark:text-[#94A3B8] tracking-wider">/{details.ukphone}/</span>
                 {details.ukspeech && (
                   <button
@@ -103,7 +103,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
             )}
             {details.usphone && (
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#A0A090] dark:text-[#94A3B8] bg-[#EAEAE0] dark:bg-[#1E293B] px-2 py-0.5 rounded">US</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A7A6A] dark:text-[#94A3B8] bg-[#EAEAE0] dark:bg-[#1E293B] px-2 py-0.5 rounded">US</span>
                 <span className="text-sm font-mono text-[#7A7A6A] dark:text-[#94A3B8] tracking-wider">/{details.usphone}/</span>
                 {details.usspeech && (
                   <button
@@ -123,7 +123,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
           {/* Memory mode: show hint to tap */}
           {hideContent && (
             <div className="mt-8 animate-pulse">
-              <p className="text-[#A0A090] dark:text-[#94A3B8] text-sm font-medium">{t('vocab.tapToReveal')}</p>
+              <p className="text-[#7A7A6A] dark:text-[#94A3B8] text-sm font-medium">{t('vocab.tapToReveal')}</p>
             </div>
           )}
 
@@ -158,7 +158,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
                  <button 
                     key={tab.id}
                     onClick={(e) => { e.stopPropagation(); setActiveTab(tab.id as TabType); }}
-                    className={`text-sm md:text-base font-bold transition-all relative ${activeTab === tab.id ? 'text-[#7A8A54]' : 'text-[#A0A090] dark:text-[#94A3B8] hover:text-[#7A8A54]/70'}`}
+                    className={`text-sm md:text-base font-bold transition-all relative ${activeTab === tab.id ? 'text-[#7A8A54]' : 'text-[#7A7A6A] dark:text-[#94A3B8] hover:text-[#7A8A54]/70'}`}
                  >
                    {tab.label}
                    {activeTab === tab.id && (
@@ -179,7 +179,7 @@ export const WordScreen: React.FC<WordScreenProps> = ({ word, isPreloaded, isCur
                         <span className="bg-[#2A2A20] dark:bg-[#334155] text-[#F4F5EF] text-[10px] font-bold px-1.5 py-0.5 rounded font-mono italic">
                           example {idx + 1}
                         </span>
-                        <button onClick={(e) => { e.stopPropagation(); speakSentence(sentence.s_content); }} className="text-[#A0A090] dark:text-[#94A3B8] p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all">
+                        <button onClick={(e) => { e.stopPropagation(); speakSentence(sentence.s_content); }} className="text-[#7A7A6A] dark:text-[#94A3B8] p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all">
                            <Volume1 className="w-4 h-4 text-[#7A8A54]" />
                         </button>
                       </div>

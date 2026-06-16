@@ -70,7 +70,7 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
         <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">
           {isLogin ? t('auth.authentication') : t('auth.register')}
         </h2>
-        <p className="text-[#848464] mb-8 text-sm md:text-base">
+        <p className="text-[#6A6A5A] mb-8 text-sm md:text-base">
           {message || (isLogin ? t('messages.loginHistory') : '')}
         </p>
 
@@ -147,7 +147,7 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
 
         <div className="mt-6 text-center">
           {isLogin ? (
-            <p className="text-sm text-[#848464]">
+            <p className="text-sm text-[#6A6A5A]">
               {t('auth.noAccount')}{' '}
               <button
                 type="button"
@@ -158,7 +158,7 @@ export const LoginPrompt: React.FC<{ message?: string }> = ({ message }) => {
               </button>
             </p>
           ) : (
-            <p className="text-sm text-[#848464]">
+            <p className="text-sm text-[#6A6A5A]">
               {t('auth.hasAccount')}{' '}
               <button
                 type="button"

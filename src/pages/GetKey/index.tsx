@@ -37,7 +37,7 @@ export const GetKeyPage: React.FC = () => {
             <Gift className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold text-[#5A5A40] dark:text-white mb-2">{t('getKey.qrTitle')}</h2>
-          <p className="text-sm text-[#848464] dark:text-gray-400 mb-6 leading-relaxed">{t('getKey.qrDesc')}</p>
+          <p className="text-sm text-[#6A6A5A] dark:text-gray-400 mb-6 leading-relaxed">{t('getKey.qrDesc')}</p>
 
           <div className="inline-block p-3 bg-white rounded-2xl shadow-inner border border-[#EAEAE0] dark:bg-gray-800 dark:border-gray-600 mb-4">
             <img src="/contact.jpg" alt={t('getKey.qrAlt')} className="w-48 h-48 object-contain rounded-xl" />
@@ -60,7 +60,7 @@ export const GetKeyPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-[#5A5A40] dark:text-white">{f.title}</h3>
-                  <p className="text-xs text-[#848464] dark:text-gray-400 mt-0.5 leading-relaxed">{f.desc}</p>
+                  <p className="text-xs text-[#6A6A5A] dark:text-gray-400 mt-0.5 leading-relaxed">{f.desc}</p>
                 </div>
               </div>
             ))}

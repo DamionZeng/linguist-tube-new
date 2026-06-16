@@ -198,7 +198,7 @@ export const VocabularyPage: React.FC = () => {
       <div className="flex flex-col h-full bg-[#F5F5F0] text-[#4A4A40] max-w-4xl mx-auto w-full relative pt-20 px-4 items-center flex-1">
          <div className="bg-white p-8 rounded-[24px] shadow-sm border border-[#E0E0D5] text-center max-w-md w-full">
             <h2 className="text-2xl font-serif font-bold text-[#5A5A40] mb-2">{t('messages.membersOnly')}</h2>
-            <p className="text-[#848464] mb-6">{t('messages.vipVocab')}</p>
+            <p className="text-[#6A6A5A] mb-6">{t('messages.vipVocab')}</p>
             <button className="bg-[#E1B12C] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#C29828] transition-colors" onClick={() => navigate(-1)}>
                {t('video.goBack')}
             </button>
@@ -266,7 +266,7 @@ export const VocabularyPage: React.FC = () => {
              <span className="text-xs font-bold text-[#7A8A54] bg-[#7A8A54]/10 px-2 py-0.5 rounded-full">
                {t('vocab.recommended')} {recommendedIds.length} {t('vocab.wordCount', { count: recommendedIds.length })}
              </span>
-             <span className="text-[10px] text-[#A0A090]">{t('vocab.recommendedHint')}</span>
+             <span className="text-[10px] text-[#7A7A6A]">{t('vocab.recommendedHint')}</span>
            </div>
          )}
       </header>
@@ -371,14 +371,14 @@ export const VocabularyPage: React.FC = () => {
                {/* Recommended mode: toggle checkbox */}
                {isRecommendedMode && recommendedIds && (
                   <button onClick={(e) => { e.stopPropagation(); toggleRecommended(item.id); }} className="shrink-0 w-5 h-5 flex items-center justify-center transition-all active:scale-90" title={isRecommended ? t('vocab.removeFromRecommended') : t('vocab.addToRecommended')}>
-                     <div className={`w-[16px] h-[16px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#C0C0B5] hover:border-[#7A8A54]/60 bg-white'}`}>
+                     <div className={`w-[16px] h-[16px] rounded border-2 flex items-center justify-center transition-colors ${isRecommended ? 'bg-[#7A8A54] border-[#7A8A54]' : 'border-[#9CA390] hover:border-[#7A8A54]/60 bg-white'}`}>
                         {isRecommended && <CheckSquare className="w-[10px] h-[10px] text-white" />}
                      </div>
                   </button>
                )}
                {isEditing && (
                   <button onClick={() => toggleSelect(item.id)} className="shrink-0 w-5 h-5 flex items-center justify-center transition-all">
-                     <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#C0C0B5]'}`}>
+                     <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${selectedWords.has(item.id) ? 'bg-[#D48166] border-[#D48166]' : 'border-[#9CA390]'}`}>
                         {selectedWords.has(item.id) && <CheckSquare className="w-3 h-3 text-white" />}
                      </div>
                   </button>
@@ -406,7 +406,7 @@ export const VocabularyPage: React.FC = () => {
                        <div className="ml-auto flex items-center gap-1.5 shrink-0">
                          <MasteryBar mastery={item.mastery ?? 1} />
                          {!isEditing && (
-                           <ChevronRight className="w-3.5 h-3.5 text-[#C0C0B5] group-hover:text-[#D48166] transition-colors" />
+                           <ChevronRight className="w-3.5 h-3.5 text-[#9CA390] group-hover:text-[#D48166] transition-colors" />
                          )}
                        </div>
                      </div>
@@ -416,7 +416,7 @@ export const VocabularyPage: React.FC = () => {
                        {item.pos && (
                          <span className="text-[10px] text-[#94A684] font-serif border border-[#94A684]/30 px-1.5 py-[1px] rounded-sm bg-[#94A684]/5 shrink-0">{item.pos}</span>
                        )}
-                       <span className="text-xs text-[#6A6A6A] truncate" title={displayMean}>{displayMean}</span>
+                       <span className="text-xs text-[#6A6A5A] truncate" title={displayMean}>{displayMean}</span>
                      </div>
                   </div>
                </div>

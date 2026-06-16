@@ -80,7 +80,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
         : 'bg-white border-[#E0E0D5] hover:border-[#D48166]/30 hover:bg-[#F9F9F7] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B] dark:hover:bg-[#1C222C]'
     }`}>
       <div className="flex justify-between items-center mb-1.5">
-        <span className={`text-[11px] font-mono font-bold tracking-wider ${isActive ? 'text-[#D48166]' : 'text-[#D0D0CE] dark:text-[#475569]'}`}>
+        <span className={`text-[11px] font-mono font-bold tracking-wider ${isActive ? 'text-[#D48166]' : 'text-[#8A8A7A] dark:text-[#475569]'}`}>
           {transcript.startTime}
         </span>
         <div className="flex items-center gap-0.5">
@@ -88,7 +88,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
           {isActive && (
             <button
               onClick={(e) => { e.stopPropagation(); setLooping(v => !v); }}
-              className={`p-1 transition-all ${looping ? 'text-[#D48166]' : 'text-[#D0D0CE] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
+              className={`p-1 transition-all ${looping ? 'text-[#D48166]' : 'text-[#8A8A7A] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
               title={looping ? t('transcript.cancelLoop') : t('transcript.loopLine')}
             >
               <RefreshCcw className={`w-4 h-4 ${looping ? 'text-[#D48166]' : ''}`} />
@@ -98,7 +98,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
           {langMode === 'none' && isActive && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowSubtitle(v => !v); }}
-              className={`p-1 transition-all text-[#D0D0CE] hover:text-[#7A8A54] dark:text-[#475569] dark:hover:text-[#7A8A54]`}
+              className={`p-1 transition-all text-[#8A8A7A] hover:text-[#7A8A54] dark:text-[#475569] dark:hover:text-[#7A8A54]`}
               title={showSubtitle ? t('transcript.hideSubtitle') : t('transcript.showSubtitle')}
             >
               {showSubtitle ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -106,7 +106,7 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
           )}
           <button 
              onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-             className={`p-1 -mr-1 transition-all ${isActive || transcript.isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${transcript.isFavorite ? 'text-[#D48166]' : 'text-[#D0D0CE] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
+             className={`p-1 -mr-1 transition-all ${isActive || transcript.isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${transcript.isFavorite ? 'text-[#D48166]' : 'text-[#8A8A7A] hover:text-[#D48166] dark:text-[#475569] dark:hover:text-[#D48166]'}`}
           >
             <Heart className={`w-5 h-5 ${transcript.isFavorite ? 'fill-current' : ''}`} />
           </button>

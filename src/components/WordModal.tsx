@@ -164,7 +164,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
               </div>
               <div className="flex flex-wrap gap-x-0.5 gap-y-1 items-center">
                 {visibleRange.start > 0 && (
-                  <span className="text-[#C0C0B8] dark:text-[#64748B] text-sm px-0.5 select-none">…</span>
+                  <span className="text-[#9CA390] dark:text-[#64748B] text-sm px-0.5 select-none">…</span>
                 )}
                 {sentenceWords.slice(visibleRange.start, visibleRange.end).map((w, i) => {
                   const globalIndex = visibleRange.start + i;
@@ -189,7 +189,7 @@ export const WordModal: React.FC<WordModalProps> = ({ isOpen, onClose, word, sen
                   );
                 })}
                 {visibleRange.end < sentenceWords.length && (
-                  <span className="text-[#C0C0B8] text-sm px-0.5 select-none">…</span>
+                  <span className="text-[#9CA390] text-sm px-0.5 select-none">…</span>
                 )}
               </div>
               {isPhrase && (
