@@ -170,10 +170,12 @@ async def init_db():
     from models.registration_key import RegistrationKey  # noqa
     from models.parse_task import ParseTask  # noqa
 
+    is_serverless = os.environ.get("VERCEL") == "1"
     async with _get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        await _auto_migrate(conn)
-        await _migrate_checkin_constraints(conn)
+        if not is_serverless:
+            await _auto_migrate(conn)
+            await _migrate_checkin_constraints(conn)
 
 
 async def _migrate_checkin_constraints(conn):
