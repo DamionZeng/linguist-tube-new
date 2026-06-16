@@ -12,7 +12,6 @@ interface TranscriptItemProps {
   onSeek: () => void;
   onToggleFavorite: () => void;
   onWordClick: (word: string, sentence?: string) => void;
-  forwardRef: React.Ref<HTMLDivElement>;
   langMode: LangMode;
   showHighlights: boolean;
   savedWords?: string[];
@@ -21,7 +20,7 @@ interface TranscriptItemProps {
   subtitleSize?: 'small' | 'standard' | 'medium' | 'large';
 }
 
-export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, forwardRef, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
+const TranscriptItemInner: React.FC<TranscriptItemProps> = ({ transcript, isActive, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
   const { t } = useTranslation();
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [looping, setLooping] = useState(false);
@@ -71,12 +70,11 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
   };
 
   return (
-    <div 
-      ref={forwardRef}
+    <div
       onClick={onSeek}
-      className={`p-4 mb-2 transition-all duration-300 cursor-pointer group border rounded-xl ${
-      isActive 
-        ? 'bg-[#E0E0D5] border-[#D48166] dark:bg-[#1E293B] dark:border-[#D48166]' 
+      className={`mx-3 md:mx-5 p-4 mb-2 transition-all duration-300 cursor-pointer group border rounded-xl ${
+      isActive
+        ? 'bg-[#E0E0D5] border-[#D48166] dark:bg-[#1E293B] dark:border-[#D48166]'
         : 'bg-white border-[#E0E0D5] hover:border-[#D48166]/30 hover:bg-[#F9F9F7] shadow-sm dark:bg-[#151B25] dark:border-[#1E293B] dark:hover:bg-[#1C222C]'
     }`}>
       <div className="flex justify-between items-center mb-1.5">
@@ -149,3 +147,38 @@ export const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript, isAc
     </div>
   );
 };
+
+const arePropsEqual = (prev: TranscriptItemProps, next: TranscriptItemProps) => {
+  // 对于非活跃字幕，currentTime 的变化不影响渲染结果，跳过比较以阻止无权重渲染
+  if (!prev.isActive && !next.isActive && prev.currentTime !== next.currentTime) {
+    return (
+      prev.transcript === next.transcript &&
+      prev.isActive === next.isActive &&
+      prev.langMode === next.langMode &&
+      prev.showHighlights === next.showHighlights &&
+      prev.savedWords === next.savedWords &&
+      prev.savedPhrases === next.savedPhrases &&
+      prev.highlightColor === next.highlightColor &&
+      prev.subtitleSize === next.subtitleSize &&
+      prev.onSeek === next.onSeek &&
+      prev.onToggleFavorite === next.onToggleFavorite &&
+      prev.onWordClick === next.onWordClick
+    );
+  }
+  return (
+    prev.transcript === next.transcript &&
+    prev.isActive === next.isActive &&
+    prev.currentTime === next.currentTime &&
+    prev.langMode === next.langMode &&
+    prev.showHighlights === next.showHighlights &&
+    prev.savedWords === next.savedWords &&
+    prev.savedPhrases === next.savedPhrases &&
+    prev.highlightColor === next.highlightColor &&
+    prev.subtitleSize === next.subtitleSize &&
+    prev.onSeek === next.onSeek &&
+    prev.onToggleFavorite === next.onToggleFavorite &&
+    prev.onWordClick === next.onWordClick
+  );
+};
+
+export const TranscriptItem = React.memo(TranscriptItemInner, arePropsEqual);

@@ -3,10 +3,19 @@ import type { VocabItem, MasteryResult } from '../types/word';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
+// 默认请求超时时间（毫秒）
+const DEFAULT_TIMEOUT_MS = 15000;
+
 interface ApiResponse<T> {
   code: number;
   data: T;
   message: string;
+}
+
+function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
 async function apiGet<T>(path: string): Promise<T> {
@@ -15,7 +24,18 @@ async function apiGet<T>(path: string): Promise<T> {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  const { signal, clear } = withTimeout(DEFAULT_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { headers, signal });
+  } catch (e) {
+    clear();
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试');
+    }
+    throw e;
+  }
+  clear();
   const json: ApiResponse<T> = await res.json();
   if (res.status === 401) {
     window.dispatchEvent(new Event('auth:unauthorized'));
@@ -32,11 +52,23 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  });
+  const { signal, clear } = withTimeout(DEFAULT_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (e) {
+    clear();
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试');
+    }
+    throw e;
+  }
+  clear();
   const json: ApiResponse<T> = await res.json();
   if (res.status === 401) {
     window.dispatchEvent(new Event('auth:unauthorized'));
@@ -53,7 +85,18 @@ async function apiDelete<T>(path: string): Promise<T> {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
+  const { signal, clear } = withTimeout(DEFAULT_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers, signal });
+  } catch (e) {
+    clear();
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试');
+    }
+    throw e;
+  }
+  clear();
   const json: ApiResponse<T> = await res.json();
   if (res.status === 401) {
     window.dispatchEvent(new Event('auth:unauthorized'));

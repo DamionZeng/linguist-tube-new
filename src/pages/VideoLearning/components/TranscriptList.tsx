@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Transcript } from '../../../types';
 import { TranscriptItem } from './TranscriptItem';
 import { parseTime } from '../../../utils/time';
@@ -20,44 +21,53 @@ interface TranscriptListProps {
 }
 
 export const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, currentTime, activeIndex, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords = [], savedPhrases = [], highlightColor = '#D48166', subtitleSize = 'standard' }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const activeItemRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const prevActiveIndex = useRef(activeIndex);
 
   useEffect(() => {
     if (activeIndex !== prevActiveIndex.current && activeIndex !== -1) {
-       if (activeItemRef.current) {
-          activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-       }
-       prevActiveIndex.current = activeIndex;
+      virtuosoRef.current?.scrollToIndex({
+        index: activeIndex,
+        behavior: 'smooth',
+        align: 'start',
+      });
+      prevActiveIndex.current = activeIndex;
     }
   }, [activeIndex]);
 
+  const itemContent = useCallback((index: number) => {
+    const t = transcripts[index];
+    const isActive = index === activeIndex;
+    return (
+      <TranscriptItem
+        transcript={t}
+        isActive={isActive}
+        currentTime={isActive ? currentTime : 0}
+        onSeek={() => onSeek(parseTime(t.startTime))}
+        onToggleFavorite={() => onToggleFavorite(t.id)}
+        onWordClick={onWordClick}
+        langMode={langMode}
+        showHighlights={showHighlights}
+        savedWords={savedWords}
+        savedPhrases={savedPhrases}
+        highlightColor={highlightColor}
+        subtitleSize={subtitleSize}
+      />
+    );
+  }, [transcripts, activeIndex, currentTime, onSeek, onToggleFavorite, onWordClick, langMode, showHighlights, savedWords, savedPhrases, highlightColor, subtitleSize]);
+
+  const Footer = useCallback(() => (
+    <div className="h-[200px] lg:h-10" />
+  ), []);
+
   return (
-    <div ref={containerRef} className="w-full h-full overflow-y-auto px-3 py-5 md:px-5">
-      {transcripts.map((t, index) => {
-        const isActive = index === activeIndex;
-        return (
-          <TranscriptItem 
-            key={t.id} 
-            transcript={t} 
-            isActive={isActive}
-            currentTime={currentTime}
-            onSeek={() => onSeek(parseTime(t.startTime))}
-            onToggleFavorite={() => onToggleFavorite(t.id)}
-            onWordClick={onWordClick}
-            forwardRef={isActive ? activeItemRef : null}
-            langMode={langMode}
-            showHighlights={showHighlights}
-            savedWords={savedWords}
-            savedPhrases={savedPhrases}
-            highlightColor={highlightColor}
-            subtitleSize={subtitleSize}
-          />
-        );
-      })}
-      {/* Dynamic padding at the bottom so the last item clears the fixed action bar on mobile */}
-      <div className="h-[200px] lg:h-10" /> 
-    </div>
+    <Virtuoso
+      ref={virtuosoRef}
+      totalCount={transcripts.length}
+      itemContent={itemContent}
+      components={{ Footer }}
+      className="w-full h-full"
+      style={{ padding: '12px 0 0 0' }}
+    />
   );
 };

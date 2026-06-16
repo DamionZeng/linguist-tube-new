@@ -100,7 +100,8 @@ const resources = {
       history: {
         title: "Recent History",
         watched: "Watched",
-        complete: "Complete"
+        complete: "Complete",
+        noHistory: "No watch history yet"
       },
       favorites: {
         title: "My Favorites",
@@ -296,9 +297,6 @@ const resources = {
         loadLibrary: "Failed to load library data.",
         loadExplore: "Failed to load explore data."
       },
-      history: {
-        noHistory: "No watch history yet"
-      },
       transcript: {
         cancelLoop: "Cancel loop",
         loopLine: "Loop this line",
@@ -401,7 +399,8 @@ const resources = {
       history: {
         title: "最近学习",
         watched: "观看于",
-        complete: "已完成"
+        complete: "已完成",
+        noHistory: "暂无观看记录"
       },
       favorites: {
         title: "我的收藏",
@@ -599,9 +598,6 @@ const resources = {
         loadVocabulary: "加载生词本失败。",
         loadLibrary: "加载个人数据失败。",
         loadExplore: "加载探索数据失败。"
-      },
-      history: {
-        noHistory: "暂无观看记录"
       },
       transcript: {
         cancelLoop: "取消循环",
