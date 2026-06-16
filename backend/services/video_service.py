@@ -98,14 +98,17 @@ async def get_transcripts(video_id: str, user_id: int | None = None) -> list[dic
         transcripts = result.scalars().all()
 
         fav_sentence_ids: set[str] = set()
-        if user_id is not None:
+        if user_id is not None and transcripts:
+            # 只查询当前视频相关的用户收藏（join transcript id），
+            # 避免全量拉取用户所有收藏
+            transcript_ids = [t.id for t in transcripts]
             fav_result = await session.execute(
-                select(FavoriteSentence).where(
-                    FavoriteSentence.user_id == user_id
+                select(FavoriteSentence.id).where(
+                    FavoriteSentence.user_id == user_id,
+                    FavoriteSentence.id.in_(transcript_ids),
                 )
             )
-            for fs in fav_result.scalars().all():
-                fav_sentence_ids.add(fs.id)
+            fav_sentence_ids = {row[0] for row in fav_result.all()}
 
         items = []
         for t in transcripts:

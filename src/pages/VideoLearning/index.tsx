@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
-import { VideoPlayer } from './components/VideoPlayer';
 import { TranscriptList } from './components/TranscriptList';
 import { ActionBar } from './components/ActionBar';
 import { Transcript, VideoInfo } from '../../types';
@@ -10,6 +9,9 @@ import { fetchVocabularyData } from '@api/general';
 import { useVideoPlayer } from './hooks/useVideoPlayer';
 import { WordModal } from '../../components/WordModal';
 import { PlaybackSettingsModal } from './components/PlaybackSettingsModal';
+
+// 懒加载 VideoPlayer 减少首屏 JS 体积（react-player 包含多个播放器实现）
+const VideoPlayer = lazy(() => import('./components/VideoPlayer').then(m => ({ default: m.VideoPlayer })));
 import { useLocalized } from '../../hooks/useLocalized';
 import { CelebrationModal } from './components/CelebrationModal';
 import { PracticeModeModal } from './components/PracticeModeModal';
@@ -316,22 +318,28 @@ export const VideoLearningPage: React.FC = () => {
              : 'flex-none lg:w-1/2 lg:h-full lg:flex lg:flex-col lg:p-6 lg:gap-6 shrink-0 z-10'
          } transition-all`}>
             <div className={`${videoDisplayMode === 'hidden' ? 'w-[640px]' : 'w-full px-3 md:px-5'} z-20`}>
-              <VideoPlayer 
-                videoInfo={videoInfo} 
-                {...videoContext} 
-                isMaskActive={isMaskActive} 
-                totalTranscripts={transcripts.length} 
-                 onPlayerReady={handlePlayerReady}
-                 langMode={langMode}
-                activeTranscriptEn={activeTranscript.en}
-                activeTranscriptZh={activeTranscript.zh}
-                activeTranscriptWords={activeTranscript.words}
-                onVideoEnded={handleVideoEnded}
-                onWordClick={(w, s) => { setSelectedWord(w); setSelectedSentence(s || null); }}
-                savedWords={savedWords}
-                savedPhrases={savedPhrases}
-                highlightColor={highlightColor}
-              />
+              <Suspense fallback={
+                <div className="w-full aspect-video bg-black rounded-2xl flex items-center justify-center">
+                  <div className="text-white/60 text-sm">视频播放器加载中...</div>
+                </div>
+              }>
+                <VideoPlayer
+                  videoInfo={videoInfo}
+                  {...videoContext}
+                  isMaskActive={isMaskActive}
+                  totalTranscripts={transcripts.length}
+                   onPlayerReady={handlePlayerReady}
+                   langMode={langMode}
+                  activeTranscriptEn={activeTranscript.en}
+                  activeTranscriptZh={activeTranscript.zh}
+                  activeTranscriptWords={activeTranscript.words}
+                  onVideoEnded={handleVideoEnded}
+                  onWordClick={(w, s) => { setSelectedWord(w); setSelectedSentence(s || null); }}
+                  savedWords={savedWords}
+                  savedPhrases={savedPhrases}
+                  highlightColor={highlightColor}
+                />
+              </Suspense>
             </div>
 
             {/* Desktop Action Bar */}
