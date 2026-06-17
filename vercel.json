@@ -8,5 +8,13 @@
     { "source": "/api/parser/(.*)", "destination": "http://47.239.26.150:28080/$1" },
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store" }
+      ]
+    }
   ]
 }

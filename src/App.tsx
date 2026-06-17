@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { FullscreenToolbar } from './components/FullscreenToolbar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -73,12 +74,13 @@ function GlobalFullscreenToolbar() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <GlobalFullscreenToolbar />
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <GlobalFullscreenToolbar />
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Navigate to="/explore" replace />} />
                 <Route path="/explore" element={<ExplorePage />} />
@@ -105,5 +107,6 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 }
